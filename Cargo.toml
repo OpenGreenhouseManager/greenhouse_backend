@@ -1,0 +1,29 @@
+[workspace]
+members = [
+    "api/web",
+    "api/script",
+    "services/area_service",
+    "services/circumference_service",
+    "smart_device/esp_webserver",
+    "shared",
+]
+
+[workspace.dependencies]
+axum = { version = "0.7.5", features = ["macros"] }
+derive_more = "0.99.17"
+tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread"] }
+reqwest = "0.12.4"
+serde = { version = "1.0.202", features = ["serde_derive"] }
+shared = { path = "./shared" }
+
+[package]
+name = "gh"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum.workspace = true
+
+[build-dependencies]
+embuild = "0.31.3"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
