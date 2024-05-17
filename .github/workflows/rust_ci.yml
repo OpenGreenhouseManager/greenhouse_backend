@@ -26,7 +26,9 @@ jobs:
           - command: fmt
             args: --all -- --check --color always
           - command: clippy
-            args: --all-targets --all-features --workspace -- -D warnings
+            args: --all-targets --all-features --workspace --exclude esp_* -- -D warnings
+          - command: clippy
+            args: --all-features -p esp_* --target riscv32imc-esp-espidf -- -D warnings
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
