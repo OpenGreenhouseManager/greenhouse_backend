@@ -1,4 +1,3 @@
-
 use serde::{Deserialize, Serialize};
 pub mod error;
 
@@ -11,7 +10,7 @@ pub struct Rectangle {
 impl Rectangle {
     pub fn circumference(&self) -> u32 {
         2 * (self.width + self.height)
-    }    
+    }
     pub fn area(&self) -> u32 {
         self.width * self.height
     }

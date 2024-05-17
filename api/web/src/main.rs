@@ -18,19 +18,19 @@ async fn handler(Path((a, b)): Path<(i32, i32)>) -> String {
     //let cf = 2 * a + 2 * b;
     let area_request = reqwest::get(format!("http://127.0.0.1:3001/{a}/{b}"));
     let cf_request = reqwest::get(format!("http://127.0.0.1:3002/{a}/{b}"));
-    let area =match area_request.await{
-        Ok(response) => match response.text().await{
+    let area = match area_request.await {
+        Ok(response) => match response.text().await {
             Ok(text) => text,
-            Err(e) => e.to_string()
-        }
-        Err(e) => e.to_string()
+            Err(e) => e.to_string(),
+        },
+        Err(e) => e.to_string(),
     };
-    let cf =match cf_request.await{
-        Ok(response) => match response.text().await{
+    let cf = match cf_request.await {
+        Ok(response) => match response.text().await {
             Ok(text) => text,
-            Err(e) => e.to_string()
-        }
-        Err(e) => e.to_string()
+            Err(e) => e.to_string(),
+        },
+        Err(e) => e.to_string(),
     };
 
     format!(
@@ -38,5 +38,6 @@ async fn handler(Path((a, b)): Path<(i32, i32)>) -> String {
         <h1>Rectangle Info</h1>
         <p>Area: {area}</p>
         <p>Circumference: {cf}</p>
-    ")
+    "
+    )
 }

@@ -24,7 +24,7 @@ async fn handler(Path((a, b)): Path<(u32, u32)>) -> String {
     let rec = Rectangle {
         width: a,
         height: b,
-    }; 
+    };
     let area = rec.area();
     format!("{area}")
 }

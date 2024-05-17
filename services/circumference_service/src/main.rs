@@ -22,4 +22,3 @@ async fn handler(Path((a, b)): Path<(u32, u32)>) -> String {
     let cf = rec.circumference();
     format!("{cf}")
 }
-
