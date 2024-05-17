@@ -13,7 +13,7 @@ env:
 
 jobs:
   rust-checks-embedded:
-    name: Rust Checks for Embedded
+    name: Rust Checks
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -21,44 +21,21 @@ jobs:
         action:
           - command: build
             args: --release -p esp_* --target riscv32imc-esp-espidf
-          - command: fmt
-            args: --all -- --check --color always
-          - command: clippy
-            args: --all-targets --all-features --workspace -- -D warnings
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@v1
-        with:
-          toolchain: nightly
-          components: rust-src
-      - name: Enable caching
-        uses: Swatinem/rust-cache@v2
-      - name: Run command
-        run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
-  rust-checks-services:
-    name: Rust Checks for Services
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        action:
           - command: build
             args: --release --workspace --exclude esp_*
           - command: fmt
             args: --all -- --check --color always
           - command: clippy
-            args: --all-targets --all-features --workspace -- -D warnings
+            args: --all-targets --all-features --workspace --exclude esp_* -- -D warnings
+          - command: clippy
+            args: --all-features -p esp_* --target riscv32imc-esp-espidf -- -D warnings
+        toolchain:
+          - stable
+          - beta
+          - nightly
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@v1
-        with:
-          toolchain: nightly
-          components: rust-src
-      - name: Enable caching
-        uses: Swatinem/rust-cache@v2
+      - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
       - name: Run command
         run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
