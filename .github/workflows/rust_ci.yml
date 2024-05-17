@@ -42,5 +42,7 @@ jobs:
         run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rustfmt
       - name: clippy
         run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu clippy
+      - name: ldproxy
+        run: cargo install ldproxy
       - name: Run command
         run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
