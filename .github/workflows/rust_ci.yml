@@ -29,13 +29,20 @@ jobs:
             args: --all-targets --all-features --workspace --exclude esp_* -- -D warnings
           - command: clippy
             args: --all-features -p esp_* --target riscv32imc-esp-espidf -- -D warnings
-        toolchain:
-          - stable
-          - beta
-          - nightly
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
+      - name: rust up update 
+        run: rustup update
+      - name: rust up update nightly
+        run: rustup update nightly
+      - name: nightly
+        run: rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
+      - name: rustfmt
+        run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rustfmt
+      - name: clippy
+        run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu clippy
+      - name: ldproxy
+        run: cargo install ldproxy
       - name: Run command
         run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
