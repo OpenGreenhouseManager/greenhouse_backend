@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{ Deserialize, Serialize };
 pub mod error;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -7,6 +7,7 @@ pub struct Rectangle {
     pub height: u32,
 }
 
+#[cfg(feature = "service_dto")]
 impl Rectangle {
     pub fn circumference(&self) -> u32 {
         2 * (self.width + self.height)

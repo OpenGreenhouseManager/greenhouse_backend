@@ -9,4 +9,4 @@ edition = "2021"
 axum = { workspace = true }
 derive_more = { workspace = true }
 tokio = { workspace = true }
-shared = { workspace = true }
+core = { workspace = true, features = ["service_dto"] }

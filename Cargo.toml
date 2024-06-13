@@ -4,8 +4,7 @@ members = [
     "api/script",
     "services/area_service",
     "services/circumference_service",
-    "smart_device/esp_webserver",
-    "shared",
+    "core",
 ]
 
 [workspace.dependencies]
@@ -14,7 +13,7 @@ derive_more = "0.99.17"
 tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread"] }
 reqwest = "0.12.4"
 serde = { version = "1.0.202", features = ["serde_derive"] }
-shared = { path = "./shared" }
+core = { path = "./core" }
 
 [package]
 name = "gh"

@@ -1,5 +1,5 @@
 [package]
-name = "shared"
+name = "core"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,3 +8,10 @@ edition = "2021"
 [dependencies]
 serde = { workspace = true }
 derive_more = { workspace = true }
+
+[features]
+api_web_dto = []
+api_script_dto = []
+service_dto = []
+smart_device_dto = []
+smart_device_interface = ["smart_device_dto"]
