@@ -51,34 +51,34 @@ where
     pub additinal_config: T,
 }
 
-impl<T> Into<ConfigResponseDto<T>> for Config<T>
+impl<T> From<Config<T>> for ConfigResponseDto<T>
 where
     T: Clone,
 {
-    fn into(self) -> ConfigResponseDto<T> {
+    fn from(config: Config<T>) -> Self {
         ConfigResponseDto {
-            address: self.address,
-            port: self.port,
-            mode: match self.mode {
+            address: config.address,
+            port: config.port,
+            mode: match config.mode {
                 Mode::Input => crate::smart_device_dto::config::Mode::Input,
                 Mode::Output => crate::smart_device_dto::config::Mode::Output,
                 Mode::InputOutput => crate::smart_device_dto::config::Mode::InputOutput,
             },
-            input_type: match self.input_type {
+            input_type: match config.input_type {
                 Some(Type::Number) => Some(crate::smart_device_dto::Type::Number),
                 Some(Type::String) => Some(crate::smart_device_dto::Type::String),
                 Some(Type::Stream) => Some(crate::smart_device_dto::Type::Stream),
                 Some(Type::Unknown) => Some(crate::smart_device_dto::Type::Unknown),
                 None => None,
             },
-            output_type: match self.output_type {
+            output_type: match config.output_type {
                 Some(Type::Number) => Some(crate::smart_device_dto::Type::Number),
                 Some(Type::String) => Some(crate::smart_device_dto::Type::String),
                 Some(Type::Stream) => Some(crate::smart_device_dto::Type::Stream),
                 Some(Type::Unknown) => Some(crate::smart_device_dto::Type::Unknown),
                 None => None,
             },
-            additinal_config: self.additinal_config,
+            additinal_config: config.additinal_config,
         }
     }
 }

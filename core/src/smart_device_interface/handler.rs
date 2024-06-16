@@ -23,13 +23,9 @@ where
     T: Clone,
 {
     match device_service.write_handler {
-        None => {
-            return StatusCode::INTERNAL_SERVER_ERROR;
-        }
-        Some(handler) => {
-            return handler(payload.data);
-        }
-    };
+        Some(handler) => handler(payload.data),
+        None => StatusCode::INTERNAL_SERVER_ERROR,
+    }
 }
 
 pub(crate) async fn read_device_handler<T>(
@@ -39,16 +35,12 @@ where
     T: Clone,
 {
     match device_service.read_handler {
-        None => {
-            return Json(Default::default());
-        }
-        Some(handler) => {
-            return Json(ReadResponseDto {
-                data: handler(),
-                output_type: Default::default(),
-            });
-        }
-    };
+        None => Json(Default::default()),
+        Some(handler) => Json(ReadResponseDto {
+            data: handler(),
+            output_type: Default::default(),
+        }),
+    }
 }
 
 pub(crate) async fn get_config_handler<T>(
@@ -60,11 +52,9 @@ where
     match read_config_file() {
         Ok(config) => {
             device_service.config = Arc::new(config.clone());
-            return Json(Some(config.into()));
+            Json(Some(ConfigResponseDto::from(config)))
         }
-        Err(_) => {
-            return Json(None);
-        }
+        Err(_) => Json(None),
     }
 }
 pub(crate) async fn status_device_handler<T>(
@@ -86,11 +76,7 @@ where
     let config = (device_service.config_interceptor_handler)(config);
 
     match update_config_file(&config) {
-        Ok(_) => {
-            return StatusCode::OK;
-        }
-        Err(_) => {
-            return StatusCode::INTERNAL_SERVER_ERROR;
-        }
+        Ok(_) => StatusCode::OK,
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
     }
 }

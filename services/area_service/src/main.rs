@@ -19,6 +19,6 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn handler(Path((a, b)): Path<(u32, u32)>) -> String {
+async fn handler(Path((_a, _b)): Path<(u32, u32)>) -> String {
     "".to_string()
 }
