@@ -1,9 +1,9 @@
-use serde::{ Deserialize, Serialize };
+use serde::{Deserialize, Serialize};
+pub mod config;
 pub mod endpoints;
 pub mod read;
-pub mod write;
-pub mod config;
 pub mod status;
+pub mod write;
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub enum Type {
     Number,

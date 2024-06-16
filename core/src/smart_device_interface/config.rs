@@ -1,11 +1,12 @@
-use serde::{ de::DeserializeOwned, Deserialize, Serialize };
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use crate::smart_device_dto::config::ConfigResponseDto;
 
 const CONFIG_FILE_NAME: &str = "config.json";
 
 pub fn update_config_file<T>(config: &Config<T>) -> Result<(), Box<dyn std::error::Error>>
-    where T: Serialize + Clone
+where
+    T: Serialize + Clone,
 {
     let data = serde_json::to_string(&config)?;
     std::fs::write(CONFIG_FILE_NAME, data)?;
@@ -13,7 +14,8 @@ pub fn update_config_file<T>(config: &Config<T>) -> Result<(), Box<dyn std::erro
 }
 
 pub fn read_config_file<T>() -> Result<Config<T>, Box<dyn std::error::Error>>
-    where T: DeserializeOwned + Clone
+where
+    T: DeserializeOwned + Clone,
 {
     let data = std::fs::read_to_string(CONFIG_FILE_NAME)?;
     let a: Config<T> = serde_json::from_str(&data)?;
@@ -37,7 +39,10 @@ pub enum Type {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Config<T> where T: Clone {
+pub struct Config<T>
+where
+    T: Clone,
+{
     pub address: String,
     pub port: u32,
     pub mode: Mode,
@@ -46,7 +51,10 @@ pub struct Config<T> where T: Clone {
     pub additinal_config: T,
 }
 
-impl<T> Into<ConfigResponseDto<T>> for Config<T> where T: Clone {
+impl<T> Into<ConfigResponseDto<T>> for Config<T>
+where
+    T: Clone,
+{
     fn into(self) -> ConfigResponseDto<T> {
         ConfigResponseDto {
             address: self.address,

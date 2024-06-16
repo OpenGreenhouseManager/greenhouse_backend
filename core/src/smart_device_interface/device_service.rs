@@ -1,12 +1,15 @@
-use std::sync::Arc;
+use crate::smart_device_dto::{config::ConfigRequestDto, status::DeviceStatusResponseDto};
 use axum::http::StatusCode;
 use serde::de::DeserializeOwned;
-use crate::smart_device_dto::{ config::ConfigRequestDto, status::DeviceStatusResponseDto };
+use std::sync::Arc;
 
-use super::config::{ read_config_file, Config };
+use super::config::{read_config_file, Config};
 
 #[derive(Clone)]
-pub struct DeviceService<T> where T: Clone {
+pub struct DeviceService<T>
+where
+    T: Clone,
+{
     pub read_handler: Option<Arc<dyn (Fn() -> String) + Send + Sync>>,
     pub write_handler: Option<Arc<dyn (Fn(String) -> StatusCode) + Send + Sync>>,
     pub status_handler: Arc<dyn (Fn() -> DeviceStatusResponseDto) + Send + Sync>,
@@ -14,15 +17,15 @@ pub struct DeviceService<T> where T: Clone {
     pub config: Arc<Config<T>>,
 }
 
-impl<T> DeviceService<T> where T: DeserializeOwned + Clone {
+impl<T> DeviceService<T>
+where
+    T: DeserializeOwned + Clone,
+{
     pub fn new_hybrid_device(
         read_handler: impl (Fn() -> String) + Send + Sync + 'static,
         write_handler: impl (Fn(String) -> StatusCode) + Send + Sync + 'static,
         status_handler: impl (Fn() -> DeviceStatusResponseDto) + Send + Sync + 'static,
-        config_interceptor_handler: impl (Fn(ConfigRequestDto<T>) -> Config<T>) +
-            Send +
-            Sync +
-            'static
+        config_interceptor_handler: impl (Fn(ConfigRequestDto<T>) -> Config<T>) + Send + Sync + 'static,
     ) -> Self {
         let config = read_config_file().unwrap();
         DeviceService {
@@ -37,10 +40,7 @@ impl<T> DeviceService<T> where T: DeserializeOwned + Clone {
     pub fn new_output_device(
         read_handler: impl (Fn() -> String) + Send + Sync + 'static,
         status_handler: impl (Fn() -> DeviceStatusResponseDto) + Send + Sync + 'static,
-        config_interceptor_handler: impl (Fn(ConfigRequestDto<T>) -> Config<T>) +
-            Send +
-            Sync +
-            'static
+        config_interceptor_handler: impl (Fn(ConfigRequestDto<T>) -> Config<T>) + Send + Sync + 'static,
     ) -> Self {
         let config = read_config_file().unwrap();
         DeviceService {
@@ -55,10 +55,7 @@ impl<T> DeviceService<T> where T: DeserializeOwned + Clone {
     pub fn new_input_device(
         write_handler: impl (Fn(String) -> StatusCode) + Send + Sync + 'static,
         status_handler: impl (Fn() -> DeviceStatusResponseDto) + Send + Sync + 'static,
-        config_interceptor_handler: impl (Fn(ConfigRequestDto<T>) -> Config<T>) +
-            Send +
-            Sync +
-            'static
+        config_interceptor_handler: impl (Fn(ConfigRequestDto<T>) -> Config<T>) + Send + Sync + 'static,
     ) -> Self {
         let config = read_config_file().unwrap();
         DeviceService {
