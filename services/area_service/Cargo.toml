@@ -11,4 +11,4 @@ license="GPL-3.0"
 axum = { workspace = true }
 derive_more = { workspace = true }
 tokio = { workspace = true }
-core = { workspace = true, features = ["service_dto"] }
+greenhouse_core = { workspace = true, features = ["service_dto"] }

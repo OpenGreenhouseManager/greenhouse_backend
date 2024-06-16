@@ -41,8 +41,8 @@ name = "area_service"
 version = "0.0.1"
 dependencies = [
  "axum",
- "core",
  "derive_more",
+ "greenhouse_core",
  "tokio",
 ]
 
@@ -199,8 +199,8 @@ name = "circumference_service"
 version = "0.0.1"
 dependencies = [
  "axum",
- "core",
  "derive_more",
+ "greenhouse_core",
  "tokio",
 ]
 
@@ -236,17 +236,6 @@ dependencies = [
  "serde_json",
  "time",
  "url",
-]
-
-[[package]]
-name = "core"
-version = "0.0.1"
-dependencies = [
- "axum",
- "derive_more",
- "httpc-test",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -427,6 +416,17 @@ name = "gimli"
 version = "0.28.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4271d37baee1b8c7e4b708028c57d816cf9d2434acb33a549475f78c181f6253"
+
+[[package]]
+name = "greenhouse_core"
+version = "0.0.1"
+dependencies = [
+ "axum",
+ "derive_more",
+ "httpc-test",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "h2"
