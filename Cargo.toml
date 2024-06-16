@@ -18,8 +18,10 @@ serde_json = "1.0.68"
 
 [package]
 name = "gh"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
+description= ""
+license="gnu GPLv3"
 
 [dependencies]
 axum.workspace = true
