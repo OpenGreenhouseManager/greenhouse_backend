@@ -21,7 +21,7 @@ name = "gh"
 version = "0.0.1"
 edition = "2021"
 description= "greenhouse project"
-license="gnu GPLv3"
+license="GPLv3"
 
 [dependencies]
 axum.workspace = true
