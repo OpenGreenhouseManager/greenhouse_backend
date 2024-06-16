@@ -51,8 +51,6 @@ impl Into<smart_device_dto::Type> for Type {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Config<T> where T: Clone + Default {
-    pub address: String,
-    pub port: u32,
     pub mode: Mode,
     pub input_type: Option<Type>,
     pub output_type: Option<Type>,
