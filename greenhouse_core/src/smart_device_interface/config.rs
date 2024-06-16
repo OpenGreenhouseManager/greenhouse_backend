@@ -1,11 +1,12 @@
-use serde::{ de::DeserializeOwned, Deserialize, Serialize };
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use crate::smart_device_dto::{ self, config::ConfigResponseDto };
+use crate::smart_device_dto::{self, config::ConfigResponseDto};
 
 const CONFIG_FILE_NAME: &str = "config.json";
 
 pub fn update_config_file<T>(config: &Config<T>) -> Result<(), Box<dyn std::error::Error>>
-    where T: Serialize + Clone + Default
+where
+    T: Serialize + Clone + Default,
 {
     let data = serde_json::to_string(&config)?;
     std::fs::write(CONFIG_FILE_NAME, data)?;
@@ -13,7 +14,8 @@ pub fn update_config_file<T>(config: &Config<T>) -> Result<(), Box<dyn std::erro
 }
 
 pub fn read_config_file<T>() -> Result<Config<T>, Box<dyn std::error::Error>>
-    where T: DeserializeOwned + Clone + Default
+where
+    T: DeserializeOwned + Clone + Default,
 {
     let data = std::fs::read_to_string(CONFIG_FILE_NAME)?;
     let a: Config<T> = serde_json::from_str(&data)?;
@@ -38,9 +40,9 @@ pub enum Type {
     Unknown,
 }
 
-impl Into<smart_device_dto::Type> for Type {
-    fn into(self) -> smart_device_dto::Type {
-        match self {
+impl From<Type> for smart_device_dto::Type {
+    fn from(val: Type) -> Self {
+        match val {
             Type::Number => smart_device_dto::Type::Number,
             Type::String => smart_device_dto::Type::String,
             Type::Stream => smart_device_dto::Type::Stream,
@@ -50,14 +52,20 @@ impl Into<smart_device_dto::Type> for Type {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-pub struct Config<T> where T: Clone + Default {
+pub struct Config<T>
+where
+    T: Clone + Default,
+{
     pub mode: Mode,
     pub input_type: Option<Type>,
     pub output_type: Option<Type>,
     pub additinal_config: T,
 }
 
-impl<T> From<Config<T>> for ConfigResponseDto<T> where T: Clone + Default {
+impl<T> From<Config<T>> for ConfigResponseDto<T>
+where
+    T: Clone + Default,
+{
     fn from(config: Config<T>) -> Self {
         ConfigResponseDto {
             mode: match config.mode {

@@ -1,26 +1,27 @@
 use std::sync::Arc;
 
-use axum::{ extract::State, http::StatusCode, Json };
-use serde::{ de::DeserializeOwned, Serialize };
+use axum::{extract::State, http::StatusCode, Json};
+use serde::{de::DeserializeOwned, Serialize};
 
 use crate::smart_device_dto::{
     self,
-    config::{ ConfigRequestDto, ConfigResponseDto },
+    config::{ConfigRequestDto, ConfigResponseDto},
     read::ReadResponseDto,
     status::DeviceStatusResponseDto,
     write::WriteRequestDto,
 };
 
 use super::{
-    config::{ read_config_file, update_config_file, Type },
+    config::{read_config_file, update_config_file},
     device_service::DeviceService,
 };
 
 pub(crate) async fn write_device_handler<T>(
     State(device_service): State<DeviceService<T>>,
-    Json(payload): Json<WriteRequestDto>
+    Json(payload): Json<WriteRequestDto>,
 ) -> StatusCode
-    where T: Clone + Default
+where
+    T: Clone + Default,
 {
     let config = device_service.config;
     match device_service.write_handler {
@@ -29,10 +30,11 @@ pub(crate) async fn write_device_handler<T>(
     }
 }
 
-pub(crate) async fn read_device_handler<T>(State(
-    device_service,
-): State<DeviceService<T>>) -> Json<ReadResponseDto>
-    where T: Clone + Default
+pub(crate) async fn read_device_handler<T>(
+    State(device_service): State<DeviceService<T>>,
+) -> Json<ReadResponseDto>
+where
+    T: Clone + Default,
 {
     let config = device_service.config;
     let output_type = match config.output_type {
@@ -41,18 +43,18 @@ pub(crate) async fn read_device_handler<T>(State(
     };
     match device_service.read_handler {
         None => Json(Default::default()),
-        Some(handler) =>
-            Json(ReadResponseDto {
-                data: handler(config),
-                output_type: output_type,
-            }),
+        Some(handler) => Json(ReadResponseDto {
+            data: handler(config),
+            output_type,
+        }),
     }
 }
 
-pub(crate) async fn get_config_handler<T>(State(
-    mut device_service,
-): State<DeviceService<T>>) -> Json<Option<ConfigResponseDto<T>>>
-    where T: DeserializeOwned + Clone + Default
+pub(crate) async fn get_config_handler<T>(
+    State(mut device_service): State<DeviceService<T>>,
+) -> Json<Option<ConfigResponseDto<T>>>
+where
+    T: DeserializeOwned + Clone + Default,
 {
     match read_config_file() {
         Ok(config) => {
@@ -62,10 +64,11 @@ pub(crate) async fn get_config_handler<T>(State(
         Err(_) => Json(None),
     }
 }
-pub(crate) async fn status_device_handler<T>(State(
-    device_service,
-): State<DeviceService<T>>) -> Json<DeviceStatusResponseDto>
-    where T: Clone + Default
+pub(crate) async fn status_device_handler<T>(
+    State(device_service): State<DeviceService<T>>,
+) -> Json<DeviceStatusResponseDto>
+where
+    T: Clone + Default,
 {
     let config = device_service.config;
 
@@ -74,9 +77,10 @@ pub(crate) async fn status_device_handler<T>(State(
 
 pub(crate) async fn config_update_handler<T>(
     State(device_service): State<DeviceService<T>>,
-    Json(config): Json<ConfigRequestDto<T>>
+    Json(config): Json<ConfigRequestDto<T>>,
 ) -> StatusCode
-    where T: Serialize + Clone + Default
+where
+    T: Serialize + Clone + Default,
 {
     let config = (device_service.config_interceptor_handler)(config);
 
