@@ -2,7 +2,7 @@
 name = "core"
 version = "0.0.1"
 edition = "2021"
-description= ""
+description= "core"
 license="gnu GPLv3"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

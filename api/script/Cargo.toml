@@ -2,7 +2,7 @@
 name = "api_script"
 version = "0.0.1"
 edition = "2021"
-description= ""
+description= "api_script"
 license="gnu GPLv3"
 
 [dependencies]
