@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{ Deserialize, Serialize };
 
 use super::Type;
 
@@ -17,6 +17,7 @@ pub enum Mode {
     Input,
     Output,
     InputOutput,
+    Unknown,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

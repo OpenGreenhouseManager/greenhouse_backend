@@ -1,12 +1,12 @@
 use crate::smart_device_dto::{ config::ConfigRequestDto, status::DeviceStatusResponseDto };
 use axum::http::StatusCode;
-use serde::de::DeserializeOwned;
+use serde::{ de::DeserializeOwned, Serialize };
 use std::sync::Arc;
 
-use super::config::{ read_config_file, Config };
+use super::config::{ read_config_file, update_config_file, Config };
 
 #[derive(Clone)]
-pub struct DeviceService<T> where T: Clone {
+pub struct DeviceService<T> where T: Clone + Default {
     pub read_handler: Option<Arc<dyn (Fn(Arc<Config<T>>) -> String) + Send + Sync>>,
     pub write_handler: Option<Arc<dyn (Fn(String, Arc<Config<T>>) -> StatusCode) + Send + Sync>>,
     pub status_handler: Arc<dyn (Fn(Arc<Config<T>>) -> DeviceStatusResponseDto) + Send + Sync>,
@@ -14,7 +14,7 @@ pub struct DeviceService<T> where T: Clone {
     pub config: Arc<Config<T>>,
 }
 
-impl<T> DeviceService<T> where T: DeserializeOwned + Clone {
+impl<T> DeviceService<T> where T: Clone + Default + DeserializeOwned + Serialize {
     pub fn new_hybrid_device(
         read_handler: impl (Fn(Arc<Config<T>>) -> String) + Send + Sync + 'static,
         write_handler: impl (Fn(String, Arc<Config<T>>) -> StatusCode) + Send + Sync + 'static,
@@ -27,7 +27,14 @@ impl<T> DeviceService<T> where T: DeserializeOwned + Clone {
             Sync +
             'static
     ) -> Self {
-        let config = read_config_file().unwrap();
+        let config = match read_config_file() {
+            Ok(config) => config,
+            Err(_) => {
+                let default_config = Config::default();
+                update_config_file(&default_config).unwrap();
+                default_config
+            }
+        };
         DeviceService {
             read_handler: Some(Arc::new(read_handler)),
             write_handler: Some(Arc::new(write_handler)),

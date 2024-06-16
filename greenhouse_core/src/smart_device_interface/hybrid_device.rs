@@ -15,7 +15,7 @@ use super::{
 };
 
 pub fn init_hybrid_router<T>(device_service: DeviceService<T>) -> Router
-    where T: Clone + Serialize + DeserializeOwned + Send + Sync + 'static
+    where T: Clone + Default + Serialize + DeserializeOwned + Send + Sync + 'static
 {
     Router::new()
         .route(READ, post(read_device_handler))

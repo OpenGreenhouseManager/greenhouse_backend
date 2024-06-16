@@ -16,7 +16,7 @@ pub(crate) async fn write_device_handler<T>(
     State(device_service): State<DeviceService<T>>,
     Json(payload): Json<WriteRequestDto>
 ) -> StatusCode
-    where T: Clone
+    where T: Clone + Default
 {
     let config = device_service.config;
     match device_service.write_handler {
@@ -28,7 +28,7 @@ pub(crate) async fn write_device_handler<T>(
 pub(crate) async fn read_device_handler<T>(State(
     device_service,
 ): State<DeviceService<T>>) -> Json<ReadResponseDto>
-    where T: Clone
+    where T: Clone + Default
 {
     let config = device_service.config;
 
@@ -45,7 +45,7 @@ pub(crate) async fn read_device_handler<T>(State(
 pub(crate) async fn get_config_handler<T>(State(
     mut device_service,
 ): State<DeviceService<T>>) -> Json<Option<ConfigResponseDto<T>>>
-    where T: DeserializeOwned + Clone
+    where T: DeserializeOwned + Clone + Default
 {
     match read_config_file() {
         Ok(config) => {
@@ -58,7 +58,7 @@ pub(crate) async fn get_config_handler<T>(State(
 pub(crate) async fn status_device_handler<T>(State(
     device_service,
 ): State<DeviceService<T>>) -> Json<DeviceStatusResponseDto>
-    where T: Clone
+    where T: Clone + Default
 {
     let config = device_service.config;
 
@@ -69,7 +69,7 @@ pub(crate) async fn config_update_handler<T>(
     State(device_service): State<DeviceService<T>>,
     Json(config): Json<ConfigRequestDto<T>>
 ) -> StatusCode
-    where T: Serialize + Clone
+    where T: Serialize + Clone + Default
 {
     let config = (device_service.config_interceptor_handler)(config);
 

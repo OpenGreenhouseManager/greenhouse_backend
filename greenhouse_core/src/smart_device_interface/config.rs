@@ -5,7 +5,7 @@ use crate::smart_device_dto::config::ConfigResponseDto;
 const CONFIG_FILE_NAME: &str = "config.json";
 
 pub fn update_config_file<T>(config: &Config<T>) -> Result<(), Box<dyn std::error::Error>>
-    where T: Serialize + Clone
+    where T: Serialize + Clone + Default
 {
     let data = serde_json::to_string(&config)?;
     std::fs::write(CONFIG_FILE_NAME, data)?;
@@ -13,18 +13,20 @@ pub fn update_config_file<T>(config: &Config<T>) -> Result<(), Box<dyn std::erro
 }
 
 pub fn read_config_file<T>() -> Result<Config<T>, Box<dyn std::error::Error>>
-    where T: DeserializeOwned + Clone
+    where T: DeserializeOwned + Clone + Default
 {
     let data = std::fs::read_to_string(CONFIG_FILE_NAME)?;
     let a: Config<T> = serde_json::from_str(&data)?;
     Ok(a)
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub enum Mode {
     Input,
     Output,
     InputOutput,
+    #[default]
+    Unknown,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -36,8 +38,8 @@ pub enum Type {
     Unknown,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Config<T> where T: Clone {
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct Config<T> where T: Clone + Default {
     pub address: String,
     pub port: u32,
     pub mode: Mode,
@@ -46,7 +48,7 @@ pub struct Config<T> where T: Clone {
     pub additinal_config: T,
 }
 
-impl<T> From<Config<T>> for ConfigResponseDto<T> where T: Clone {
+impl<T> From<Config<T>> for ConfigResponseDto<T> where T: Clone + Default {
     fn from(config: Config<T>) -> Self {
         ConfigResponseDto {
             address: config.address,
@@ -55,6 +57,7 @@ impl<T> From<Config<T>> for ConfigResponseDto<T> where T: Clone {
                 Mode::Input => crate::smart_device_dto::config::Mode::Input,
                 Mode::Output => crate::smart_device_dto::config::Mode::Output,
                 Mode::InputOutput => crate::smart_device_dto::config::Mode::InputOutput,
+                Mode::Unknown => crate::smart_device_dto::config::Mode::Unknown,
             },
             input_type: match config.input_type {
                 Some(Type::Number) => Some(crate::smart_device_dto::Type::Number),
