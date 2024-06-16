@@ -1,5 +1,4 @@
 use axum::{ extract::Path, routing::get, Router };
-use core::Rectangle;
 
 #[tokio::main]
 async fn main() {
@@ -13,10 +12,5 @@ async fn main() {
 }
 
 async fn handler(Path((a, b)): Path<(u32, u32)>) -> String {
-    let rec = Rectangle {
-        width: a,
-        height: b,
-    };
-    let cf = rec.circumference();
-    format!("{cf}")
+    "".to_string()
 }
