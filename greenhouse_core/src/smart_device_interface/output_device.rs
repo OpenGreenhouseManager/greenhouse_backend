@@ -17,7 +17,7 @@ pub fn init_output_router<T>(device_service: DeviceService<T>) -> Router
     where T: Clone + Default + Serialize + DeserializeOwned + Send + Sync + 'static
 {
     Router::new()
-        .route(READ, post(read_device_handler))
+        .route(READ, get(read_device_handler))
         .route(CONFIG, post(config_update_handler))
         .route(CONFIG, get(get_config_handler))
         .route(STATUS, get(status_device_handler))
