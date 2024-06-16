@@ -4,13 +4,17 @@ use axum::{ extract::State, http::StatusCode, Json };
 use serde::{ de::DeserializeOwned, Serialize };
 
 use crate::smart_device_dto::{
+    self,
     config::{ ConfigRequestDto, ConfigResponseDto },
     read::ReadResponseDto,
     status::DeviceStatusResponseDto,
     write::WriteRequestDto,
 };
 
-use super::{ config::{ read_config_file, update_config_file }, device_service::DeviceService };
+use super::{
+    config::{ read_config_file, update_config_file, Type },
+    device_service::DeviceService,
+};
 
 pub(crate) async fn write_device_handler<T>(
     State(device_service): State<DeviceService<T>>,
@@ -31,13 +35,16 @@ pub(crate) async fn read_device_handler<T>(State(
     where T: Clone + Default
 {
     let config = device_service.config;
-
+    let output_type = match config.output_type {
+        Some(output_type) => output_type.into(),
+        None => smart_device_dto::Type::Unknown,
+    };
     match device_service.read_handler {
         None => Json(Default::default()),
         Some(handler) =>
             Json(ReadResponseDto {
                 data: handler(config),
-                output_type: Default::default(),
+                output_type: output_type,
             }),
     }
 }

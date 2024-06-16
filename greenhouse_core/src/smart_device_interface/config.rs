@@ -1,6 +1,6 @@
 use serde::{ de::DeserializeOwned, Deserialize, Serialize };
 
-use crate::smart_device_dto::config::ConfigResponseDto;
+use crate::smart_device_dto::{ self, config::ConfigResponseDto };
 
 const CONFIG_FILE_NAME: &str = "config.json";
 
@@ -29,13 +29,24 @@ pub enum Mode {
     Unknown,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, Default)]
 pub enum Type {
     Number,
     String,
     Stream,
     #[default]
     Unknown,
+}
+
+impl Into<smart_device_dto::Type> for Type {
+    fn into(self) -> smart_device_dto::Type {
+        match self {
+            Type::Number => smart_device_dto::Type::Number,
+            Type::String => smart_device_dto::Type::String,
+            Type::Stream => smart_device_dto::Type::Stream,
+            Type::Unknown => smart_device_dto::Type::Unknown,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -51,8 +62,6 @@ pub struct Config<T> where T: Clone + Default {
 impl<T> From<Config<T>> for ConfigResponseDto<T> where T: Clone + Default {
     fn from(config: Config<T>) -> Self {
         ConfigResponseDto {
-            address: config.address,
-            port: config.port,
             mode: match config.mode {
                 Mode::Input => crate::smart_device_dto::config::Mode::Input,
                 Mode::Output => crate::smart_device_dto::config::Mode::Output,

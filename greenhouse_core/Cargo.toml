@@ -1,6 +1,6 @@
 [package]
 name = "greenhouse_core"
-version = "0.0.4"
+version = "0.0.5"
 edition = "2021"
 description= "greenhouse_core"
 license="GPL-3.0"
