@@ -5,6 +5,14 @@ members = [
     "services/area_service",
     "services/circumference_service",
     "greenhouse_core",
+    "examples/*"
+]
+default-members = [
+    "api/web",
+    "api/script",
+    "services/area_service",
+    "services/circumference_service",
+    "greenhouse_core",
 ]
 
 [workspace.dependencies]
