@@ -54,7 +54,14 @@ where
         status_handler: impl (Fn(Arc<Config<T>>) -> DeviceStatusResponseDto) + Send + Sync + 'static,
         config_interceptor_handler: impl (Fn(ConfigRequestDto<T>) -> Config<T>) + Send + Sync + 'static,
     ) -> Self {
-        let config = read_config_file().unwrap();
+        let config = match read_config_file() {
+            Ok(config) => config,
+            Err(_) => {
+                let default_config = Config::default();
+                update_config_file(&default_config).unwrap();
+                default_config
+            }
+        };
         DeviceService {
             read_handler: Some(Arc::new(read_handler)),
             write_handler: None,
@@ -69,7 +76,14 @@ where
         status_handler: impl (Fn(Arc<Config<T>>) -> DeviceStatusResponseDto) + Send + Sync + 'static,
         config_interceptor_handler: impl (Fn(ConfigRequestDto<T>) -> Config<T>) + Send + Sync + 'static,
     ) -> Self {
-        let config = read_config_file().unwrap();
+        let config = match read_config_file() {
+            Ok(config) => config,
+            Err(_) => {
+                let default_config = Config::default();
+                update_config_file(&default_config).unwrap();
+                default_config
+            }
+        };
         DeviceService {
             read_handler: None,
             write_handler: Some(Arc::new(write_handler)),
