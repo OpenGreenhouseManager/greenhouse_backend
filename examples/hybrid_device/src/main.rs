@@ -38,7 +38,7 @@ async fn main() {
 
 fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> String {
     // Implement your read handler here
-    return Json(unsafe { SAVED_NUMBER }).to_string();
+    Json(unsafe { SAVED_NUMBER }).to_string()
 }
 
 fn write_handler(json: String, config: Arc<Config<ExampleDeviceConfig>>) -> StatusCode {
