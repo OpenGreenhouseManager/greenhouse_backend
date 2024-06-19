@@ -5,7 +5,6 @@
 //! ```
 
 use axum::{extract::Path, routing::get, Router};
-use shared::Rectangle;
 
 #[tokio::main]
 async fn main() {
@@ -20,11 +19,6 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn handler(Path((a, b)): Path<(u32, u32)>) -> String {
-    let rec = Rectangle {
-        width: a,
-        height: b,
-    };
-    let area = rec.area();
-    format!("{area}")
+async fn handler(Path((_a, _b)): Path<(u32, u32)>) -> String {
+    "".to_string()
 }
