@@ -16,10 +16,7 @@ use serde::Deserialize;
 #[derive(Clone, Deserialize)]
 struct Config {
     service_port: u32,
-    database_name: String,
-    database_port: u32,
-    database_user: String,
-    database_password: String,
+    DATABASE_URL: String,
 }
 
 type Pool = bb8::Pool<AsyncDieselConnectionManager<AsyncPgConnection>>;
@@ -32,7 +29,7 @@ struct AppState {
 
 #[tokio::main]
 async fn main() {
-    let config: Config = match std::fs::File::open("config.yaml") {
+    let config: Config = match std::fs::File::open(".env") {
         Ok(f) => match serde_yaml::from_reader(f) {
             Ok(config) => config,
             Err(e) => {
@@ -44,16 +41,12 @@ async fn main() {
         }
     };
 
-    let connection_string = format!(
-        "postgres://{}:{}@localhost:{}/{}",
-        config.database_user, config.database_password, config.database_port, config.database_name
-    );
     let url = format!("localhost:{}", config.service_port);
 
     let state = AppState {
         config,
         pool: Pool::builder()
-            .build(AsyncDieselConnectionManager::new(connection_string))
+            .build(AsyncDieselConnectionManager::new(config.DATABASE_URL))
             .await
             .unwrap(),
     };
