@@ -16,7 +16,8 @@ use serde::Deserialize;
 #[derive(Clone, Deserialize)]
 struct Config {
     service_port: u32,
-    DATABASE_URL: String,
+    #[serde(rename = "DATABASE_URL")]
+    database_url: String,
 }
 
 type Pool = bb8::Pool<AsyncDieselConnectionManager<AsyncPgConnection>>;
@@ -45,12 +46,12 @@ async fn main() {
 
     let pool = Pool::builder()
         .build(AsyncDieselConnectionManager::new(
-            config.DATABASE_URL.clone(),
+            config.database_url.clone(),
         ))
         .await
         .unwrap();
 
-    let state = AppState { config, pool: pool };
+    let state = AppState { config, pool };
 
     let app = Router::new()
         .route("/:a/:b", get(handler))
@@ -61,11 +62,6 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn handler(State(AppState { config: _, pool }): State<AppState>) -> StatusCode {
-    let mut conn = pool
-        .get()
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR));
-
+async fn handler(State(AppState { config: _, pool: _ }): State<AppState>) -> StatusCode {
     StatusCode::OK
 }
