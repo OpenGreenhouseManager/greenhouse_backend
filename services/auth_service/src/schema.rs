@@ -7,5 +7,6 @@ diesel::table! {
         password -> Text,
         salt -> Text,
         role -> Text,
+        login_session -> Varchar,
     }
 }
