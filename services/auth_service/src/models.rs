@@ -49,9 +49,6 @@ impl User {
     }
 
     pub async fn check_login(&self, password: String) -> bool {
-        match bcrypt::verify(password, &self.password) {
-            Ok(_) => true,
-            Err(_) => false,
-        }
+        bcrypt::verify(password, &self.password).is_ok()
     }
 }

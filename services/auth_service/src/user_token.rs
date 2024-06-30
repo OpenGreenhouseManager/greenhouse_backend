@@ -16,13 +16,13 @@ pub struct UserToken {
 }
 
 impl UserToken {
-    pub fn generate_token(username: String, role: String, secret: String) -> String {
+    pub fn generate_token(user_name: String, role: String, secret: String) -> String {
         let now = Utc::now().timestamp_nanos_opt().unwrap() / 1000000000;
         let payload = UserToken {
             iat: now,
             exp: now + THREE_HOUR,
-            user_name: username,
-            role: role,
+            user_name,
+            role,
         };
 
         jsonwebtoken::encode(
