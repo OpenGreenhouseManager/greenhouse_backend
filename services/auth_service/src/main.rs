@@ -1,16 +1,13 @@
-//! Run with
-//!
-//! ```not_rust
-//! cargo run -p example-hello-world
-//! ```
-
 use axum::{
     extract::{FromRef, State},
-    http::StatusCode,
-    routing::get,
-    Router,
+    routing::post,
+    Json, Router,
 };
 use diesel_async::{pooled_connection::AsyncDieselConnectionManager, AsyncPgConnection};
+use greenhouse_core::auth_service_dto::{
+    login::{LoginRequestDto, LoginResponseDto},
+    register::{RegisterRequestDto, RegisterResponseDto},
+};
 use serde::Deserialize;
 
 #[derive(Clone, Deserialize)]
@@ -54,14 +51,31 @@ async fn main() {
     let state = AppState { config, pool };
 
     let app = Router::new()
-        .route("/:a/:b", get(handler))
+        .route("/api/auth/register", post(register))
+        .route("/api/auth/login", post(login))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
     println!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }
-
-async fn handler(State(AppState { config: _, pool: _ }): State<AppState>) -> StatusCode {
-    StatusCode::OK
+#[axum::debug_handler]
+async fn register(
+    State(AppState { config: _, pool: _ }): State<AppState>,
+    Json(_): Json<RegisterRequestDto>,
+) -> Json<RegisterResponseDto> {
+    Json(RegisterResponseDto {
+        token: todo!(),
+        token_type: todo!(),
+    })
+}
+#[axum::debug_handler]
+async fn login(
+    State(AppState { config: _, pool: _ }): State<AppState>,
+    Json(_): Json<LoginRequestDto>,
+) -> Json<LoginResponseDto> {
+    Json(LoginResponseDto {
+        token: todo!(),
+        token_type: todo!(),
+    })
 }
