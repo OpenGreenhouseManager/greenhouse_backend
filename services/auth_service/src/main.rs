@@ -5,10 +5,10 @@
 //! ```
 
 use axum::{
-    extract::{Path, State},
+    extract::{FromRef, State},
     http::StatusCode,
     routing::get,
-    Json, Router,
+    Router,
 };
 use diesel_async::{pooled_connection::AsyncDieselConnectionManager, AsyncPgConnection};
 use serde::Deserialize;
@@ -21,7 +21,7 @@ struct Config {
 
 type Pool = bb8::Pool<AsyncDieselConnectionManager<AsyncPgConnection>>;
 
-#[derive(Clone)]
+#[derive(FromRef, Clone)]
 struct AppState {
     config: Config,
     pool: Pool,
@@ -43,13 +43,14 @@ async fn main() {
 
     let url = format!("localhost:{}", config.service_port);
 
-    let state = AppState {
-        config,
-        pool: Pool::builder()
-            .build(AsyncDieselConnectionManager::new(config.DATABASE_URL))
-            .await
-            .unwrap(),
-    };
+    let pool = Pool::builder()
+        .build(AsyncDieselConnectionManager::new(
+            config.DATABASE_URL.clone(),
+        ))
+        .await
+        .unwrap();
+
+    let state = AppState { config, pool: pool };
 
     let app = Router::new()
         .route("/:a/:b", get(handler))
@@ -60,24 +61,11 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn handler(State(pool): State<Pool>) -> StatusCode {
+async fn handler(State(AppState { config: _, pool }): State<AppState>) -> StatusCode {
     let mut conn = pool
         .get()
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR));
 
-    let res = diesel::insert_into(users::table)
-        .values(new_user)
-        .returning(User::as_returning())
-        .get_result(&mut conn)
-        .await
-        .map_err(internal_error)?;
-    Ok(Json(res))
-}
-
-fn internal_error<E>(err: E) -> (StatusCode, String)
-where
-    E: std::error::Error,
-{
-    (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
+    StatusCode::OK
 }
