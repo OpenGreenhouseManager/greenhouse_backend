@@ -16,5 +16,15 @@ greenhouse_core = { workspace = true, features = ["auth_service_dto"] }
 bb8 = { workspace = true }
 serde = { workspace = true }
 serde_json ={ workspace = true}
-diesel =  { workspace = true }
+diesel =  { workspace = true, features = [ "uuid" ] }
 diesel-async =  { workspace = true }
+uuid = { workspace = true, features = [
+    "v4",                
+    "fast-rng",          
+    "macro-diagnostics", 
+    "serde"
+] }
+bcrypt = { workspace = true }
+jsonwebtoken = { workspace = true }
+rand = { workspace = true }
+chrono = { workspace = true }

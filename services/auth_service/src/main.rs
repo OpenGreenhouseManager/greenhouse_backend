@@ -1,20 +1,32 @@
+use crate::schema::users::dsl::users;
 use axum::{
     extract::{FromRef, State},
     routing::post,
     Json, Router,
 };
-use diesel_async::{pooled_connection::AsyncDieselConnectionManager, AsyncPgConnection};
+
+use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
+use diesel_async::{
+    pooled_connection::AsyncDieselConnectionManager, AsyncPgConnection, RunQueryDsl,
+};
 use greenhouse_core::auth_service_dto::{
     login::{LoginRequestDto, LoginResponseDto},
     register::{RegisterRequestDto, RegisterResponseDto},
 };
+use models::User;
+use schema::users::username;
 use serde::Deserialize;
+pub mod models;
+pub mod schema;
+pub mod user_token;
 
 #[derive(Clone, Deserialize)]
 struct Config {
     service_port: u32,
     #[serde(rename = "DATABASE_URL")]
     database_url: String,
+    #[serde(rename = "JWT_SECRET")]
+    jwt_secret: String,
 }
 
 type Pool = bb8::Pool<AsyncDieselConnectionManager<AsyncPgConnection>>;
@@ -59,23 +71,50 @@ async fn main() {
     println!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }
+
 #[axum::debug_handler]
 async fn register(
-    State(AppState { config: _, pool: _ }): State<AppState>,
-    Json(_): Json<RegisterRequestDto>,
+    State(AppState { config, pool }): State<AppState>,
+    Json(user): Json<RegisterRequestDto>,
 ) -> Json<RegisterResponseDto> {
+    let mut conn = pool.get().await.unwrap();
+
+    let new_user = User::new(
+        user.username,
+        user.password,
+        user.role,
+        config.jwt_secret.clone(),
+    );
+
+    let res = diesel::insert_into(schema::users::table)
+        .values(new_user)
+        .returning(User::as_returning())
+        .get_result(&mut conn)
+        .await
+        .unwrap();
     Json(RegisterResponseDto {
-        token: todo!(),
-        token_type: todo!(),
+        token: res.login_session,
+        token_type: "Bearer".to_string(),
     })
 }
+
 #[axum::debug_handler]
 async fn login(
-    State(AppState { config: _, pool: _ }): State<AppState>,
-    Json(_): Json<LoginRequestDto>,
+    State(AppState { config: _, pool }): State<AppState>,
+    Json(login): Json<LoginRequestDto>,
 ) -> Json<LoginResponseDto> {
+    let mut conn = pool.get_owned().await.unwrap();
+
+    let user = users
+        .filter(username.eq(login.username))
+        .get_result::<User>(&mut conn)
+        .await
+        .unwrap();
+
+    user.check_login(login.password).await;
+
     Json(LoginResponseDto {
-        token: todo!(),
-        token_type: todo!(),
+        token: user.refresh_token(),
+        token_type: "Bearer".to_string(),
     })
 }

@@ -25,6 +25,11 @@ serde_yaml = "0.9.33"
 bb8 = "0.8.5"
 diesel = "2"
 diesel-async = { version = "0.4.1", features = ["postgres", "bb8"] }
+uuid = "1.9.1"
+bcrypt = "0.15.1"
+rand="0.8.5"
+jsonwebtoken = "9.3.0"
+chrono = "0.4.38"
 
 [package]
 name = "gh"
