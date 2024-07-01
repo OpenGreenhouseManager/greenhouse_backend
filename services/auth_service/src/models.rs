@@ -20,11 +20,8 @@ pub struct User {
 impl User {
     pub fn new(username: String, password: String, role: String, jws_secret: String) -> Self {
         let password_hash: bcrypt::HashParts = bcrypt::hash_with_result(password, 12).unwrap();
-        let token = user_token::UserToken::generate_token(
-            username.clone(),
-            role.clone(),
-            jws_secret.clone(),
-        );
+        let token =
+            user_token::UserToken::generate_token(username.clone(), role.clone(), jws_secret);
 
         Self {
             id: Uuid::new_v4(),
@@ -36,16 +33,12 @@ impl User {
         }
     }
 
-    pub fn check_token() -> bool {
-        todo!()
+    pub fn check_token(&self, jws_secret: String) -> bool {
+        user_token::UserToken::check_token(self.login_session.clone(), jws_secret)
     }
 
-    pub fn refresh_token(&self) -> String {
-        user_token::UserToken::generate_token(
-            self.username.clone(),
-            self.role.clone(),
-            self.login_session.clone(),
-        )
+    pub fn refresh_token(&self, jws_secret: String) -> String {
+        user_token::UserToken::generate_token(self.username.clone(), self.role.clone(), jws_secret)
     }
 
     pub async fn check_login(&self, password: String) -> bool {

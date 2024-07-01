@@ -32,4 +32,15 @@ impl UserToken {
         )
         .unwrap()
     }
+
+    pub fn check_token(token: String, secret: String) -> bool {
+        match jsonwebtoken::decode::<UserToken>(
+            &token,
+            &jsonwebtoken::DecodingKey::from_secret(secret.as_ref()),
+            &jsonwebtoken::Validation::default(),
+        ) {
+            Ok(_) => true,
+            Err(_) => false,
+        }
+    }
 }

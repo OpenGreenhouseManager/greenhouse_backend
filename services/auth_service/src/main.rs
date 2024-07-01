@@ -65,6 +65,7 @@ async fn main() {
     let app = Router::new()
         .route("/api/auth/register", post(register))
         .route("/api/auth/login", post(login))
+        .route("/api/auth/check_token", post(check_token))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
@@ -100,7 +101,7 @@ async fn register(
 
 #[axum::debug_handler]
 async fn login(
-    State(AppState { config: _, pool }): State<AppState>,
+    State(AppState { config, pool }): State<AppState>,
     Json(login): Json<LoginRequestDto>,
 ) -> Json<LoginResponseDto> {
     let mut conn = pool.get_owned().await.unwrap();
@@ -114,7 +115,28 @@ async fn login(
     user.check_login(login.password).await;
 
     Json(LoginResponseDto {
-        token: user.refresh_token(),
+        token: user.refresh_token(config.jwt_secret),
+        token_type: "Bearer".to_string(),
+    })
+}
+
+#[axum::debug_handler]
+async fn check_token(
+    State(AppState { config, pool }): State<AppState>,
+    Json(login): Json<LoginRequestDto>,
+) -> Json<LoginResponseDto> {
+    let mut conn = pool.get_owned().await.unwrap();
+
+    let user = users
+        .filter(username.eq(login.username))
+        .get_result::<User>(&mut conn)
+        .await
+        .unwrap();
+
+    user.check_login(login.password).await;
+
+    Json(LoginResponseDto {
+        token: user.refresh_token(config.jwt_secret),
         token_type: "Bearer".to_string(),
     })
 }
