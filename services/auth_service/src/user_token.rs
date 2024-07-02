@@ -32,6 +32,17 @@ impl UserToken {
         .unwrap()
     }
 
+    pub fn get_claims(token: String, secret: String) -> UserToken {
+        match jsonwebtoken::decode::<UserToken>(
+            &token,
+            &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()),
+            &jsonwebtoken::Validation::default(),
+        ) {
+            Ok(token) => token.claims,
+            Err(_) => panic!("cant decode token"),
+        }
+    }
+
     pub fn check_token(token: String, secret: String) -> bool {
         match jsonwebtoken::decode::<UserToken>(
             &token,
@@ -98,5 +109,19 @@ mod tests {
             UserToken::check_token(EXPIRED_TOKEN.to_string(), SECRET.to_string()),
             false
         );
+    }
+
+    #[test]
+    fn get_claims() {
+        let token = UserToken::generate_token(
+            "testUser1".to_string(),
+            "test".to_string(),
+            SECRET.to_string(),
+        );
+
+        let claims = UserToken::get_claims(token, SECRET.to_string());
+
+        assert_eq!(claims.user_name, "testUser1");
+        assert_eq!(claims.role, "test");
     }
 }

@@ -1,5 +1,5 @@
 [package]
-name = "area_service"
+name = "auth_service"
 version = "0.0.1"
 edition = "2021"
 description= "area service"

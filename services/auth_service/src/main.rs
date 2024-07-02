@@ -1,6 +1,7 @@
 use crate::schema::users::dsl::users;
 use axum::{
     extract::{FromRef, State},
+    http::StatusCode,
     routing::post,
     Json, Router,
 };
@@ -12,10 +13,12 @@ use diesel_async::{
 use greenhouse_core::auth_service_dto::{
     login::{LoginRequestDto, LoginResponseDto},
     register::{RegisterRequestDto, RegisterResponseDto},
+    token::TokenRequestDto,
 };
 use models::User;
-use schema::users::username;
+use schema::users::{id, login_session, username};
 use serde::Deserialize;
+use user_token::UserToken;
 pub mod models;
 pub mod schema;
 pub mod user_token;
@@ -80,21 +83,16 @@ async fn register(
 ) -> Json<RegisterResponseDto> {
     let mut conn = pool.get().await.unwrap();
 
-    let new_user = User::new(
-        user.username,
-        user.password,
-        user.role,
-        config.jwt_secret.clone(),
-    );
-
-    let res = diesel::insert_into(schema::users::table)
+    let mut new_user = User::new(user.username, user.password, user.role);
+    let token = new_user.refresh_token(config.jwt_secret.clone());
+    let _ = diesel::insert_into(schema::users::table)
         .values(new_user)
         .returning(User::as_returning())
         .get_result(&mut conn)
         .await
         .unwrap();
     Json(RegisterResponseDto {
-        token: res.login_session,
+        token: token,
         token_type: "Bearer".to_string(),
     })
 }
@@ -106,37 +104,49 @@ async fn login(
 ) -> Json<LoginResponseDto> {
     let mut conn = pool.get_owned().await.unwrap();
 
-    let user = users
+    let mut user = users
         .filter(username.eq(login.username))
         .get_result::<User>(&mut conn)
         .await
         .unwrap();
 
-    user.check_login(login.password).await;
+    if !user.check_login(login.password).await {
+        todo!("return error")
+    }
 
-    Json(LoginResponseDto {
-        token: user.refresh_token(config.jwt_secret),
+    let token = user.refresh_token(config.jwt_secret.clone());
+
+    diesel::update(users)
+        .filter(id.eq(user.id))
+        .set(login_session.eq(token.clone()))
+        .execute(&mut conn)
+        .await
+        .unwrap();
+
+    return Json(LoginResponseDto {
+        token,
         token_type: "Bearer".to_string(),
-    })
+    });
 }
 
 #[axum::debug_handler]
 async fn check_token(
     State(AppState { config, pool }): State<AppState>,
-    Json(login): Json<LoginRequestDto>,
-) -> Json<LoginResponseDto> {
+    Json(token): Json<TokenRequestDto>,
+) -> StatusCode {
     let mut conn = pool.get_owned().await.unwrap();
 
+    let claims = UserToken::get_claims(token.token.clone(), config.jwt_secret);
+
     let user = users
-        .filter(username.eq(login.username))
+        .filter(username.eq(claims.user_name))
         .get_result::<User>(&mut conn)
         .await
         .unwrap();
 
-    user.check_login(login.password).await;
+    if token.token != user.login_session {
+        return StatusCode::UNAUTHORIZED;
+    }
 
-    Json(LoginResponseDto {
-        token: user.refresh_token(config.jwt_secret),
-        token_type: "Bearer".to_string(),
-    })
+    StatusCode::OK
 }

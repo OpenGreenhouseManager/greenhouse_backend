@@ -4,9 +4,8 @@ diesel::table! {
     users (id) {
         id -> Uuid,
         username -> Varchar,
-        password -> Text,
-        salt -> Text,
         role -> Text,
         login_session -> Varchar,
+        hash -> Varchar,
     }
 }
