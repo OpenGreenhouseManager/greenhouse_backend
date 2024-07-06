@@ -19,10 +19,8 @@ pub struct User {
 
 impl User {
     pub fn new(username: String, password: String, role: String) -> Result<Self> {
-        let password_hash: bcrypt::HashParts = match bcrypt::hash_with_result(password, 12) {
-            Ok(hash) => hash,
-            Err(_) => return Err(Error::HashError),
-        };
+        let password_hash =
+            bcrypt::hash_with_result(password, 12).map_err(|_| Error::InvalidHash)?;
 
         Ok(Self {
             id: Uuid::new_v4(),
