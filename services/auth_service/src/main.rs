@@ -28,6 +28,7 @@ pub mod user_token;
 
 #[derive(Clone, Deserialize)]
 struct Config {
+    #[serde(rename = "SERVICE_PORT")]
     service_port: u32,
     #[serde(rename = "DATABASE_URL")]
     database_url: String,
