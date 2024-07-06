@@ -1,12 +1,17 @@
-use crate::schema::users::dsl::users;
+use core::panic;
+
+use crate::database::schema::users::dsl::users;
 use axum::{
     extract::{FromRef, State},
     http::StatusCode,
+    response::{IntoResponse, Response},
     routing::post,
     Json, Router,
 };
 
-use diesel::{ExpressionMethods, QueryDsl, SelectableHelper};
+use database::models::User;
+use database::schema::users::{id, login_session, username};
+use diesel::{query_dsl::methods::FilterDsl, ExpressionMethods};
 use diesel_async::{
     pooled_connection::AsyncDieselConnectionManager, AsyncPgConnection, RunQueryDsl,
 };
@@ -15,12 +20,9 @@ use greenhouse_core::auth_service_dto::{
     register::{RegisterRequestDto, RegisterResponseDto},
     token::TokenRequestDto,
 };
-use models::User;
-use schema::users::{id, login_session, username};
 use serde::Deserialize;
 use user_token::UserToken;
-pub mod models;
-pub mod schema;
+pub mod database;
 pub mod user_token;
 
 #[derive(Clone, Deserialize)]
@@ -80,28 +82,31 @@ async fn main() {
 async fn register(
     State(AppState { config, pool }): State<AppState>,
     Json(user): Json<RegisterRequestDto>,
-) -> Json<RegisterResponseDto> {
+) -> Response {
     let mut conn = pool.get().await.unwrap();
 
-    let mut new_user = User::new(user.username, user.password, user.role);
+    let mut new_user = match User::new(user.username, user.password, user.role) {
+        Ok(user) => user,
+        Err(_) => panic!("Failed to create user"),
+    };
     let token = new_user.refresh_token(config.jwt_secret.clone());
-    let _ = diesel::insert_into(schema::users::table)
+    let _ = diesel::insert_into(database::schema::users::table)
         .values(new_user)
-        .returning(User::as_returning())
-        .get_result(&mut conn)
+        .execute(&mut conn)
         .await
         .unwrap();
     Json(RegisterResponseDto {
-        token: token,
+        token,
         token_type: "Bearer".to_string(),
     })
+    .into_response()
 }
 
 #[axum::debug_handler]
 async fn login(
     State(AppState { config, pool }): State<AppState>,
     Json(login): Json<LoginRequestDto>,
-) -> Json<LoginResponseDto> {
+) -> Response {
     let mut conn = pool.get_owned().await.unwrap();
 
     let mut user = users
@@ -110,9 +115,17 @@ async fn login(
         .await
         .unwrap();
 
-    if !user.check_login(login.password).await {
-        todo!("return error")
-    }
+    match user.check_login(login.password).await {
+        Ok(true) => {}
+        Ok(false) => {
+            return Json(LoginResponseDto {
+                token: "".to_string(),
+                token_type: "".to_string(),
+            })
+            .into_response();
+        }
+        Err(_) => panic!("Failed to check login"),
+    };
 
     let token = user.refresh_token(config.jwt_secret.clone());
 
@@ -123,17 +136,18 @@ async fn login(
         .await
         .unwrap();
 
-    return Json(LoginResponseDto {
+    Json(LoginResponseDto {
         token,
         token_type: "Bearer".to_string(),
-    });
+    })
+    .into_response()
 }
 
 #[axum::debug_handler]
 async fn check_token(
     State(AppState { config, pool }): State<AppState>,
     Json(token): Json<TokenRequestDto>,
-) -> StatusCode {
+) -> Response {
     let mut conn = pool.get_owned().await.unwrap();
 
     let claims = UserToken::get_claims(token.token.clone(), config.jwt_secret);
@@ -145,8 +159,8 @@ async fn check_token(
         .unwrap();
 
     if token.token != user.login_session {
-        return StatusCode::UNAUTHORIZED;
+        return StatusCode::UNAUTHORIZED.into_response();
     }
 
-    StatusCode::OK
+    StatusCode::OK.into_response()
 }

@@ -44,14 +44,12 @@ impl UserToken {
     }
 
     pub fn check_token(token: String, secret: String) -> bool {
-        match jsonwebtoken::decode::<UserToken>(
+        jsonwebtoken::decode::<UserToken>(
             &token,
             &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()),
             &jsonwebtoken::Validation::default(),
-        ) {
-            Ok(_) => true,
-            Err(_) => false,
-        }
+        )
+        .is_ok()
     }
 }
 
@@ -79,7 +77,7 @@ mod tests {
                 assert_eq!(token.claims.role, "test");
                 assert_eq!(token.claims.exp - token.claims.iat, THREE_HOUR);
             }
-            Err(_) => assert!(false, "cant decode token"),
+            Err(_) => panic!("cant decode token"),
         };
     }
 
@@ -100,15 +98,15 @@ mod tests {
             "test".to_string(),
             SECRET.to_string(),
         );
-        assert_eq!(UserToken::check_token(token, "broken".to_string()), false);
+        assert!(!UserToken::check_token(token, "broken".to_string()));
     }
 
     #[test]
     fn expired_token() {
-        assert_eq!(
-            UserToken::check_token(EXPIRED_TOKEN.to_string(), SECRET.to_string()),
-            false
-        );
+        assert!(!UserToken::check_token(
+            EXPIRED_TOKEN.to_string(),
+            SECRET.to_string()
+        ));
     }
 
     #[test]

@@ -1,3 +1,4 @@
+use super::{Error, Result};
 use bcrypt::Version;
 use diesel::prelude::*;
 use serde::Deserialize;
@@ -6,7 +7,7 @@ use uuid::Uuid;
 use crate::user_token;
 
 #[derive(Debug, Queryable, Selectable, Deserialize, Insertable)]
-#[diesel(table_name = crate::schema::users)]
+#[diesel(table_name = crate::database::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
     pub id: Uuid,
@@ -17,16 +18,19 @@ pub struct User {
 }
 
 impl User {
-    pub fn new(username: String, password: String, role: String) -> Self {
-        let password_hash: bcrypt::HashParts = bcrypt::hash_with_result(password, 12).unwrap();
+    pub fn new(username: String, password: String, role: String) -> Result<Self> {
+        let password_hash: bcrypt::HashParts = match bcrypt::hash_with_result(password, 12) {
+            Ok(hash) => hash,
+            Err(_) => return Err(Error::HashError),
+        };
 
-        Self {
+        Ok(Self {
             id: Uuid::new_v4(),
             username,
             hash: password_hash.format_for_version(Version::TwoB),
             role,
             login_session: "".to_string(),
-        }
+        })
     }
 
     pub fn check_token(&self, jws_secret: String) -> bool {
@@ -44,8 +48,11 @@ impl User {
         login_session
     }
 
-    pub async fn check_login(&self, password: String) -> bool {
-        bcrypt::verify(password, &self.hash).unwrap()
+    pub async fn check_login(&self, password: String) -> Result<bool> {
+        match bcrypt::verify(password, &self.hash) {
+            Ok(result) => Ok(result),
+            Err(_) => Err(Error::InvalidHash),
+        }
     }
 }
 
@@ -60,7 +67,8 @@ mod tests {
             "testUser1".to_string(),
             "testPassword1".to_string(),
             "test".to_string(),
-        );
+        )
+        .expect("Failed to create user");
 
         assert_eq!(user.username, "testUser1");
         assert_eq!(user.role, "test");
@@ -72,10 +80,17 @@ mod tests {
             "testUser1".to_string(),
             "testPassword1".to_string(),
             "test".to_string(),
-        );
+        )
+        .expect("Failed to create user");
 
-        assert!(user.check_login("testPassword1".to_string()).await);
-        assert!(!user.check_login("wrongPassword".to_string()).await);
+        assert!(user
+            .check_login("testPassword1".to_string())
+            .await
+            .expect("Failed to check login"));
+        assert!(!user
+            .check_login("wrongPassword".to_string())
+            .await
+            .expect("Failed to check login"));
     }
 
     #[test]
@@ -84,7 +99,8 @@ mod tests {
             "testUser1".to_string(),
             "testPassword1".to_string(),
             "test".to_string(),
-        );
+        )
+        .expect("Failed to create user");
 
         let _ = user.refresh_token(SECRET.to_string());
         assert!(user.check_token(SECRET.to_string()));
