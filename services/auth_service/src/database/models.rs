@@ -47,10 +47,7 @@ impl User {
     }
 
     pub async fn check_login(&self, password: String) -> Result<bool> {
-        match bcrypt::verify(password, &self.hash) {
-            Ok(result) => Ok(result),
-            Err(_) => Err(Error::InvalidHash),
-        }
+        bcrypt::verify(password, &self.hash).map_err(|_| Error::InvalidHash)
     }
 }
 
