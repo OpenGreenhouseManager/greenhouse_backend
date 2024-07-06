@@ -19,10 +19,7 @@ pub struct UserToken {
 
 impl UserToken {
     pub fn generate_token(user_name: String, role: String, secret: String) -> Result<String> {
-        let now = match Utc::now().timestamp_nanos_opt() {
-            Some(time) => time / 1_000_000_000,
-            None => return Err(Error::InvalidTime),
-        };
+        let now = Utc::now().timestamp_nanos_opt().ok_or(Error::InvalidTime)? / 1_000_000_000;
         let payload = UserToken {
             iat: now,
             exp: now + THREE_HOUR,
