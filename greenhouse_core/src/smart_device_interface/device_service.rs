@@ -1,9 +1,9 @@
+use super::config::{read_config_file, update_config_file, Config};
+use super::Result;
 use crate::smart_device_dto::{config::ConfigRequestDto, status::DeviceStatusResponseDto};
 use axum::http::StatusCode;
 use serde::{de::DeserializeOwned, Serialize};
 use std::sync::Arc;
-
-use super::config::{read_config_file, update_config_file, Config};
 
 type ReadHandler<T> = Option<Arc<dyn (Fn(Arc<Config<T>>) -> String) + Send + Sync>>;
 type WriteHandler<T> = Option<Arc<dyn (Fn(String, Arc<Config<T>>) -> StatusCode) + Send + Sync>>;
@@ -31,65 +31,65 @@ where
         write_handler: impl (Fn(String, Arc<Config<T>>) -> StatusCode) + Send + Sync + 'static,
         status_handler: impl (Fn(Arc<Config<T>>) -> DeviceStatusResponseDto) + Send + Sync + 'static,
         config_interceptor_handler: impl (Fn(ConfigRequestDto<T>) -> Config<T>) + Send + Sync + 'static,
-    ) -> Self {
+    ) -> Result<Self> {
         let config = match read_config_file() {
             Ok(config) => config,
             Err(_) => {
                 let default_config = Config::default();
-                update_config_file(&default_config).unwrap();
+                update_config_file(&default_config)?;
                 default_config
             }
         };
-        DeviceService {
+        Ok(DeviceService {
             read_handler: Some(Arc::new(read_handler)),
             write_handler: Some(Arc::new(write_handler)),
             status_handler: Arc::new(status_handler),
             config_interceptor_handler: Arc::new(config_interceptor_handler),
             config: Arc::new(config),
-        }
+        })
     }
 
     pub fn new_output_device(
         read_handler: impl (Fn(Arc<Config<T>>) -> String) + Send + Sync + 'static,
         status_handler: impl (Fn(Arc<Config<T>>) -> DeviceStatusResponseDto) + Send + Sync + 'static,
         config_interceptor_handler: impl (Fn(ConfigRequestDto<T>) -> Config<T>) + Send + Sync + 'static,
-    ) -> Self {
+    ) -> Result<Self> {
         let config = match read_config_file() {
             Ok(config) => config,
             Err(_) => {
                 let default_config = Config::default();
-                update_config_file(&default_config).unwrap();
+                update_config_file(&default_config)?;
                 default_config
             }
         };
-        DeviceService {
+        Ok(DeviceService {
             read_handler: Some(Arc::new(read_handler)),
             write_handler: None,
             status_handler: Arc::new(status_handler),
             config_interceptor_handler: Arc::new(config_interceptor_handler),
             config: Arc::new(config),
-        }
+        })
     }
 
     pub fn new_input_device(
         write_handler: impl (Fn(String, Arc<Config<T>>) -> StatusCode) + Send + Sync + 'static,
         status_handler: impl (Fn(Arc<Config<T>>) -> DeviceStatusResponseDto) + Send + Sync + 'static,
         config_interceptor_handler: impl (Fn(ConfigRequestDto<T>) -> Config<T>) + Send + Sync + 'static,
-    ) -> Self {
+    ) -> Result<Self> {
         let config = match read_config_file() {
             Ok(config) => config,
             Err(_) => {
                 let default_config = Config::default();
-                update_config_file(&default_config).unwrap();
+                update_config_file(&default_config)?;
                 default_config
             }
         };
-        DeviceService {
+        Ok(DeviceService {
             read_handler: None,
             write_handler: Some(Arc::new(write_handler)),
             status_handler: Arc::new(status_handler),
             config_interceptor_handler: Arc::new(config_interceptor_handler),
             config: Arc::new(config),
-        }
+        })
     }
 }

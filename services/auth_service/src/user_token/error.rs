@@ -1,15 +1,12 @@
-use crate::user_token;
-use derive_more::From;
 use serde::Serialize;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, Serialize, From)]
+#[derive(Debug, Serialize)]
 pub enum Error {
-    InvalidHash,
-    HashError,
-    #[from]
-    JWT(user_token::Error),
+    InvalidTime,
+    JwtEncode,
+    JwtDecode,
 }
 
 // region:    --- Error Boilerplate

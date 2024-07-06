@@ -37,15 +37,15 @@ impl User {
         user_token::UserToken::check_token(self.login_session.clone(), jws_secret)
     }
 
-    pub fn refresh_token(&mut self, jws_secret: String) -> String {
+    pub fn refresh_token(&mut self, jws_secret: String) -> Result<String> {
         let login_session = user_token::UserToken::generate_token(
             self.username.clone(),
             self.role.clone(),
             jws_secret,
-        );
+        )?;
 
         self.login_session = login_session.clone();
-        login_session
+        Ok(login_session)
     }
 
     pub async fn check_login(&self, password: String) -> Result<bool> {

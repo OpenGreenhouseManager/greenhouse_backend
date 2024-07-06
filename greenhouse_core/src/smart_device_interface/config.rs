@@ -1,24 +1,38 @@
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-
+use super::{Error, Result};
 use crate::smart_device_dto::{self, config::ConfigResponseDto};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 const CONFIG_FILE_NAME: &str = "config.json";
 
-pub fn update_config_file<T>(config: &Config<T>) -> Result<(), Box<dyn std::error::Error>>
+pub fn update_config_file<T>(config: &Config<T>) -> Result<()>
 where
     T: Serialize + Clone + Default,
 {
-    let data = serde_json::to_string(&config)?;
-    std::fs::write(CONFIG_FILE_NAME, data)?;
+    let json_string = match serde_json::to_string(&config) {
+        Ok(json_string) => json_string,
+        Err(_) => return Err(Error::IllFormatedConfig),
+    };
+    match std::fs::write(CONFIG_FILE_NAME, json_string) {
+        Ok(_) => (),
+        Err(_) => return Err(Error::MissingConfig),
+    };
+
     Ok(())
 }
 
-pub fn read_config_file<T>() -> Result<Config<T>, Box<dyn std::error::Error>>
+pub fn read_config_file<T>() -> Result<Config<T>>
 where
     T: DeserializeOwned + Clone + Default,
 {
-    let data = std::fs::read_to_string(CONFIG_FILE_NAME)?;
-    let a: Config<T> = serde_json::from_str(&data)?;
+    let data = match std::fs::read_to_string(CONFIG_FILE_NAME) {
+        Ok(data) => data,
+        Err(_) => return Err(Error::MissingConfig),
+    };
+    let a: Config<T> = match serde_json::from_str(&data) {
+        Ok(a) => a,
+        Err(_) => return Err(Error::IllFormatedConfig),
+    };
+
     Ok(a)
 }
 

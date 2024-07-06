@@ -1,5 +1,4 @@
-use core::panic;
-
+pub use self::error::{Error, Result};
 use crate::database::schema::users::dsl::users;
 use axum::{
     extract::{FromRef, State},
@@ -8,7 +7,7 @@ use axum::{
     routing::post,
     Json, Router,
 };
-
+use core::panic;
 use database::models::User;
 use database::schema::users::{id, login_session, username};
 use diesel::{query_dsl::methods::FilterDsl, ExpressionMethods};
@@ -22,7 +21,9 @@ use greenhouse_core::auth_service_dto::{
 };
 use serde::Deserialize;
 use user_token::UserToken;
+
 pub mod database;
+mod error;
 pub mod user_token;
 
 #[derive(Clone, Deserialize)]
@@ -82,85 +83,80 @@ async fn main() {
 async fn register(
     State(AppState { config, pool }): State<AppState>,
     Json(user): Json<RegisterRequestDto>,
-) -> Response {
-    let mut conn = pool.get().await.unwrap();
+) -> Result<Response> {
+    let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
 
-    let mut new_user = match User::new(user.username, user.password, user.role) {
-        Ok(user) => user,
-        Err(_) => panic!("Failed to create user"),
-    };
-    let token = new_user.refresh_token(config.jwt_secret.clone());
+    let mut new_user = User::new(user.username, user.password, user.role)?;
+    let token = new_user.refresh_token(config.jwt_secret.clone())?;
     let _ = diesel::insert_into(database::schema::users::table)
         .values(new_user)
         .execute(&mut conn)
         .await
-        .unwrap();
-    Json(RegisterResponseDto {
+        .map_err(|_| Error::DatabaseConnection)?;
+    Ok(Json(RegisterResponseDto {
         token,
         token_type: "Bearer".to_string(),
     })
-    .into_response()
+    .into_response())
 }
 
 #[axum::debug_handler]
 async fn login(
     State(AppState { config, pool }): State<AppState>,
     Json(login): Json<LoginRequestDto>,
-) -> Response {
-    let mut conn = pool.get_owned().await.unwrap();
+) -> Result<Response> {
+    let mut conn = pool
+        .get_owned()
+        .await
+        .map_err(|_| Error::DatabaseConnection)?;
 
     let mut user = users
         .filter(username.eq(login.username))
         .get_result::<User>(&mut conn)
         .await
-        .unwrap();
+        .map_err(|_| Error::DatabaseConnection)?;
 
-    match user.check_login(login.password).await {
-        Ok(true) => {}
-        Ok(false) => {
-            return Json(LoginResponseDto {
-                token: "".to_string(),
-                token_type: "".to_string(),
-            })
-            .into_response();
-        }
-        Err(_) => panic!("Failed to check login"),
-    };
+    if user.check_login(login.password).await? {
+        return Ok(StatusCode::UNAUTHORIZED.into_response());
+    }
 
-    let token = user.refresh_token(config.jwt_secret.clone());
+    let token = user.refresh_token(config.jwt_secret.clone())?;
 
     diesel::update(users)
         .filter(id.eq(user.id))
         .set(login_session.eq(token.clone()))
         .execute(&mut conn)
         .await
-        .unwrap();
+        .map_err(|_| Error::DatabaseConnection)?;
 
-    Json(LoginResponseDto {
+    Ok(Json(LoginResponseDto {
         token,
         token_type: "Bearer".to_string(),
     })
-    .into_response()
+    .into_response())
 }
 
 #[axum::debug_handler]
 async fn check_token(
     State(AppState { config, pool }): State<AppState>,
     Json(token): Json<TokenRequestDto>,
-) -> Response {
-    let mut conn = pool.get_owned().await.unwrap();
+) -> Result<Response> {
+    let mut conn = pool
+        .get_owned()
+        .await
+        .map_err(|_| Error::DatabaseConnection)?;
 
-    let claims = UserToken::get_claims(token.token.clone(), config.jwt_secret);
+    let claims = UserToken::get_claims(token.token.clone(), config.jwt_secret)?;
 
     let user = users
         .filter(username.eq(claims.user_name))
         .get_result::<User>(&mut conn)
         .await
-        .unwrap();
+        .map_err(|_| Error::DatabaseConnection)?;
 
     if token.token != user.login_session {
-        return StatusCode::UNAUTHORIZED.into_response();
+        return Ok(StatusCode::UNAUTHORIZED.into_response());
     }
 
-    StatusCode::OK.into_response()
+    Ok(StatusCode::OK.into_response())
 }
