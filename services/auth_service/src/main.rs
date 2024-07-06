@@ -106,10 +106,7 @@ async fn login(
     State(AppState { config, pool }): State<AppState>,
     Json(login): Json<LoginRequestDto>,
 ) -> Result<Response> {
-    let mut conn = pool
-        .get_owned()
-        .await
-        .map_err(|_| Error::DatabaseConnection)?;
+    let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
 
     let mut user = users
         .filter(username.eq(login.username))
@@ -142,10 +139,7 @@ async fn check_token(
     State(AppState { config, pool }): State<AppState>,
     Json(token): Json<TokenRequestDto>,
 ) -> Result<Response> {
-    let mut conn = pool
-        .get_owned()
-        .await
-        .map_err(|_| Error::DatabaseConnection)?;
+    let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
 
     let claims = UserToken::get_claims(token.token.clone(), config.jwt_secret)?;
 
