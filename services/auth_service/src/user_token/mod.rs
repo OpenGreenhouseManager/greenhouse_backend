@@ -30,14 +30,12 @@ impl UserToken {
             role,
         };
 
-        match jsonwebtoken::encode(
+        jsonwebtoken::encode(
             &Header::default(),
             &payload,
             &EncodingKey::from_secret(secret.as_bytes()),
-        ) {
-            Ok(token) => Ok(token),
-            Err(_) => Err(Error::JwtEncode),
-        }
+        )
+        .map_err(|_| Error::JwtEncode)
     }
 
     pub fn get_claims(token: String, secret: String) -> Result<UserToken> {
