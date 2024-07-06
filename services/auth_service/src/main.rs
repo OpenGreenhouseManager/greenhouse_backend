@@ -86,7 +86,7 @@ async fn register(
 ) -> Result<Response> {
     let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
 
-    let mut new_user = User::new(user.username, user.password, user.role)?;
+    let mut new_user = User::new(user.username, user.password, "user".to_string())?;
     let token = new_user.refresh_token(config.jwt_secret.clone())?;
     let _ = diesel::insert_into(database::schema::users::table)
         .values(new_user)

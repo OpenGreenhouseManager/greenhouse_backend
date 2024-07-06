@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 pub struct RegisterRequestDto {
     pub username: String,
     pub password: String,
-    pub role: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
