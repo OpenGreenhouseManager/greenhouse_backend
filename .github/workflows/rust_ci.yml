@@ -41,11 +41,11 @@ jobs:
         run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rustfmt
       - name: clippy
         run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu clippy
-      - name: ldproxy
+      - name: install ldproxy
         run: cargo install ldproxy
-      - name: ldproxy
+      - name: install cargo-sort
         run: cargo install cargo-sort
-      - name: ldproxy
+      - name: install typos
         run: cargo install typos-cli
       - name: typos
         run: typos
