@@ -5,9 +5,9 @@ edition = "2021"
 publish = false
 
 [dependencies]
-greenhouse_core = { path = "../../greenhouse_core" }
 axum = { version = "0.7.5", features = ["macros"] }
-tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread"] }
-serde_derive = "1.0.203"
-serde = { version = "1.0.203", features = ["derive"] }
 derive_more = "0.99.18"
+greenhouse_core = { path = "../../greenhouse_core" }
+serde = { version = "1.0.203", features = ["derive"] }
+serde_derive = "1.0.203"
+tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread"] }
