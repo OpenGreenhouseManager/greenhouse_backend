@@ -55,7 +55,7 @@ fn write_handler(json: String, config: Arc<Config<ExampleDeviceConfig>>) -> Stat
     // Implement your write handler here
     let number: i32 = json.parse().unwrap();
     unsafe { SAVED_NUMBER = number };
-    if config.additinal_config.min > number || config.additinal_config.max < number {
+    if config.additional_config.min > number || config.additional_config.max < number {
         return StatusCode::INTERNAL_SERVER_ERROR;
     }
     StatusCode::OK
@@ -76,10 +76,10 @@ fn config_interceptor_handler(
         port: old_config.port,
         input_type: old_config.input_type,
         output_type: old_config.output_type,
-        additinal_config: {
+        additional_config: {
             ExampleDeviceConfig {
-                min: config.additinal_config.min,
-                max: config.additinal_config.max,
+                min: config.additional_config.min,
+                max: config.additional_config.max,
             }
         },
     }
