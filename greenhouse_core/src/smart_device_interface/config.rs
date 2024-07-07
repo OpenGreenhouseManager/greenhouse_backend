@@ -55,6 +55,7 @@ where
     T: Clone + Default,
 {
     pub mode: Mode,
+    pub port: u16,
     pub input_type: Option<Type>,
     pub output_type: Option<Type>,
     pub additinal_config: T,
