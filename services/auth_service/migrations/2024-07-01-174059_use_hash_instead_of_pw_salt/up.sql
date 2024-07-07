@@ -1,0 +1,7 @@
+-- Your SQL goes here
+ALTER TABLE users
+ADD COLUMN hash VARCHAR NOT NULL;
+ALTER TABLE users
+DROP COLUMN password;
+ALTER TABLE users
+DROP COLUMN salt;
