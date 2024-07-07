@@ -9,7 +9,7 @@ where
     T: Serialize + Clone + Default,
 {
     let json_string = serde_json::to_string(&config).map_err(|_| Error::IllFormattedConfig)?;
-    std::fs::write(CONFIG_FILE_NAME, json_string).map_err(|_| Error::IllFormattedConfig)
+    std::fs::write(CONFIG_FILE_NAME, json_string).map_err(|_| Error::MissingConfig)
 }
 
 pub fn read_config_file<T>() -> Result<Config<T>>

@@ -39,9 +39,9 @@ async fn main() {
     .unwrap();
     let router = init_hybrid_router(device_service);
 
-    let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{}", config.port))
-        .await
-        .unwrap();
+    let url = format!("127.0.0.1:{}", config.port);
+
+    let listener = tokio::net::TcpListener::bind(url).await.unwrap();
     println!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, router).await.unwrap();
 }
