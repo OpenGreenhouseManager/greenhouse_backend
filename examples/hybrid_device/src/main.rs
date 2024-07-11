@@ -39,7 +39,7 @@ async fn main() {
     .unwrap();
     let router = init_hybrid_router(device_service);
 
-    let url = format!("127.0.0.1:{}", config.port);
+    let url = format!("0.0.0.0:{}", config.port);
 
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
     println!("listening on {}", listener.local_addr().unwrap());

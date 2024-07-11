@@ -30,7 +30,7 @@ COPY --from=builder /config.json /usr/local/bin
 RUN chown appuser /usr/local/bin/example-hybrid-device
 RUN chown -R appuser /usr/local/bin/
 USER appuser
-ENV RUST_LOG="hello_rs=debug,info"
+ENV RUST_LOG="example-hybrid-device=debug,info"
 WORKDIR /usr/local/bin/
 ENTRYPOINT ["example-hybrid-device"]
-EXPOSE 9092/tcp
+EXPOSE 9092
