@@ -1,3 +1,5 @@
 /target
 .embuild
 .env
+**/config.json
+Cargo.lock

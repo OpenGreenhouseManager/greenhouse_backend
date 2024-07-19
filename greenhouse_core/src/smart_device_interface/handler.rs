@@ -82,7 +82,7 @@ pub(crate) async fn config_update_handler<T>(
 where
     T: Serialize + Clone + Default,
 {
-    let config = (device_service.config_interceptor_handler)(config);
+    let config = (device_service.config_interceptor_handler)(config, device_service.config);
 
     match update_config_file(&config) {
         Ok(_) => StatusCode::OK,

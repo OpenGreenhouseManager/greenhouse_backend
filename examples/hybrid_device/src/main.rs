@@ -4,7 +4,7 @@ use axum::{http::StatusCode, Json};
 use greenhouse_core::{
     smart_device_dto::{config::ConfigRequestDto, status::DeviceStatusResponseDto},
     smart_device_interface::{
-        config::{Config, Mode, Type},
+        config::{read_config_file, update_config_file, Config},
         device_service::DeviceService,
         hybrid_device::init_hybrid_router,
     },
@@ -21,6 +21,15 @@ struct ExampleDeviceConfig {
 
 #[tokio::main]
 async fn main() {
+    let config = match read_config_file() {
+        Ok(config) => config,
+        Err(_) => {
+            let default_config = Config::<ExampleDeviceConfig>::default();
+            update_config_file(&default_config).unwrap();
+            default_config
+        }
+    };
+
     let device_service = DeviceService::new_hybrid_device(
         read_handler,
         write_handler,
@@ -30,9 +39,9 @@ async fn main() {
     .unwrap();
     let router = init_hybrid_router(device_service);
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
-        .await
-        .unwrap();
+    let url = format!("0.0.0.0:{}", config.port);
+
+    let listener = tokio::net::TcpListener::bind(url).await.unwrap();
     println!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, router).await.unwrap();
 }
@@ -46,7 +55,7 @@ fn write_handler(json: String, config: Arc<Config<ExampleDeviceConfig>>) -> Stat
     // Implement your write handler here
     let number: i32 = json.parse().unwrap();
     unsafe { SAVED_NUMBER = number };
-    if config.additinal_config.min > number || config.additinal_config.max < number {
+    if config.additional_config.min > number || config.additional_config.max < number {
         return StatusCode::INTERNAL_SERVER_ERROR;
     }
     StatusCode::OK
@@ -59,16 +68,18 @@ fn status_handler(_: Arc<Config<ExampleDeviceConfig>>) -> DeviceStatusResponseDt
 
 fn config_interceptor_handler(
     config: ConfigRequestDto<ExampleDeviceConfig>,
+    old_config: Arc<Config<ExampleDeviceConfig>>,
 ) -> Config<ExampleDeviceConfig> {
     // Implement your config interceptor handler here
     Config {
-        mode: Mode::InputOutput,
-        input_type: Some(Type::Number),
-        output_type: Some(Type::String),
-        additinal_config: {
+        mode: old_config.mode.clone(),
+        port: old_config.port,
+        input_type: old_config.input_type,
+        output_type: old_config.output_type,
+        additional_config: {
             ExampleDeviceConfig {
-                min: config.additinal_config.min,
-                max: config.additinal_config.max,
+                min: config.additional_config.min,
+                max: config.additional_config.max,
             }
         },
     }

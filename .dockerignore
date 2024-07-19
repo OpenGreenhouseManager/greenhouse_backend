@@ -1,0 +1,10 @@
+.github
+.vscode
+.embuild
+**/.git
+**/target
+Dockerfile
+justfile
+config.json
+README.md
+rust-toolchain.toml

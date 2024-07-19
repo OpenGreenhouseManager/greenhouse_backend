@@ -8,8 +8,8 @@ pub fn update_config_file<T>(config: &Config<T>) -> Result<()>
 where
     T: Serialize + Clone + Default,
 {
-    let json_string = serde_json::to_string(&config).map_err(|_| Error::IllFormatedConfig)?;
-    std::fs::write(CONFIG_FILE_NAME, json_string).map_err(|_| Error::IllFormatedConfig)
+    let json_string = serde_json::to_string(&config).map_err(|_| Error::IllFormattedConfig)?;
+    std::fs::write(CONFIG_FILE_NAME, json_string).map_err(|_| Error::MissingConfig)
 }
 
 pub fn read_config_file<T>() -> Result<Config<T>>
@@ -17,7 +17,7 @@ where
     T: DeserializeOwned + Clone + Default,
 {
     let data = std::fs::read_to_string(CONFIG_FILE_NAME).map_err(|_| Error::MissingConfig)?;
-    serde_json::from_str(&data).map_err(|_| Error::IllFormatedConfig)
+    serde_json::from_str(&data).map_err(|_| Error::IllFormattedConfig)
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -55,9 +55,10 @@ where
     T: Clone + Default,
 {
     pub mode: Mode,
+    pub port: u16,
     pub input_type: Option<Type>,
     pub output_type: Option<Type>,
-    pub additinal_config: T,
+    pub additional_config: T,
 }
 
 impl<T> From<Config<T>> for ConfigResponseDto<T>
@@ -86,7 +87,7 @@ where
                 Some(Type::Unknown) => Some(crate::smart_device_dto::Type::Unknown),
                 None => None,
             },
-            additinal_config: config.additinal_config,
+            additional_config: config.additional_config,
         }
     }
 }

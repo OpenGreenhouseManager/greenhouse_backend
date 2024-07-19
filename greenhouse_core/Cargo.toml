@@ -1,17 +1,16 @@
 [package]
 name = "greenhouse_core"
-version = "0.0.6"
+version = "0.0.7"
 edition = "2021"
-description= "greenhouse_core"
-license="GPL-3.0"
-
+description = "greenhouse_core"
+license = "GPL-3.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde = { workspace = true }
+axum = { workspace = true, optional = true }
 derive_more = { workspace = true }
-axum = { workspace = true, optional = true}
-serde_json ={ workspace = true}
+serde = { workspace = true }
+serde_json ={ workspace = true }
 
 [features]
 default = ["api_web_dto", "api_script_dto", "auth_service_dto", "smart_device_dto", "smart_device_interface"]

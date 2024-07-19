@@ -8,7 +8,8 @@ use std::sync::Arc;
 type ReadHandler<T> = Option<Arc<dyn (Fn(Arc<Config<T>>) -> String) + Send + Sync>>;
 type WriteHandler<T> = Option<Arc<dyn (Fn(String, Arc<Config<T>>) -> StatusCode) + Send + Sync>>;
 type StatusHandler<T> = Arc<dyn (Fn(Arc<Config<T>>) -> DeviceStatusResponseDto) + Send + Sync>;
-type ConfigInterceptorHandler<T> = Arc<dyn (Fn(ConfigRequestDto<T>) -> Config<T>) + Send + Sync>;
+type ConfigInterceptorHandler<T> =
+    Arc<dyn (Fn(ConfigRequestDto<T>, Arc<Config<T>>) -> Config<T>) + Send + Sync>;
 
 #[derive(Clone)]
 pub struct DeviceService<T>
@@ -30,16 +31,13 @@ where
         read_handler: impl (Fn(Arc<Config<T>>) -> String) + Send + Sync + 'static,
         write_handler: impl (Fn(String, Arc<Config<T>>) -> StatusCode) + Send + Sync + 'static,
         status_handler: impl (Fn(Arc<Config<T>>) -> DeviceStatusResponseDto) + Send + Sync + 'static,
-        config_interceptor_handler: impl (Fn(ConfigRequestDto<T>) -> Config<T>) + Send + Sync + 'static,
+        config_interceptor_handler: impl (Fn(ConfigRequestDto<T>, Arc<Config<T>>) -> Config<T>)
+            + Send
+            + Sync
+            + 'static,
     ) -> Result<Self> {
-        let config = match read_config_file() {
-            Ok(config) => config,
-            Err(_) => {
-                let default_config = Config::default();
-                update_config_file(&default_config)?;
-                default_config
-            }
-        };
+        let config = read_config_file()?;
+
         Ok(DeviceService {
             read_handler: Some(Arc::new(read_handler)),
             write_handler: Some(Arc::new(write_handler)),
@@ -52,7 +50,10 @@ where
     pub fn new_output_device(
         read_handler: impl (Fn(Arc<Config<T>>) -> String) + Send + Sync + 'static,
         status_handler: impl (Fn(Arc<Config<T>>) -> DeviceStatusResponseDto) + Send + Sync + 'static,
-        config_interceptor_handler: impl (Fn(ConfigRequestDto<T>) -> Config<T>) + Send + Sync + 'static,
+        config_interceptor_handler: impl (Fn(ConfigRequestDto<T>, Arc<Config<T>>) -> Config<T>)
+            + Send
+            + Sync
+            + 'static,
     ) -> Result<Self> {
         let config = match read_config_file() {
             Ok(config) => config,
@@ -74,7 +75,10 @@ where
     pub fn new_input_device(
         write_handler: impl (Fn(String, Arc<Config<T>>) -> StatusCode) + Send + Sync + 'static,
         status_handler: impl (Fn(Arc<Config<T>>) -> DeviceStatusResponseDto) + Send + Sync + 'static,
-        config_interceptor_handler: impl (Fn(ConfigRequestDto<T>) -> Config<T>) + Send + Sync + 'static,
+        config_interceptor_handler: impl (Fn(ConfigRequestDto<T>, Arc<Config<T>>) -> Config<T>)
+            + Send
+            + Sync
+            + 'static,
     ) -> Result<Self> {
         let config = match read_config_file() {
             Ok(config) => config,

@@ -1,11 +1,11 @@
 [workspace]
 members = [
-    "api/web",
     "api/script",
-    "services/auth_service",
+    "api/web",
+    "examples/hybrid_device"
+,
     "greenhouse_core",
-    "examples/*"
-]
+    "services/auth_service"]
 default-members = [
     "api/web",
     "api/script",
@@ -27,21 +27,8 @@ diesel = "2"
 diesel-async = { version = "0.4.1", features = ["postgres", "bb8"] }
 uuid = "1.9.1"
 bcrypt = "0.15.1"
-rand="0.8.5"
+rand = "0.8.5"
 jsonwebtoken = "9.3.0"
 chrono = "0.4.38"
 
-[package]
-name = "gh"
-version = "0.0.1"
-edition = "2021"
-description= "greenhouse project"
-license="GPL-3.0"
-
-[dependencies]
-axum.workspace = true
-serde_json.workspace = true
-
-[build-dependencies]
-embuild = "0.31.3"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

@@ -19,6 +19,8 @@ jobs:
       fail-fast: false
       matrix:
         action:
+          - command: sort
+            args: --workspace --grouped 
           - command: build
             args: --release --workspace 
           - command: fmt
@@ -29,6 +31,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
       - name: rust up update 
         run: rustup update
       - name: rust up update nightly
@@ -39,7 +45,13 @@ jobs:
         run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rustfmt
       - name: clippy
         run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu clippy
-      - name: ldproxy
+      - name: install ldproxy
         run: cargo install ldproxy
+      - name: install cargo-sort
+        run: cargo install cargo-sort
+      - name: install typos
+        run: cargo install typos-cli
+      - name: typos
+        run: typos
       - name: Run command
         run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
