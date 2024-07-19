@@ -5,9 +5,9 @@ WORKDIR /app
 COPY . .
 
 RUN apt-get update -y && apt-get upgrade -y && \ 
-  apt-get install -y \
-    pkg-config \
-    libssl-dev
+  apt-get install --no-install-recommends -y \
+    pkg-config=1.8.1 \
+    libssl-dev=3.0.11
 
 RUN \
   --mount=type=cache,target=/app/target/ \
@@ -25,10 +25,12 @@ RUN adduser \
   --no-create-home \
   --uid "10001" \
   appuser
+  
 COPY --from=builder /example-hybrid-device /usr/local/bin
 COPY --from=builder /config.json /usr/local/bin
-RUN chown appuser /usr/local/bin/example-hybrid-device
-RUN chown -R appuser /usr/local/bin/
+RUN chown appuser /usr/local/bin/example-hybrid-device && \
+  chown -R appuser /usr/local/bin/
+
 USER appuser
 ENV RUST_LOG="example-hybrid-device=debug,info"
 WORKDIR /usr/local/bin/
