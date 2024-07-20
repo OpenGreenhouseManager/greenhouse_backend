@@ -7,7 +7,7 @@ COPY . .
 RUN apt-get update -y && apt-get upgrade -y && \ 
   apt-get install --no-install-recommends -y \
     pkg-config=1.8.1-1 \
-    libssl-dev=3.0.13-1~deb12u1
+    libssl-dev
 
 RUN \
   --mount=type=cache,target=/app/target/ \
