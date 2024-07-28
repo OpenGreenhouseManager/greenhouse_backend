@@ -46,7 +46,7 @@ struct AppState {
 
 #[tokio::main]
 async fn main() {
-    let config: Config = match std::fs::File::open(".env") {
+    let config: Config = match std::fs::File::open("config/.env") {
         Ok(f) => match serde_yaml::from_reader(f) {
             Ok(config) => config,
             Err(e) => {
@@ -58,7 +58,7 @@ async fn main() {
         }
     };
 
-    let url = format!("localhost:{}", config.service_port);
+    let url = format!("0.0.0.0:{}", config.service_port);
 
     let pool = Pool::builder()
         .build(AsyncDieselConnectionManager::new(

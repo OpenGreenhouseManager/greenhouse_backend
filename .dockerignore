@@ -5,6 +5,6 @@
 **/target
 Dockerfile
 justfile
-config.json
+.env
 README.md
 rust-toolchain.toml

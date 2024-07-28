@@ -2,7 +2,7 @@ use super::{Error, Result};
 use crate::smart_device_dto::{self, config::ConfigResponseDto};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-const CONFIG_FILE_NAME: &str = "config.json";
+const CONFIG_FILE_NAME: &str = "./config/config.json";
 
 pub fn update_config_file<T>(config: &Config<T>) -> Result<()>
 where

@@ -12,8 +12,8 @@ RUN apt-get update -y && apt-get upgrade -y && \
 RUN \
   --mount=type=cache,target=/app/target/ \
   --mount=type=cache,target=/usr/local/cargo/registry/ \
-  cargo build --release --package example-hybrid-device --bin example-hybrid-device && \
-  cp ./target/x86_64-unknown-linux-gnu/release/example-hybrid-device /
+  cargo build --release --package auth_service --bin auth_service && \
+  cp ./target/x86_64-unknown-linux-gnu/release/auth_service /
 
 FROM debian:bookworm-slim AS final
 RUN adduser \
@@ -25,13 +25,13 @@ RUN adduser \
   --uid "10001" \
   appuser
   
-COPY --from=builder /example-hybrid-device /usr/local/bin
-RUN chown appuser /usr/local/bin/example-hybrid-device && \
+COPY --from=builder /auth_service /usr/local/bin
+RUN chown appuser /usr/local/bin/auth_service && \
   chown -R appuser /usr/local/bin/
 
 USER appuser
-ENV RUST_LOG="example-hybrid-device=debug,info"
+ENV RUST_LOG="auth_service=debug,info"
 RUN mkdir /usr/local/bin/config
 WORKDIR /usr/local/bin/
-ENTRYPOINT ["example-hybrid-device"]
+ENTRYPOINT ["auth_service"]
 EXPOSE 9092
