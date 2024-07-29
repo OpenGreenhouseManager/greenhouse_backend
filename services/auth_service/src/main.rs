@@ -1,5 +1,9 @@
 pub use self::error::{Error, Result};
+
+extern crate diesel_migrations;
+
 use crate::database::schema::users::dsl::users;
+use crate::diesel_migrations::MigrationHarness;
 use axum::{
     extract::{FromRef, State},
     http::StatusCode,
@@ -10,10 +14,11 @@ use axum::{
 use core::panic;
 use database::models::User;
 use database::schema::users::{id, login_session, username};
-use diesel::{query_dsl::methods::FilterDsl, ExpressionMethods};
+use diesel::{query_dsl::methods::FilterDsl, Connection, ExpressionMethods, PgConnection};
 use diesel_async::{
     pooled_connection::AsyncDieselConnectionManager, AsyncPgConnection, RunQueryDsl,
 };
+use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 use greenhouse_core::auth_service_dto::{
     login::{LoginRequestDto, LoginResponseDto},
     register::{RegisterRequestDto, RegisterResponseDto},
@@ -25,6 +30,8 @@ use user_token::UserToken;
 pub mod database;
 mod error;
 pub mod user_token;
+
+const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
 #[derive(Clone, Deserialize)]
 struct Config {
@@ -60,12 +67,11 @@ async fn main() {
             }
         },
         Err(e) => {
-            panic!(
-                "Failed to open config file at: {}",
-                std::env::current_dir().unwrap().display()
-            )
+            panic!("Failed to open config file at: {}", e)
         }
     };
+
+    run_migration(&config.database_url);
 
     let url = format!("0.0.0.0:{}", config.service_port);
 
@@ -163,4 +169,9 @@ async fn check_token(
     }
 
     Ok(StatusCode::OK.into_response())
+}
+
+fn run_migration(database_url: &str) {
+    let mut conn = PgConnection::establish(database_url).unwrap();
+    conn.run_pending_migrations(MIGRATIONS).unwrap();
 }
