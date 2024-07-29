@@ -8,7 +8,7 @@ RUN apt-get update -y && apt-get upgrade -y && \
   apt-get install --no-install-recommends -y \
     pkg-config=1.8.1-1 \
     libssl-dev=3.0.13-1~deb12u1 \
-    libpq-dev
+    libpq-dev=15.7-0+deb12u1
 
 RUN \
   --mount=type=cache,target=/app/target/ \
@@ -32,7 +32,9 @@ RUN chown appuser /usr/local/bin/auth_service && \
 
 RUN apt-get update -y && apt-get upgrade -y && \ 
   apt-get install --no-install-recommends -y \
-    libpq-dev
+    libpq-dev=15.7-0+deb12u1\
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 USER appuser
 ENV RUST_LOG="auth_service=debug,info"
