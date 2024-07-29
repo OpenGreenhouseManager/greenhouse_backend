@@ -46,7 +46,13 @@ struct AppState {
 
 #[tokio::main]
 async fn main() {
-    let config: Config = match std::fs::File::open("config/.env") {
+    let file_path: &str;
+    if cfg!(debug_assertions) {
+        file_path = "services/auth_service/config/.env";
+    } else {
+        file_path = "config/.env";
+    }
+    let config: Config = match std::fs::File::open(file_path) {
         Ok(f) => match serde_yaml::from_reader(f) {
             Ok(config) => config,
             Err(e) => {
@@ -54,7 +60,10 @@ async fn main() {
             }
         },
         Err(e) => {
-            panic!("Failed to open config file: {}", e)
+            panic!(
+                "Failed to open config file at: {}",
+                std::env::current_dir().unwrap().display()
+            )
         }
     };
 
@@ -70,9 +79,9 @@ async fn main() {
     let state = AppState { config, pool };
 
     let app = Router::new()
-        .route("/api/auth/register", post(register))
-        .route("/api/auth/login", post(login))
-        .route("/api/auth/check_token", post(check_token))
+        .route("/register", post(register))
+        .route("/login", post(login))
+        .route("/check_token", post(check_token))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();

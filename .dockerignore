@@ -1,8 +1,8 @@
 .github
 .vscode
 .embuild
-**/.git
-**/target
+.git
+target
 Dockerfile
 justfile
 .env

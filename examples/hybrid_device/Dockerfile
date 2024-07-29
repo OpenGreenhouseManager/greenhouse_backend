@@ -34,4 +34,3 @@ ENV RUST_LOG="example-hybrid-device=debug,info"
 RUN mkdir /usr/local/bin/config
 WORKDIR /usr/local/bin/
 ENTRYPOINT ["example-hybrid-device"]
-EXPOSE 9092

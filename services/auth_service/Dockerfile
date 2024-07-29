@@ -34,4 +34,3 @@ ENV RUST_LOG="auth_service=debug,info"
 RUN mkdir /usr/local/bin/config
 WORKDIR /usr/local/bin/
 ENTRYPOINT ["auth_service"]
-EXPOSE 9092
