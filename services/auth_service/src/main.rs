@@ -53,12 +53,12 @@ struct AppState {
 
 #[tokio::main]
 async fn main() {
-    let file_path: &str;
-    if cfg!(debug_assertions) {
-        file_path = "services/auth_service/config/.env";
+    let file_path = if cfg!(debug_assertions) {
+        "services/auth_service/config/.env"
     } else {
-        file_path = "config/.env";
-    }
+        "config/.env"
+    };
+
     let config: Config = match std::fs::File::open(file_path) {
         Ok(f) => match serde_yaml::from_reader(f) {
             Ok(config) => config,
