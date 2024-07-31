@@ -12,9 +12,9 @@ use crate::user_token;
 pub struct User {
     pub id: Uuid,
     pub username: String,
-    hash: String,
     pub role: String,
     pub login_session: String,
+    hash: String,
 }
 
 impl User {

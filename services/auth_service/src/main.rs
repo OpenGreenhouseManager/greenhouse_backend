@@ -129,7 +129,7 @@ async fn login(
         .await
         .map_err(|_| Error::DatabaseConnection)?;
 
-    if user.check_login(login.password).await? {
+    if !user.check_login(login.password).await? {
         return Ok(StatusCode::UNAUTHORIZED.into_response());
     }
 
