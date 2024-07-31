@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{database, user_token};
 use axum::{
     http::StatusCode,
@@ -31,10 +29,6 @@ impl std::error::Error for Error {}
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        let mut response = StatusCode::INTERNAL_SERVER_ERROR.into_response();
-
-        response.extensions_mut().insert(Arc::new(self));
-
-        response
+        (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()).into_response()
     }
 }
