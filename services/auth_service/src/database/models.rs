@@ -31,10 +31,6 @@ impl User {
         })
     }
 
-    pub fn check_token(&self, jws_secret: &str) -> bool {
-        user_token::UserToken::check_token(&self.login_session, jws_secret)
-    }
-
     pub fn refresh_token(&mut self, jws_secret: &str) -> Result<String> {
         let login_session =
             user_token::UserToken::generate_token(&self.username, &self.role, jws_secret)?;
@@ -51,7 +47,6 @@ impl User {
 #[cfg(test)]
 mod tests {
     use super::*;
-    const SECRET: &str = "XOJ~uQ7&AlPVs?1tm~4bD5nU$~E$iI702st]l|im:p8uTTj+dZX,R_QFvx4`*{r";
 
     #[test]
     fn create_user() {
@@ -73,15 +68,5 @@ mod tests {
             .check_login("wrongPassword")
             .await
             .expect("Failed to check login"));
-    }
-
-    #[test]
-    fn check_token() {
-        let mut user =
-            User::new("testUser1", "testPassword1", "test").expect("Failed to create user");
-
-        let _ = user.refresh_token(SECRET);
-        assert!(user.check_token(SECRET));
-        assert!(!user.check_token("wrongSecret"));
     }
 }
