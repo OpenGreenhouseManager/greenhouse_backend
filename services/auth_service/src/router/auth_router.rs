@@ -28,8 +28,8 @@ pub async fn register(
 ) -> Result<Response> {
     let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
 
-    let mut new_user = User::new(user.username, user.password, "user".to_string())?;
-    let token = new_user.refresh_token(config.jwt_secret.clone())?;
+    let mut new_user = User::new(&user.username, &user.password, "user")?;
+    let token = new_user.refresh_token(&config.jwt_secret)?;
     let _ = diesel::insert_into(database::schema::users::table)
         .values(new_user)
         .execute(&mut conn)
@@ -55,15 +55,15 @@ pub async fn login(
         .await
         .map_err(|_| Error::DatabaseConnection)?;
 
-    if !user.check_login(login.password).await? {
+    if !user.check_login(&login.password).await? {
         return Ok(StatusCode::UNAUTHORIZED.into_response());
     }
 
-    let token = user.refresh_token(config.jwt_secret.clone())?;
+    let token = user.refresh_token(&config.jwt_secret)?;
 
     diesel::update(users)
         .filter(id.eq(user.id))
-        .set(login_session.eq(token.clone()))
+        .set(login_session.eq(&token))
         .execute(&mut conn)
         .await
         .map_err(|_| Error::UserNotFound)?;
@@ -82,7 +82,7 @@ pub async fn check_token(
 ) -> Result<Response> {
     let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
 
-    let claims = UserToken::get_claims(token.token.clone(), config.jwt_secret)?;
+    let claims = UserToken::get_claims(&token.token, &config.jwt_secret)?;
 
     let user = users
         .filter(username.eq(claims.user_name))

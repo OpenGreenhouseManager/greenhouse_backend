@@ -18,13 +18,13 @@ pub struct UserToken {
 }
 
 impl UserToken {
-    pub fn generate_token(user_name: String, role: String, secret: String) -> Result<String> {
+    pub fn generate_token(user_name: &str, role: &str, secret: &str) -> Result<String> {
         let now = Utc::now().timestamp_nanos_opt().ok_or(Error::InvalidTime)? / 1_000_000_000;
         let payload = UserToken {
             iat: now,
             exp: now + THREE_HOUR,
-            user_name,
-            role,
+            user_name: user_name.to_string(),
+            role: role.to_string(),
         };
 
         jsonwebtoken::encode(
@@ -35,17 +35,20 @@ impl UserToken {
         .map_err(|_| Error::JwtEncode)
     }
 
-    pub fn get_claims(token: String, secret: String) -> Result<UserToken> {
+    pub fn get_claims(token: &str, secret: &str) -> Result<UserToken> {
         Ok(jsonwebtoken::decode::<UserToken>(
             &token,
             &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()),
             &jsonwebtoken::Validation::default(),
         )
-        .map_err(|_| Error::JwtDecode)?
+        .map_err(|e| {
+            println!("{:?}", e);
+            Error::JwtDecode
+        })?
         .claims)
     }
 
-    pub fn check_token(token: String, secret: String) -> bool {
+    pub fn check_token(token: &str, secret: &str) -> bool {
         jsonwebtoken::decode::<UserToken>(
             &token,
             &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()),
@@ -63,12 +66,7 @@ mod tests {
 
     #[test]
     fn create_token() {
-        let token = UserToken::generate_token(
-            "testUser1".to_string(),
-            "test".to_string(),
-            SECRET.to_string(),
-        )
-        .unwrap();
+        let token = UserToken::generate_token("testUser1", "test", SECRET).unwrap();
 
         let token = jsonwebtoken::decode::<UserToken>(
             &token,
@@ -83,44 +81,26 @@ mod tests {
 
     #[test]
     fn verify_token() {
-        let token = UserToken::generate_token(
-            "testUser1".to_string(),
-            "test".to_string(),
-            SECRET.to_string(),
-        )
-        .unwrap();
-        assert!(UserToken::check_token(token, SECRET.to_string()));
+        let token = UserToken::generate_token("testUser1", "test", SECRET).unwrap();
+        assert!(UserToken::check_token(&token, SECRET));
     }
 
     #[test]
     fn verify_token_different_secret() {
-        let token = UserToken::generate_token(
-            "testUser1".to_string(),
-            "test".to_string(),
-            SECRET.to_string(),
-        )
-        .unwrap();
-        assert!(!UserToken::check_token(token, "broken".to_string()));
+        let token = UserToken::generate_token("testUser1", "test", SECRET).unwrap();
+        assert!(!UserToken::check_token(&token, "broken"));
     }
 
     #[test]
     fn expired_token() {
-        assert!(!UserToken::check_token(
-            EXPIRED_TOKEN.to_string(),
-            SECRET.to_string()
-        ));
+        assert!(!UserToken::check_token(EXPIRED_TOKEN, SECRET));
     }
 
     #[test]
     fn get_claims() {
-        let token = UserToken::generate_token(
-            "testUser1".to_string(),
-            "test".to_string(),
-            SECRET.to_string(),
-        )
-        .unwrap();
+        let token = UserToken::generate_token("testUser1", "test", SECRET).unwrap();
 
-        let claims = UserToken::get_claims(token, SECRET.to_string()).unwrap();
+        let claims = UserToken::get_claims(&token, SECRET).unwrap();
 
         assert_eq!(claims.user_name, "testUser1");
         assert_eq!(claims.role, "test");
