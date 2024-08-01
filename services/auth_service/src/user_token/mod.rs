@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 mod error;
 static THREE_HOUR: i64 = 60 * 60 * 3;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct UserToken {
     // issued at
     pub iat: i64,
@@ -70,22 +70,24 @@ mod tests {
     #[test]
     fn verify_token() {
         let token = UserToken::generate_token("testUser1", "test", SECRET).unwrap();
-        assert!(UserToken::get_claims(&token, SECRET));
+        UserToken::get_claims(&token, SECRET).unwrap();
     }
 
     #[test]
     fn verify_token_different_secret() {
         let token = UserToken::generate_token("testUser1", "test", SECRET).unwrap();
-        assert!(!UserToken::get_claims(&token, "broken"));
+
+        assert_eq!(
+            UserToken::get_claims(&token, "broken").unwrap_err(),
+            (Error::JwtDecode)
+        );
     }
 
     #[test]
     fn expired_get_claims() {
-        let a = UserToken::get_claims(EXPIRED_TOKEN, SECRET).err();
-        let b = Some(Error::JwtDecode);
         assert_eq!(
-            ,
-
+            UserToken::get_claims(EXPIRED_TOKEN, SECRET).unwrap_err(),
+            (Error::JwtDecode)
         );
     }
 

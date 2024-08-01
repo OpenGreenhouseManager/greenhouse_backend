@@ -17,7 +17,7 @@ pub enum Error {
     #[from]
     User(database::Error),
     #[from]
-    JWT(user_token::Error),
+    Jwt(user_token::Error),
 }
 
 // region:    --- Error Boilerplate
