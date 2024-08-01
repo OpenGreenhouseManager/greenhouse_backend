@@ -41,10 +41,7 @@ impl UserToken {
             &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()),
             &jsonwebtoken::Validation::default(),
         )
-        .map_err(|e| {
-            println!("{:?}", e);
-            Error::JwtDecode
-        })?
+        .map_err(|_| Error::JwtDecode)?
         .claims)
     }
 
