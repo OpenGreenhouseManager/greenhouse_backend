@@ -37,21 +37,12 @@ impl UserToken {
 
     pub fn get_claims(token: &str, secret: &str) -> Result<UserToken> {
         Ok(jsonwebtoken::decode::<UserToken>(
-            &token,
+            token,
             &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()),
             &jsonwebtoken::Validation::default(),
         )
         .map_err(|_| Error::JwtDecode)?
         .claims)
-    }
-
-    pub fn check_token(token: &str, secret: &str) -> bool {
-        jsonwebtoken::decode::<UserToken>(
-            &token,
-            &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()),
-            &jsonwebtoken::Validation::default(),
-        )
-        .is_ok()
     }
 }
 
@@ -79,18 +70,23 @@ mod tests {
     #[test]
     fn verify_token() {
         let token = UserToken::generate_token("testUser1", "test", SECRET).unwrap();
-        assert!(UserToken::check_token(&token, SECRET));
+        assert!(UserToken::get_claims(&token, SECRET));
     }
 
     #[test]
     fn verify_token_different_secret() {
         let token = UserToken::generate_token("testUser1", "test", SECRET).unwrap();
-        assert!(!UserToken::check_token(&token, "broken"));
+        assert!(!UserToken::get_claims(&token, "broken"));
     }
 
     #[test]
-    fn expired_token() {
-        assert!(!UserToken::check_token(EXPIRED_TOKEN, SECRET));
+    fn expired_get_claims() {
+        let a = UserToken::get_claims(EXPIRED_TOKEN, SECRET).err();
+        let b = Some(Error::JwtDecode);
+        assert_eq!(
+            ,
+
+        );
     }
 
     #[test]
