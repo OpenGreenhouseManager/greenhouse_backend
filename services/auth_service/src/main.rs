@@ -1,34 +1,18 @@
 pub use self::error::{Error, Result};
 
 extern crate diesel_migrations;
-
-use crate::database::schema::users::dsl::users;
 use crate::diesel_migrations::MigrationHarness;
-use axum::{
-    extract::{FromRef, State},
-    http::StatusCode,
-    response::{IntoResponse, Response},
-    routing::post,
-    Json, Router,
-};
+use axum::{extract::FromRef, routing::post, Router};
 use core::panic;
-use database::models::User;
-use database::schema::users::{id, login_session, username};
-use diesel::{query_dsl::methods::FilterDsl, Connection, ExpressionMethods, PgConnection};
-use diesel_async::{
-    pooled_connection::AsyncDieselConnectionManager, AsyncPgConnection, RunQueryDsl,
-};
+use diesel::{Connection, PgConnection};
+use diesel_async::{pooled_connection::AsyncDieselConnectionManager, AsyncPgConnection};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations};
-use greenhouse_core::auth_service_dto::{
-    login::{LoginRequestDto, LoginResponseDto},
-    register::{RegisterRequestDto, RegisterResponseDto},
-    token::TokenRequestDto,
-};
+use router::auth_router::{check_token, login, register};
 use serde::Deserialize;
-use user_token::UserToken;
 
 pub mod database;
 mod error;
+mod router;
 pub mod user_token;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
@@ -93,82 +77,6 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
     println!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
-}
-
-#[axum::debug_handler]
-async fn register(
-    State(AppState { config, pool }): State<AppState>,
-    Json(user): Json<RegisterRequestDto>,
-) -> Result<Response> {
-    let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
-
-    let mut new_user = User::new(user.username, user.password, "user".to_string())?;
-    let token = new_user.refresh_token(config.jwt_secret.clone())?;
-    let _ = diesel::insert_into(database::schema::users::table)
-        .values(new_user)
-        .execute(&mut conn)
-        .await
-        .map_err(|_| Error::DatabaseConnection)?;
-    Ok(Json(RegisterResponseDto {
-        token,
-        token_type: "Bearer".to_string(),
-    })
-    .into_response())
-}
-
-#[axum::debug_handler]
-async fn login(
-    State(AppState { config, pool }): State<AppState>,
-    Json(login): Json<LoginRequestDto>,
-) -> Result<Response> {
-    let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
-
-    let mut user = users
-        .filter(username.eq(login.username))
-        .get_result::<User>(&mut conn)
-        .await
-        .map_err(|_| Error::DatabaseConnection)?;
-
-    if !user.check_login(login.password).await? {
-        return Ok(StatusCode::UNAUTHORIZED.into_response());
-    }
-
-    let token = user.refresh_token(config.jwt_secret.clone())?;
-
-    diesel::update(users)
-        .filter(id.eq(user.id))
-        .set(login_session.eq(token.clone()))
-        .execute(&mut conn)
-        .await
-        .map_err(|_| Error::DatabaseConnection)?;
-
-    Ok(Json(LoginResponseDto {
-        token,
-        token_type: "Bearer".to_string(),
-    })
-    .into_response())
-}
-
-#[axum::debug_handler]
-async fn check_token(
-    State(AppState { config, pool }): State<AppState>,
-    Json(token): Json<TokenRequestDto>,
-) -> Result<Response> {
-    let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
-
-    let claims = UserToken::get_claims(token.token.clone(), config.jwt_secret)?;
-
-    let user = users
-        .filter(username.eq(claims.user_name))
-        .get_result::<User>(&mut conn)
-        .await
-        .map_err(|_| Error::DatabaseConnection)?;
-
-    if token.token != user.login_session {
-        return Ok(StatusCode::UNAUTHORIZED.into_response());
-    }
-
-    Ok(StatusCode::OK.into_response())
 }
 
 fn run_migration(database_url: &str) {
