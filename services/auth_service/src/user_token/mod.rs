@@ -23,8 +23,8 @@ impl UserToken {
         let payload = UserToken {
             iat: now,
             exp: now + THREE_HOUR,
-            user_name: user_name.to_string(),
-            role: role.to_string(),
+            user_name: String::from(user_name),
+            role: String::from(role),
         };
 
         jsonwebtoken::encode(

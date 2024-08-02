@@ -24,10 +24,10 @@ impl User {
 
         Ok(Self {
             id: Uuid::new_v4(),
-            username: username.to_string(),
+            username: String::from(username),
             hash: password_hash.format_for_version(Version::TwoB),
-            role: role.to_string(),
-            login_session: "".to_string(),
+            role: String::from(role),
+            login_session: String::from(""),
         })
     }
 

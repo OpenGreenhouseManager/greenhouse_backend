@@ -37,7 +37,7 @@ pub async fn register(
         .map_err(|_| Error::UsernameTaken)?;
     Ok(Json(RegisterResponseDto {
         token,
-        token_type: "Bearer".to_string(),
+        token_type: String::from("Bearer"),
     })
     .into_response())
 }
@@ -70,7 +70,7 @@ pub async fn login(
 
     Ok(Json(LoginResponseDto {
         token,
-        token_type: "Bearer".to_string(),
+        token_type: String::from("Bearer"),
     })
     .into_response())
 }
