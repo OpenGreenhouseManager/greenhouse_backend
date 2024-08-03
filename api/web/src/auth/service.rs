@@ -14,7 +14,7 @@ pub async fn register(base_ulr: &str, user: RegisterRequestDto) -> Result<Regist
         .send()
         .await
         .map_err(|_| Error::InternalError)?;
-    Ok(resp.json().await.map_err(|_| Error::InternalError)?)
+    resp.json().await.map_err(|_| Error::InternalError)
 }
 
 pub async fn login(base_ulr: &str, user: LoginRequestDto) -> Result<LoginResponseDto> {
@@ -24,7 +24,7 @@ pub async fn login(base_ulr: &str, user: LoginRequestDto) -> Result<LoginRespons
         .send()
         .await
         .map_err(|_| Error::InternalError)?;
-    Ok(resp.json().await.map_err(|_| Error::InternalError)?)
+    resp.json().await.map_err(|_| Error::InternalError)
 }
 
 pub async fn check_token(base_ulr: &str, token: &str) -> Result<()> {
@@ -38,8 +38,7 @@ pub async fn check_token(base_ulr: &str, token: &str) -> Result<()> {
         .await
         .map_err(|_| Error::InternalError)?;
     if resp.status().is_success() {
-        Ok(())
-    } else {
-        Err(Error::Unauthorized)
+        return Ok(());
     }
+    Err(Error::Unauthorized)
 }

@@ -29,5 +29,5 @@ pub(crate) async fn check_token(
     }
 
     cookies.remove(Cookie::from(AUTH_TOKEN));
-    return Response::builder().status(403).body(Body::empty()).unwrap();
+    Response::builder().status(403).body(Body::empty()).unwrap()
 }

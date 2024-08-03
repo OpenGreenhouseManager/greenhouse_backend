@@ -1,6 +1,5 @@
 use crate::{auth::Result, AppState};
 use axum::{
-    extract::State,
     response::{IntoResponse, Response},
     routing::get,
     Router,
@@ -13,8 +12,6 @@ pub(crate) fn routes(state: AppState) -> Router {
 }
 
 #[axum::debug_handler]
-pub(crate) async fn api_test_handler(
-    State(AppState { config }): State<AppState>,
-) -> Result<Response> {
+pub(crate) async fn api_test_handler() -> Result<Response> {
     Ok("worked".into_response())
 }
