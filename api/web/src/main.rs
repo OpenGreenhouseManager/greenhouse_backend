@@ -3,6 +3,7 @@ use axum::{extract::FromRef, middleware, Router};
 use serde::Deserialize;
 use tower_cookies::CookieManagerLayer;
 pub mod auth;
+pub mod test;
 
 #[derive(Clone, Deserialize)]
 struct ServiceAddresses {
@@ -47,10 +48,10 @@ async fn main() {
     let url = format!("0.0.0.0:{}", config.api_port);
     let state = AppState { config };
     let app = Router::new()
-        .nest("/api", auth::router::routes(state.clone()))
+        .nest("/api", test::router::routes(state.clone()))
         .layer(middleware::from_fn_with_state(state.clone(), check_token))
-        .layer(CookieManagerLayer::new())
-        .merge(auth::router::routes(state));
+        .merge(auth::router::routes(state))
+        .layer(CookieManagerLayer::new());
 
     // run it
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
