@@ -32,5 +32,6 @@ rand = "0.8.5"
 jsonwebtoken = "9.3.0"
 chrono = "0.4.38"
 diesel_migrations = "2.2.0"
+tower-cookies = "0.10"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
