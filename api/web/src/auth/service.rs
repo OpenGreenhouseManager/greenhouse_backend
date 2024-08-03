@@ -7,20 +7,23 @@ use greenhouse_core::auth_service_dto::{
     token::TokenRequestDto,
 };
 
-pub async fn register(base_ulr: &str, user: RegisterRequestDto) -> Result<RegisterResponseDto> {
+pub async fn register(
+    base_ulr: &str,
+    register_request: RegisterRequestDto,
+) -> Result<RegisterResponseDto> {
     let resp = reqwest::Client::new()
         .post(base_ulr.to_string() + endpoints::REGISTER)
-        .json(&user)
+        .json(&register_request)
         .send()
         .await
         .map_err(|_| Error::InternalError)?;
     resp.json().await.map_err(|_| Error::InternalError)
 }
 
-pub async fn login(base_ulr: &str, user: LoginRequestDto) -> Result<LoginResponseDto> {
+pub async fn login(base_ulr: &str, login_request: LoginRequestDto) -> Result<LoginResponseDto> {
     let resp = reqwest::Client::new()
         .post(base_ulr.to_string() + endpoints::LOGIN)
-        .json(&user)
+        .json(&login_request)
         .send()
         .await
         .map_err(|_| Error::InternalError)?;
