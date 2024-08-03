@@ -1,43 +1,60 @@
-use axum::{extract::Path, routing::get, Router};
+use auth::middleware::check_token;
+use axum::{extract::FromRef, middleware, Router};
+use serde::Deserialize;
+use tower_cookies::CookieManagerLayer;
+pub mod auth;
+
+#[derive(Clone, Deserialize)]
+struct ServiceAddresses {
+    #[serde(rename = "AUTH_SERVICE")]
+    auth_service: String,
+}
+
+#[derive(Clone, Deserialize)]
+struct Config {
+    #[serde(rename = "API_PORT")]
+    api_port: u32,
+    #[serde(rename = "SERVICE_ADDRESSES")]
+    service_addresses: ServiceAddresses,
+}
+
+#[derive(FromRef, Clone)]
+struct AppState {
+    config: Config,
+}
 
 #[tokio::main]
 async fn main() {
+    let file_path = if cfg!(debug_assertions) {
+        "api/web/config/.env"
+    } else {
+        "config/.env"
+    };
+
+    let config: Config = match std::fs::File::open(file_path) {
+        Ok(f) => match serde_yaml::from_reader(f) {
+            Ok(config) => config,
+            Err(e) => {
+                panic!("Failed to read config file: {}", e)
+            }
+        },
+        Err(e) => {
+            panic!("Failed to open config file at: {}", e)
+        }
+    };
+
     // build our application with a route
-    let app = Router::new().route("/:a/:b", get(handler));
+    let url = format!("0.0.0.0:{}", config.api_port);
+    let state = AppState { config };
+    let app = Router::new()
+        .nest("/api", auth::router::routes(state.clone()))
+        .layer(middleware::from_fn_with_state(state.clone(), check_token))
+        .layer(CookieManagerLayer::new())
+        .merge(auth::router::routes(state));
 
     // run it
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind(url).await.unwrap();
+
     println!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
-}
-
-async fn handler(Path((a, b)): Path<(i32, i32)>) -> String {
-    //let area = a * b;
-    //let cf = 2 * a + 2 * b;
-    let area_request = reqwest::get(format!("http://127.0.0.1:3001/{a}/{b}"));
-    let cf_request = reqwest::get(format!("http://127.0.0.1:3002/{a}/{b}"));
-    let area = match area_request.await {
-        Ok(response) => match response.text().await {
-            Ok(text) => text,
-            Err(e) => e.to_string(),
-        },
-        Err(e) => e.to_string(),
-    };
-    let cf = match cf_request.await {
-        Ok(response) => match response.text().await {
-            Ok(text) => text,
-            Err(e) => e.to_string(),
-        },
-        Err(e) => e.to_string(),
-    };
-
-    format!(
-        "
-        <h1>Rectangle Info</h1>
-        <p>Area: {area}</p>
-        <p>Circumference: {cf}</p>
-    "
-    )
 }

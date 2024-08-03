@@ -8,5 +8,10 @@ license = "GPL-3.0"
 
 [dependencies]
 axum = { workspace = true }
-reqwest = { workspace = true }
+reqwest = { workspace = true, features = ["json"]}
 tokio = { workspace = true }
+greenhouse_core = { workspace = true, features = ["auth_service_dto"] }
+derive_more = { workspace = true }
+serde = { workspace = true }
+serde_yaml ={ workspace = true }
+tower-cookies = {workspace = true}

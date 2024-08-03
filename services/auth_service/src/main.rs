@@ -7,6 +7,7 @@ use core::panic;
 use diesel::{Connection, PgConnection};
 use diesel_async::{pooled_connection::AsyncDieselConnectionManager, AsyncPgConnection};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations};
+use greenhouse_core::auth_service_dto::endpoints;
 use router::auth_router::{check_token, login, register};
 use serde::Deserialize;
 
@@ -69,9 +70,9 @@ async fn main() {
     let state = AppState { config, pool };
 
     let app = Router::new()
-        .route("/register", post(register))
-        .route("/login", post(login))
-        .route("/check_token", post(check_token))
+        .route(endpoints::REGISTER, post(register))
+        .route(endpoints::LOGIN, post(login))
+        .route(endpoints::CHECK_TOKEN, post(check_token))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
