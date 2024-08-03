@@ -1,10 +1,10 @@
 .github
 .vscode
 .embuild
-**/.git
-**/target
+.git
+target
 Dockerfile
 justfile
-config.json
+.env
 README.md
 rust-toolchain.toml

@@ -1,0 +1,38 @@
+version: '3'
+services:
+  smart-device-example:
+    build:
+      context: ./
+      dockerfile: ./examples/hybrid_device/Dockerfile
+    volumes:
+      - ./docker/hybrid_device:/usr/local/bin/config
+    ports:
+      - "9091:8080"
+    depends_on:
+      - db
+
+  auth_service:
+    build:
+      context: ./
+      dockerfile: ./services/auth_service/Dockerfile
+    volumes:
+      - ./docker/auth_service:/usr/local/bin/config
+    ports:
+      - "9051:8080"
+    depends_on:
+      - db
+
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: auth
+    ports:
+      - 5432:5432
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data: {}
