@@ -36,7 +36,6 @@ pub(crate) async fn api_login_handler(
     Json(login_request): Json<LoginRequestDto>,
 ) -> Result<Response> {
     let token = service::login(&config.service_addresses.auth_service, login_request).await?;
-
     cookie.add(Cookie::new(AUTH_TOKEN, token.token.clone()));
 
     Ok(Json(token).into_response())
