@@ -7,7 +7,7 @@ services:
     volumes:
       - ./docker/hybrid_device:/usr/local/bin/config
     ports:
-      - "9091:8080"
+      - "9099:9099"
     depends_on:
       - db
 
@@ -18,9 +18,25 @@ services:
     volumes:
       - ./docker/auth_service:/usr/local/bin/config
     ports:
-      - "9051:8080"
+      - "9091:9091"
     depends_on:
       - db
+    networks:
+      - backend
+
+  web_api:
+    build:
+      context: ./
+      dockerfile: ./api/web/Dockerfile
+    volumes:
+      - ./docker/api_web:/usr/local/bin/config
+    ports:
+      - "9001:9001"
+    depends_on:
+      - auth_service
+    networks:
+      - backend
+      - frontend
 
   db:
     image: postgres
@@ -33,6 +49,12 @@ services:
       - 5432:5432
     volumes:
       - db-data:/var/lib/postgresql/data
+    networks:
+      - backend
 
 volumes:
   db-data: {}
+
+networks:
+  frontend:
+  backend:

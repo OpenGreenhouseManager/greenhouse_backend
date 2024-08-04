@@ -1,8 +1,8 @@
 [package]
-name = "api_script"
+name = "script_api"
 version = "0.0.1"
 edition = "2021"
-description = "api_script"
+description = "script_api"
 license = "GPL-3.0"
 
 [dependencies]
