@@ -2,6 +2,8 @@ use auth::middleware::check_token;
 use axum::{extract::FromRef, middleware, Router};
 use serde::Deserialize;
 use tower_cookies::CookieManagerLayer;
+use tower_http::trace::TraceLayer;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 pub mod auth;
 pub mod test;
 
@@ -26,6 +28,14 @@ struct AppState {
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "web_api=debug,tower_http=debug,axum::rejection=trace".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
     let file_path = if cfg!(debug_assertions) {
         "api/web/config/.env"
     } else {
@@ -51,11 +61,12 @@ async fn main() {
         .nest("/api", test::router::routes(state.clone()))
         .layer(middleware::from_fn_with_state(state.clone(), check_token))
         .merge(auth::router::routes(state))
-        .layer(CookieManagerLayer::new());
+        .layer(CookieManagerLayer::new())
+        .layer(TraceLayer::new_for_http());
 
     // run it
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
 
-    println!("listening on {}", listener.local_addr().unwrap());
+    tracing::info!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }

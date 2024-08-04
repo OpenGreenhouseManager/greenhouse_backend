@@ -15,7 +15,7 @@ default-members = [
 ]
 
 [workspace.dependencies]
-axum = { version = "0.7.5", features = ["macros"] }
+axum = { version = "0.7.5", features = ["macros", "tracing"] }
 derive_more = "0.99.17"
 tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread"] }
 reqwest = "0.12.4"
@@ -33,5 +33,8 @@ jsonwebtoken = "9.3.0"
 chrono = "0.4.38"
 diesel_migrations = "2.2.0"
 tower-cookies = "0.10"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tower-http = { version = "0.5.0", features = ["trace"] }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

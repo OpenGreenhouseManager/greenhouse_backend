@@ -10,6 +10,8 @@ use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 use greenhouse_core::auth_service_dto::endpoints;
 use router::auth_router::{check_token, login, register};
 use serde::Deserialize;
+use tower_http::trace::TraceLayer;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 pub mod database;
 mod error;
@@ -38,6 +40,15 @@ struct AppState {
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                "auth_service=debug,tower_http=debug,axum::rejection=trace".into()
+            }),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
     let file_path = if cfg!(debug_assertions) {
         "services/auth_service/config/.env"
     } else {
@@ -73,10 +84,12 @@ async fn main() {
         .route(endpoints::REGISTER, post(register))
         .route(endpoints::LOGIN, post(login))
         .route(endpoints::CHECK_TOKEN, post(check_token))
+        .layer(TraceLayer::new_for_http())
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
-    println!("listening on {}", listener.local_addr().unwrap());
+    tracing::info!("listening on {}", listener.local_addr().unwrap());
+
     axum::serve(listener, app).await.unwrap();
 }
 
