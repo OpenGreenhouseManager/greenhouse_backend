@@ -19,8 +19,21 @@ pub struct User {
 
 impl User {
     pub fn new(username: &str, password: &str, role: &str) -> Result<Self> {
-        let password_hash =
-            bcrypt::hash_with_result(password, 12).map_err(|_| Error::InvalidHash)?;
+        let password_hash = bcrypt::hash_with_result(password, 12).map_err(|e| {
+            sentry::configure_scope(|scope| {
+                scope.set_user(Some(sentry::User {
+                    username: Some(String::from(username)),
+                    ..Default::default()
+                }));
+                let mut map = std::collections::BTreeMap::new();
+                map.insert(String::from("username"), username.into());
+                map.insert(String::from("role"), role.into());
+
+                scope.set_context("user_long", sentry::protocol::Context::Other(map));
+            });
+            sentry::capture_error(&e);
+            Error::InvalidHash
+        })?;
 
         Ok(Self {
             id: Uuid::new_v4(),
@@ -40,7 +53,22 @@ impl User {
     }
 
     pub async fn check_login(&self, password: &str) -> Result<bool> {
-        bcrypt::verify(password, &self.hash).map_err(|_| Error::InvalidHash)
+        bcrypt::verify(password, &self.hash).map_err(|e| {
+            sentry::configure_scope(|scope| {
+                scope.set_user(Some(sentry::User {
+                    username: Some(self.username.clone()),
+                    ..Default::default()
+                }));
+                let mut map = std::collections::BTreeMap::new();
+                map.insert(String::from("username"), self.username.clone().into());
+                map.insert(String::from("role"), self.role.clone().into());
+
+                scope.set_context("user_long", sentry::protocol::Context::Other(map));
+            });
+
+            sentry::capture_error(&e);
+            Error::InvalidHash
+        })
     }
 }
 
