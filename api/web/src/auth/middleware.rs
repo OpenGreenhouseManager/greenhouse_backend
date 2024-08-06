@@ -27,6 +27,8 @@ pub(crate) async fn check_token(
             return next.run(req).await;
         }
     }
+
+    sentry::capture_error(&Error::CookieNotFound);
     cookies.remove(Cookie::from(AUTH_TOKEN));
     Response::builder().status(403).body(Body::empty()).unwrap()
 }
