@@ -10,6 +10,8 @@ use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 use greenhouse_core::auth_service_dto::endpoints;
 use router::auth_router::{check_token, login, register};
 use serde::Deserialize;
+use tower_http::trace::TraceLayer;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 pub mod database;
 mod error;
@@ -26,6 +28,8 @@ struct Config {
     database_url: String,
     #[serde(rename = "JWT_SECRET")]
     jwt_secret: String,
+    #[serde(rename = "SENTRY_URL")]
+    sentry_url: String,
 }
 
 type Pool = bb8::Pool<AsyncDieselConnectionManager<AsyncPgConnection>>;
@@ -36,15 +40,70 @@ struct AppState {
     pool: Pool,
 }
 
-#[tokio::main]
-async fn main() {
-    let file_path = if cfg!(debug_assertions) {
+fn main() {
+    let config = load_config();
+
+    let _guard = sentry::init((
+        config.sentry_url.clone(),
+        sentry::ClientOptions {
+            release: sentry::release_name!(),
+            ..Default::default()
+        },
+    ));
+
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(async {
+            tracing_subscriber::registry()
+                .with(
+                    tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                        "auth_service=debug,tower_http=debug,axum::rejection=trace".into()
+                    }),
+                )
+                .with(tracing_subscriber::fmt::layer())
+                .init();
+
+            run_migration(&config.database_url);
+
+            let url = format!("0.0.0.0:{}", config.service_port);
+
+            let pool = Pool::builder()
+                .build(AsyncDieselConnectionManager::new(
+                    config.database_url.clone(),
+                ))
+                .await
+                .unwrap();
+
+            let state = AppState { config, pool };
+
+            let app = Router::new()
+                .route(endpoints::REGISTER, post(register))
+                .route(endpoints::LOGIN, post(login))
+                .route(endpoints::CHECK_TOKEN, post(check_token))
+                .layer(TraceLayer::new_for_http())
+                .with_state(state);
+
+            let listener = tokio::net::TcpListener::bind(url).await.unwrap();
+            tracing::info!("listening on {}", listener.local_addr().unwrap());
+            axum::serve(listener, app).await.unwrap();
+        });
+}
+
+fn run_migration(database_url: &str) {
+    let mut conn = PgConnection::establish(database_url).unwrap();
+    conn.run_pending_migrations(MIGRATIONS).unwrap();
+}
+
+fn load_config() -> Config {
+    const FILE_PATH: &str = if cfg!(debug_assertions) {
         "services/auth_service/config/.env"
     } else {
         "config/.env"
     };
 
-    let config: Config = match std::fs::File::open(file_path) {
+    match std::fs::File::open(FILE_PATH) {
         Ok(f) => match serde_yaml::from_reader(f) {
             Ok(config) => config,
             Err(e) => {
@@ -54,33 +113,5 @@ async fn main() {
         Err(e) => {
             panic!("Failed to open config file at: {}", e)
         }
-    };
-
-    run_migration(&config.database_url);
-
-    let url = format!("0.0.0.0:{}", config.service_port);
-
-    let pool = Pool::builder()
-        .build(AsyncDieselConnectionManager::new(
-            config.database_url.clone(),
-        ))
-        .await
-        .unwrap();
-
-    let state = AppState { config, pool };
-
-    let app = Router::new()
-        .route(endpoints::REGISTER, post(register))
-        .route(endpoints::LOGIN, post(login))
-        .route(endpoints::CHECK_TOKEN, post(check_token))
-        .with_state(state);
-
-    let listener = tokio::net::TcpListener::bind(url).await.unwrap();
-    println!("listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, app).await.unwrap();
-}
-
-fn run_migration(database_url: &str) {
-    let mut conn = PgConnection::establish(database_url).unwrap();
-    conn.run_pending_migrations(MIGRATIONS).unwrap();
+    }
 }

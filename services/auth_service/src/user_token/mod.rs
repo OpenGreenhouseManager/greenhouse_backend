@@ -32,7 +32,20 @@ impl UserToken {
             &payload,
             &EncodingKey::from_secret(secret.as_bytes()),
         )
-        .map_err(|_| Error::JwtEncode)
+        .map_err(|e| {
+            sentry::configure_scope(|scope| {
+                scope.set_user(Some(sentry::User {
+                    username: Some(String::from(user_name)),
+                    ..Default::default()
+                }));
+                let mut map = std::collections::BTreeMap::new();
+                map.insert(String::from("username"), user_name.into());
+
+                scope.set_context("user_long", sentry::protocol::Context::Other(map));
+            });
+            sentry::capture_error(&e);
+            Error::JwtEncode
+        })
     }
 
     pub fn get_claims(token: &str, secret: &str) -> Result<UserToken> {
@@ -41,7 +54,16 @@ impl UserToken {
             &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()),
             &jsonwebtoken::Validation::default(),
         )
-        .map_err(|_| Error::JwtDecode)?
+        .map_err(|e| {
+            sentry::configure_scope(|scope| {
+                let mut map = std::collections::BTreeMap::new();
+                map.insert(String::from("token"), token.into());
+
+                scope.set_context("token", sentry::protocol::Context::Other(map));
+            });
+            sentry::capture_error(&e);
+            Error::JwtDecode
+        })?
         .claims)
     }
 }

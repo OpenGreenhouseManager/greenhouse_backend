@@ -16,8 +16,22 @@ pub async fn register(
         .json(&register_request)
         .send()
         .await
-        .map_err(|_| Error::InternalError)?;
-    resp.json().await.map_err(|_| Error::InternalError)
+        .map_err(|e| {
+            sentry::configure_scope(|scope| {
+                scope.set_extra("username", register_request.username.clone().into());
+            });
+
+            sentry::capture_error(&e);
+            Error::InternalError
+        })?;
+    resp.json().await.map_err(|e| {
+        sentry::configure_scope(|scope| {
+            scope.set_extra("username", register_request.username.into());
+        });
+        sentry::capture_error(&e);
+
+        Error::InternalError
+    })
 }
 
 pub async fn login(base_ulr: &str, login_request: LoginRequestDto) -> Result<LoginResponseDto> {
@@ -26,8 +40,20 @@ pub async fn login(base_ulr: &str, login_request: LoginRequestDto) -> Result<Log
         .json(&login_request)
         .send()
         .await
-        .map_err(|_| Error::InternalError)?;
-    resp.json().await.map_err(|_| Error::InternalError)
+        .map_err(|e| {
+            sentry::configure_scope(|scope| {
+                scope.set_extra("username", login_request.username.clone().into());
+            });
+            sentry::capture_error(&e);
+            Error::InternalError
+        })?;
+    resp.json().await.map_err(|e| {
+        sentry::configure_scope(|scope| {
+            scope.set_extra("username", login_request.username.into());
+        });
+        sentry::capture_error(&e);
+        Error::InternalError
+    })
 }
 
 pub async fn check_token(base_ulr: &str, token: &str) -> Result<()> {
@@ -39,7 +65,10 @@ pub async fn check_token(base_ulr: &str, token: &str) -> Result<()> {
         })
         .send()
         .await
-        .map_err(|_| Error::InternalError)?;
+        .map_err(|e| {
+            sentry::capture_error(&e);
+            Error::InternalError
+        })?;
     if resp.status().is_success() {
         return Ok(());
     }
