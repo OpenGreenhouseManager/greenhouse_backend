@@ -2,7 +2,7 @@ use auth::middleware::check_token;
 use axum::{extract::FromRef, middleware, Router};
 use serde::Deserialize;
 use tower_cookies::CookieManagerLayer;
-use tower_http::trace::TraceLayer;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 pub mod auth;
 pub mod test;
@@ -61,6 +61,7 @@ fn main() {
                 .layer(middleware::from_fn_with_state(state.clone(), check_token))
                 .merge(auth::router::routes(state))
                 .layer(CookieManagerLayer::new())
+                .layer(CorsLayer::permissive())
                 .layer(TraceLayer::new_for_http());
 
             // run it
