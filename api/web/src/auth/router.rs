@@ -6,7 +6,7 @@ use axum::{
     Json, Router,
 };
 use greenhouse_core::auth_service_dto::{login::LoginRequestDto, register::RegisterRequestDto};
-use tower_cookies::{Cookie, Cookies};
+use tower_cookies::{cookie::SameSite, Cookie, Cookies};
 
 use super::{service, AUTH_TOKEN};
 
@@ -24,7 +24,11 @@ pub(crate) async fn api_register_handler(
     Json(register_request): Json<RegisterRequestDto>,
 ) -> Result<Response> {
     let token = service::register(&config.service_addresses.auth_service, register_request).await?;
-    cookie.add(Cookie::new(AUTH_TOKEN, token.token.clone()));
+    let mut c = Cookie::new(AUTH_TOKEN, token.token.clone());
+    c.set_same_site(SameSite::None);
+    c.set_http_only(false);
+    c.set_path("/");
+    cookie.add(c);
 
     Ok(Json(token).into_response())
 }
@@ -35,8 +39,18 @@ pub(crate) async fn api_login_handler(
     cookie: Cookies,
     Json(login_request): Json<LoginRequestDto>,
 ) -> Result<Response> {
-    let token = service::login(&config.service_addresses.auth_service, login_request).await?;
-    cookie.add(Cookie::new(AUTH_TOKEN, token.token.clone()));
-
-    Ok(Json(token).into_response())
+    match service::login(&config.service_addresses.auth_service, login_request).await{
+        Ok(token) => {
+            let mut c = Cookie::new(AUTH_TOKEN, token.token.clone());
+            c.set_same_site(SameSite::None);
+            c.set_http_only(false);
+            c.set_path("/");
+            cookie.add(c);
+            Ok(Json(token).into_response())
+        }
+        Err(e)=>{
+            cookie.remove(Cookie::from(AUTH_TOKEN));
+            Err(e)
+        }
+    }
 }
