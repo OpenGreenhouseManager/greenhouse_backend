@@ -1,8 +1,12 @@
 use auth::middleware::check_token;
 use axum::{extract::FromRef, middleware, Router};
+use reqwest::{
+    header::{ACCEPT, AUTHORIZATION},
+    Method,
+};
 use serde::Deserialize;
 use tower_cookies::CookieManagerLayer;
-use tower_http::trace::TraceLayer;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 pub mod auth;
 pub mod test;
@@ -56,11 +60,25 @@ fn main() {
             // build our application with a route
             let url = format!("0.0.0.0:{}", config.api_port);
             let state = AppState { config };
+
+            let cors = CorsLayer::new()
+                .allow_headers([AUTHORIZATION, ACCEPT, reqwest::header::CONTENT_TYPE])
+                // allow any headers
+                .allow_credentials(true)
+                // allow `POST` when accessing the resource
+                .allow_methods([Method::POST])
+                // allow requests from below origins
+                .allow_origin([
+                    "http://localhost:4200".parse().unwrap(),
+                    "https://localhost:5001".parse().unwrap(),
+                ]);
+
             let app = Router::new()
                 .nest("/api", test::router::routes(state.clone()))
                 .layer(middleware::from_fn_with_state(state.clone(), check_token))
                 .merge(auth::router::routes(state))
                 .layer(CookieManagerLayer::new())
+                .layer(cors)
                 .layer(TraceLayer::new_for_http());
 
             // run it
@@ -85,8 +103,8 @@ fn load_config() -> Config {
                 panic!("Failed to read config file: {}", e)
             }
         },
-        Err(e) => {
-            panic!("Failed to open config file at: {}", e)
+        Err(_) => {
+            panic!("Failed to open config file at: {}", file_path)
         }
     }
 }
