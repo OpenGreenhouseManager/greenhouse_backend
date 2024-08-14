@@ -7,6 +7,22 @@ use serde::{Deserialize, Serialize};
 mod error;
 static THREE_HOUR: i64 = 60 * 60 * 3;
 
+pub mod onetime_token {
+    use std::hash::{DefaultHasher, Hash, Hasher};
+
+    pub fn generate_one_time_token(user_name: &str, secret: &str) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        let str = String::from(user_name) + secret;
+        str.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    pub fn check_one_time_token(user_name: &str, token: u64, secret: &str) -> bool {
+        let new_token = generate_one_time_token(user_name, secret);
+        new_token != token
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UserToken {
     // issued at
