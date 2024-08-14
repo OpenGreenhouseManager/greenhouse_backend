@@ -1,7 +1,7 @@
 use super::{Error, Result};
+use crate::token;
 use crate::{
-    database::schema::users::dsl::users, user_token::one_time_token::check_one_time_token,
-    user_token::UserToken, Config, Pool,
+    database::schema::users::dsl::users, token::one_time_token::check_one_time_token, Config, Pool,
 };
 use crate::{
     database::{self, models::User},
@@ -60,10 +60,8 @@ pub async fn generate_one_time_token(
     State(AppState { config, pool: _ }): State<AppState>,
     Json(user): Json<GenerateOneTimeTokenRequestDto>,
 ) -> Result<Response> {
-    let token = crate::user_token::one_time_token::generate_one_time_token(
-        &user.username,
-        &config.jwt_secret,
-    );
+    let token =
+        crate::token::one_time_token::generate_one_time_token(&user.username, &config.jwt_secret);
     Ok(Json(GenerateOneTimeTokenResponseDto { token }).into_response())
 }
 
@@ -193,7 +191,7 @@ pub async fn check_token(
         Error::DatabaseConnection
     })?;
 
-    let claims = UserToken::get_claims(&token.token, &config.jwt_secret)?;
+    let claims = token::user_token::get_claims(&token.token, &config.jwt_secret)?;
 
     let user = users
         .filter(username.eq(&claims.user_name))

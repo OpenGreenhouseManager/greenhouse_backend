@@ -1,11 +1,5 @@
 pub use self::error::{Error, Result};
-
-use chrono::Utc;
-use jsonwebtoken::{EncodingKey, Header};
-use serde::{Deserialize, Serialize};
-
 mod error;
-static THREE_HOUR: i64 = 60 * 60 * 3;
 
 pub mod one_time_token {
     pub use super::error::{Error, Result};
@@ -28,17 +22,13 @@ pub mod one_time_token {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct UserToken {
-    // issued at
-    pub iat: i64,
-    // expiration
-    pub exp: i64,
-    pub user_name: String,
-    pub role: String,
-}
+pub mod user_token {
+    pub use super::error::{Error, Result};
+    use chrono::Utc;
+    use greenhouse_core::auth_service_dto::user_token::UserToken;
+    use jsonwebtoken::{EncodingKey, Header};
+    static THREE_HOUR: i64 = 60 * 60 * 3;
 
-impl UserToken {
     pub fn generate_token(user_name: &str, role: &str, secret: &str) -> Result<String> {
         let now = Utc::now().timestamp_nanos_opt().ok_or(Error::InvalidTime)? / 1_000_000_000;
         let payload = UserToken {
@@ -91,13 +81,16 @@ impl UserToken {
 
 #[cfg(test)]
 mod tests {
+    use greenhouse_core::auth_service_dto::user_token::UserToken;
+
     use super::*;
     const SECRET: &str = "XOJ~uQ7&AlPVs?1tm~4bD5nU$~E$iI702st]l|im:p8uTTj+dZX,R_QFvx4`*{r";
     const EXPIRED_TOKEN: &str = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3MTk4NTQwANDYsImV4cCI6MTcxOTg2NDg0NiwidXNlcl9uYW1lIjoidGVzdFVzZXIxIiwicm9sZSI6InRlc3QifQ.mEg0pe-AxO3Cn3JnaXDenuN-ZR2BmVS310T_zi6z_M8";
+    static THREE_HOUR: i64 = 60 * 60 * 3;
 
     #[test]
     fn create_token() {
-        let token = UserToken::generate_token("testUser1", "test", SECRET).unwrap();
+        let token = user_token::generate_token("testUser1", "test", SECRET).unwrap();
 
         let token = jsonwebtoken::decode::<UserToken>(
             &token,
@@ -112,16 +105,16 @@ mod tests {
 
     #[test]
     fn verify_token() {
-        let token = UserToken::generate_token("testUser1", "test", SECRET).unwrap();
-        UserToken::get_claims(&token, SECRET).unwrap();
+        let token = user_token::generate_token("testUser1", "test", SECRET).unwrap();
+        user_token::get_claims(&token, SECRET).unwrap();
     }
 
     #[test]
     fn verify_token_different_secret() {
-        let token = UserToken::generate_token("testUser1", "test", SECRET).unwrap();
+        let token = user_token::generate_token("testUser1", "test", SECRET).unwrap();
 
         assert_eq!(
-            UserToken::get_claims(&token, "broken").unwrap_err(),
+            user_token::get_claims(&token, "broken").unwrap_err(),
             (Error::JwtDecode)
         );
     }
@@ -129,16 +122,16 @@ mod tests {
     #[test]
     fn expired_get_claims() {
         assert_eq!(
-            UserToken::get_claims(EXPIRED_TOKEN, SECRET).unwrap_err(),
+            user_token::get_claims(EXPIRED_TOKEN, SECRET).unwrap_err(),
             (Error::JwtDecode)
         );
     }
 
     #[test]
     fn get_claims() {
-        let token = UserToken::generate_token("testUser1", "test", SECRET).unwrap();
+        let token = user_token::generate_token("testUser1", "test", SECRET).unwrap();
 
-        let claims = UserToken::get_claims(&token, SECRET).unwrap();
+        let claims = user_token::get_claims(&token, SECRET).unwrap();
 
         assert_eq!(claims.user_name, "testUser1");
         assert_eq!(claims.role, "test");

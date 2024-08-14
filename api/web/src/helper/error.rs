@@ -5,19 +5,11 @@ use axum::{
 use derive_more::From;
 use serde::Serialize;
 
-use crate::{database, token};
-
 pub type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, Serialize, From)]
 pub enum Error {
-    DatabaseConnection,
-    UsernameTaken,
-    UserNotFound,
-    #[from]
-    User(database::Error),
-    #[from]
-    Token(token::Error),
+    InvalidToken,
 }
 
 // region:    --- Error Boilerplate

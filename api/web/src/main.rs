@@ -5,6 +5,8 @@ use tower_cookies::CookieManagerLayer;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 pub mod auth;
+pub mod helper;
+pub mod settings;
 pub mod test;
 
 #[derive(Clone, Deserialize)]
@@ -58,6 +60,7 @@ fn main() {
             let state = AppState { config };
             let app = Router::new()
                 .nest("/api", test::router::routes(state.clone()))
+                .nest("/api/settings", settings::router::routes(state.clone()))
                 .layer(middleware::from_fn_with_state(state.clone(), check_token))
                 .merge(auth::router::routes(state))
                 .layer(CookieManagerLayer::new())

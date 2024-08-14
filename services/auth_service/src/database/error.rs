@@ -1,4 +1,4 @@
-use crate::user_token;
+use crate::token;
 use derive_more::From;
 use serde::Serialize;
 
@@ -9,7 +9,7 @@ pub enum Error {
     InvalidHash,
     HashError,
     #[from]
-    Token(user_token::Error),
+    Token(token::Error),
 }
 
 // region:    --- Error Boilerplate

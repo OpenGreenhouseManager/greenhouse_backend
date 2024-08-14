@@ -16,7 +16,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 pub mod database;
 mod error;
 mod router;
-pub mod user_token;
+pub mod token;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
