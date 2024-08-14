@@ -7,7 +7,9 @@ use serde::{Deserialize, Serialize};
 mod error;
 static THREE_HOUR: i64 = 60 * 60 * 3;
 
-pub mod onetime_token {
+pub mod one_time_token {
+    pub use super::error::{Error, Result};
+
     use std::hash::{DefaultHasher, Hash, Hasher};
 
     pub fn generate_one_time_token(user_name: &str, secret: &str) -> u64 {
@@ -17,9 +19,12 @@ pub mod onetime_token {
         hasher.finish()
     }
 
-    pub fn check_one_time_token(user_name: &str, token: u64, secret: &str) -> bool {
+    pub fn check_one_time_token(user_name: &str, token: u64, secret: &str) -> Result<()> {
         let new_token = generate_one_time_token(user_name, secret);
-        new_token != token
+        if new_token == token {
+            return Ok(());
+        }
+        Err(Error::RegisterToken)
     }
 }
 
@@ -137,5 +142,54 @@ mod tests {
 
         assert_eq!(claims.user_name, "testUser1");
         assert_eq!(claims.role, "test");
+    }
+
+    #[test]
+    fn check_one_time_token_test() {
+        let token = one_time_token::generate_one_time_token("testUser1", SECRET);
+        one_time_token::check_one_time_token("testUser1", token, SECRET).unwrap();
+    }
+
+    #[test]
+    fn check_one_time_token_fail_test() {
+        let token = one_time_token::generate_one_time_token("testUser1", SECRET);
+        assert_eq!(
+            one_time_token::check_one_time_token("testUser1", token + 1, SECRET).unwrap_err(),
+            (Error::RegisterToken)
+        );
+    }
+
+    #[test]
+    fn check_one_time_token_fail_different_user_test() {
+        let token = one_time_token::generate_one_time_token("testUser1", SECRET);
+        assert_eq!(
+            one_time_token::check_one_time_token("testUser2", token, SECRET).unwrap_err(),
+            (Error::RegisterToken)
+        );
+    }
+
+    #[test]
+    fn check_one_time_token_fail_different_secret_test() {
+        let token = one_time_token::generate_one_time_token("testUser1", SECRET);
+        assert_eq!(
+            one_time_token::check_one_time_token("testUser1", token, "broken").unwrap_err(),
+            (Error::RegisterToken)
+        );
+    }
+
+    #[test]
+    fn check_one_time_token_fail_different_user_and_secret_test() {
+        let token = one_time_token::generate_one_time_token("testUser1", SECRET);
+        assert_eq!(
+            one_time_token::check_one_time_token("testUser2", token, "broken").unwrap_err(),
+            (Error::RegisterToken)
+        );
+    }
+
+    #[test]
+    fn check_one_time_token_different_user_different_token() {
+        let token = one_time_token::generate_one_time_token("testUser1", SECRET);
+        let token2 = one_time_token::generate_one_time_token("testUser2", SECRET);
+        assert_ne!(token, token2);
     }
 }

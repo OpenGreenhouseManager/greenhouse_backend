@@ -1,6 +1,6 @@
 use super::{Error, Result};
 use crate::{
-    database::schema::users::dsl::users, user_token::onetime_token::check_one_time_token,
+    database::schema::users::dsl::users, user_token::one_time_token::check_one_time_token,
     user_token::UserToken, Config, Pool,
 };
 use crate::{
@@ -16,6 +16,9 @@ use axum::{
 use database::schema::users::{id, login_session, username};
 use diesel::{query_dsl::methods::FilterDsl, ExpressionMethods};
 use diesel_async::RunQueryDsl;
+use greenhouse_core::auth_service_dto::generate_one_time_token::{
+    GenerateOneTimeTokenRequestDto, GenerateOneTimeTokenResponseDto,
+};
 use greenhouse_core::auth_service_dto::{
     login::{LoginRequestDto, LoginResponseDto},
     register::{RegisterRequestDto, RegisterResponseDto},
@@ -29,7 +32,7 @@ pub async fn register(
     Json(user): Json<RegisterRequestDto>,
 ) -> Result<Response> {
     let role = "user";
-    check_one_time_token(&user.username, user.one_time_token, &config.jwt_secret);
+    check_one_time_token(&user.username, user.one_time_token, &config.jwt_secret)?;
     let token = register_user(&user.username, &user.password, role, &config, &pool).await?;
     Ok(Json(RegisterResponseDto {
         token,
@@ -50,6 +53,18 @@ pub async fn register_admin(
         token_type: String::from("Bearer"),
     })
     .into_response())
+}
+
+#[axum::debug_handler]
+pub async fn generate_one_time_token(
+    State(AppState { config, pool: _ }): State<AppState>,
+    Json(user): Json<GenerateOneTimeTokenRequestDto>,
+) -> Result<Response> {
+    let token = crate::user_token::one_time_token::generate_one_time_token(
+        &user.username,
+        &config.jwt_secret,
+    );
+    Ok(Json(GenerateOneTimeTokenResponseDto { token }).into_response())
 }
 
 pub async fn register_user(

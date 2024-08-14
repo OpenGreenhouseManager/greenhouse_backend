@@ -7,6 +7,7 @@ pub enum Error {
     InvalidTime,
     JwtEncode,
     JwtDecode,
+    RegisterToken,
 }
 
 // region:    --- Error Boilerplate

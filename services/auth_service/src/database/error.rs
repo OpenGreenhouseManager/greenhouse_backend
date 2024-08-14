@@ -9,7 +9,7 @@ pub enum Error {
     InvalidHash,
     HashError,
     #[from]
-    JWT(user_token::Error),
+    Token(user_token::Error),
 }
 
 // region:    --- Error Boilerplate
