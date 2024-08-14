@@ -85,7 +85,7 @@ pub async fn register_user(
         Error::DatabaseConnection
     })?;
 
-    let mut new_user = User::new(&name, &password, role)?;
+    let mut new_user = User::new(name, password, role)?;
     let token = new_user.refresh_token(&config.jwt_secret)?;
     let _ = diesel::insert_into(database::schema::users::table)
         .values(new_user)
