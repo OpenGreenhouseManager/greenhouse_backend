@@ -37,5 +37,5 @@ pub(crate) async fn generate_one_time_token(
         &register_request.username,
     )
     .await?;
-    return Ok(Json(token).into_response());
+    Ok(Json(token).into_response())
 }

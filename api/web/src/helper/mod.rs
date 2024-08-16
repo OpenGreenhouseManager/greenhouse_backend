@@ -12,10 +12,8 @@ pub mod token {
         let mut validation = Validation::new(Algorithm::HS256);
         validation.insecure_disable_signature_validation();
 
-        decode::<UserToken>(&token, &key, &validation)
+        Ok(decode::<UserToken>(&token, &key, &validation)
             .map_err(|_| Error::InvalidToken)?
-            .claims
-            .try_into()
-            .map_err(|_| Error::InvalidToken)
+            .claims)
     }
 }
