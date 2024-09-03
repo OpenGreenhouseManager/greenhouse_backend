@@ -1,12 +1,15 @@
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
+use derive_more::From;
 use serde::Serialize;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, Serialize, PartialEq)]
+#[derive(Debug, Serialize, From)]
 pub enum Error {
-    InvalidTime,
-    JwtEncode,
-    JwtDecode,
+    InvalidToken,
 }
 
 // region:    --- Error Boilerplate
@@ -18,4 +21,9 @@ impl core::fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
+impl IntoResponse for Error {
+    fn into_response(self) -> Response {
+        (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()).into_response()
+    }
+}
 // endregion: --- Error Boilerplate

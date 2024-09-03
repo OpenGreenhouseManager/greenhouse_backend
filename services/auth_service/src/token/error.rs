@@ -1,15 +1,13 @@
-use crate::token;
-use derive_more::From;
 use serde::Serialize;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, Serialize, From)]
+#[derive(Debug, Serialize, PartialEq)]
 pub enum Error {
-    InvalidHash,
-    HashError,
-    #[from]
-    Token(token::Error),
+    InvalidTime,
+    JwtEncode,
+    JwtDecode,
+    RegisterToken,
 }
 
 // region:    --- Error Boilerplate
@@ -20,4 +18,5 @@ impl core::fmt::Display for Error {
 }
 
 impl std::error::Error for Error {}
+
 // endregion: --- Error Boilerplate

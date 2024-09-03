@@ -1,10 +1,10 @@
+use crate::token;
+
 use super::{Error, Result};
 use bcrypt::Version;
 use diesel::prelude::*;
 use serde::Deserialize;
 use uuid::Uuid;
-
-use crate::user_token;
 
 #[derive(Debug, Queryable, Selectable, Deserialize, Insertable)]
 #[diesel(table_name = crate::database::schema::users)]
@@ -46,7 +46,7 @@ impl User {
 
     pub fn refresh_token(&mut self, jws_secret: &str) -> Result<String> {
         let login_session =
-            user_token::UserToken::generate_token(&self.username, &self.role, jws_secret)?;
+            token::user_token::generate_token(&self.username, &self.role, jws_secret)?;
 
         self.login_session = login_session.clone();
         Ok(login_session)
