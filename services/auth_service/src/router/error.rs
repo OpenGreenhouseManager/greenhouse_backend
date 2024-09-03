@@ -14,6 +14,7 @@ pub enum Error {
     DatabaseConnection,
     UsernameTaken,
     UserNotFound,
+    OneTimeToken,
     #[from]
     User(database::Error),
     #[from]

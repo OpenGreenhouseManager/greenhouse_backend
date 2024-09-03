@@ -7,5 +7,5 @@ pub struct GenerateOneTimeTokenRequestDto {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GenerateOneTimeTokenResponseDto {
-    pub token: u64,
+    pub token: String,
 }

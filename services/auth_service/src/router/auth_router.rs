@@ -32,7 +32,13 @@ pub async fn register(
     Json(user): Json<RegisterRequestDto>,
 ) -> Result<Response> {
     let role = "user";
-    check_one_time_token(&user.username, user.one_time_token, &config.jwt_secret)?;
+    check_one_time_token(
+        &user.username,
+        user.one_time_token
+            .parse::<u64>()
+            .map_err(|_| Error::OneTimeToken)?,
+        &config.jwt_secret,
+    )?;
     let token = register_user(&user.username, &user.password, role, &config, &pool).await?;
     Ok(Json(RegisterResponseDto {
         token,
@@ -62,7 +68,10 @@ pub async fn generate_one_time_token(
 ) -> Result<Response> {
     let token =
         crate::token::one_time_token::generate_one_time_token(&user.username, &config.jwt_secret);
-    Ok(Json(GenerateOneTimeTokenResponseDto { token }).into_response())
+    Ok(Json(GenerateOneTimeTokenResponseDto {
+        token: token.to_string(),
+    })
+    .into_response())
 }
 
 pub async fn register_user(
