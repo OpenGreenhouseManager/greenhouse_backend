@@ -34,7 +34,9 @@ pub async fn register(
     let role = "user";
     check_one_time_token(
         &user.username,
-        u64::from_str_radix(&user.one_time_token, 10).map_err(|_| Error::OneTimeToken)?,
+        user.one_time_token
+            .parse::<u64>()
+            .map_err(|_| Error::OneTimeToken)?,
         &config.jwt_secret,
     )?;
     let token = register_user(&user.username, &user.password, role, &config, &pool).await?;
