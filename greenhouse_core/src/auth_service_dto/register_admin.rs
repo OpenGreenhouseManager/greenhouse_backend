@@ -1,14 +1,13 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct RegisterRequestDto {
+pub struct RegisterAdminRequestDto {
     pub username: String,
     pub password: String,
-    pub one_time_token: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct RegisterResponseDto {
+pub struct RegisterAdminResponseDto {
     pub token: String,
     pub token_type: String,
 }

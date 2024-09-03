@@ -8,7 +8,7 @@ use diesel::{Connection, PgConnection};
 use diesel_async::{pooled_connection::AsyncDieselConnectionManager, AsyncPgConnection};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 use greenhouse_core::auth_service_dto::endpoints;
-use router::auth_router::{check_token, login, register};
+use router::auth_router::{check_token, login, register, register_admin};
 use serde::Deserialize;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -82,6 +82,7 @@ fn main() {
                 .route(endpoints::REGISTER, post(register))
                 .route(endpoints::LOGIN, post(login))
                 .route(endpoints::CHECK_TOKEN, post(check_token))
+                .route(endpoints::ADMIN_REGISTER, post(register_admin))
                 .layer(TraceLayer::new_for_http())
                 .with_state(state);
 
