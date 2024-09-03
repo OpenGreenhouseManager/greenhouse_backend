@@ -115,8 +115,8 @@ fn load_config() -> Config {
                 panic!("Failed to read config file: {}", e)
             }
         },
-        Err(e) => {
-            panic!("Failed to open config file at: {}", e)
+        Err(_) => {
+            panic!("Failed to open config file at: {}", FILE_PATH)
         }
     }
 }
