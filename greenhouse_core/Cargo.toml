@@ -13,12 +13,13 @@ serde = { workspace = true }
 serde_json ={ workspace = true }
 
 [features]
-default = ["api_web_dto", "api_script_dto", "auth_service_dto", "smart_device_dto", "smart_device_interface"]
+default = ["api_web_dto", "api_script_dto", "auth_service_dto", "smart_device_dto", "smart_device_interface", "data_storage_interface"]
 api_web_dto = []
 api_script_dto = []
 auth_service_dto = []
 smart_device_dto = []
 smart_device_interface = ["smart_device_dto", "dep:axum"]
+data_storage_interface = []
 
 [dev-dependencies]
 httpc-test = "0.1.9"
