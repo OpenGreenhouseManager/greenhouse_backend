@@ -1,2 +1,2 @@
-pub mod data_storage_router;
+pub mod diary_entry_router;
 mod error;

@@ -84,7 +84,12 @@ impl DiaryEntry {
     }
 
     pub async fn delete(&self, pool: &Pool) -> Result<()> {
-        let mut conn = pool.get().await.map_err(|e| {
+        let mut conn: bb8::PooledConnection<
+            '_,
+            diesel_async::pooled_connection::AsyncDieselConnectionManager<
+                diesel_async::AsyncPgConnection,
+            >,
+        > = pool.get().await.map_err(|e| {
             sentry::capture_error(&e);
             Error::DatabaseConnection
         })?;

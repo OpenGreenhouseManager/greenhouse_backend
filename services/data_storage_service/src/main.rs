@@ -74,8 +74,11 @@ fn main() {
             let state = AppState { config, pool };
 
             let app = Router::new()
-                .layer(TraceLayer::new_for_http())
-                .with_state(state);
+                .nest(
+                    "/diary_entry",
+                    router::diary_entry_router::routes(state.clone()),
+                )
+                .layer(TraceLayer::new_for_http());
 
             let listener = tokio::net::TcpListener::bind(url).await.unwrap();
             tracing::info!("listening on {}", listener.local_addr().unwrap());
