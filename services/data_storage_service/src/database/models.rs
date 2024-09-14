@@ -142,7 +142,7 @@ mod tests {
         let title = "Test Title";
         let content = "Test Content";
         let entry = DiaryEntry::new(entry_date, title, content);
-        //entry.created_at = chrono::Utc::now().naive_utc();
+
         assert_eq!(entry.created_at, entry.updated_at);
     }
 }
