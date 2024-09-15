@@ -114,15 +114,15 @@ impl DiaryEntry {
     }
 }
 
-impl Into<DiaryEntryResponseDto> for DiaryEntry {
-    fn into(self) -> DiaryEntryResponseDto {
+impl From<DiaryEntry> for DiaryEntryResponseDto {
+    fn from(val: DiaryEntry) -> Self {
         DiaryEntryResponseDto {
-            id: self.id.to_string(),
-            date: self.entry_date.format("%Y-%m-%dT%H:%M:%S%.fZ").to_string(),
-            title: self.title,
-            content: self.content,
-            created_at: self.created_at.format("%Y-%m-%dT%H:%M:%S%.fZ").to_string(),
-            updated_at: self.updated_at.format("%Y-%m-%dT%H:%M:%S%.fZ").to_string(),
+            id: val.id.to_string(),
+            date: val.entry_date.format("%Y-%m-%dT%H:%M:%S%.fZ").to_string(),
+            title: val.title,
+            content: val.content,
+            created_at: val.created_at.format("%Y-%m-%dT%H:%M:%S%.fZ").to_string(),
+            updated_at: val.updated_at.format("%Y-%m-%dT%H:%M:%S%.fZ").to_string(),
         }
     }
 }
