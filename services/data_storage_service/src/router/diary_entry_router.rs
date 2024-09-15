@@ -37,7 +37,9 @@ pub(crate) async fn update_diary_entry(
 ) -> Result<impl IntoResponse> {
     let mut entry = DiaryEntry::find_by_id(id, &pool).await?;
     entry.title = update.title.clone();
-    entry.entry_date = update.date.parse().map_err(|_| Error::TimeError)?;
+    entry.entry_date = chrono::NaiveDateTime::parse_from_str(&update.date, "%Y-%m-%dT%H:%M:%S%.fZ")
+        .map_err(|_| Error::TimeError)?;
+
     entry.content = update.content.clone();
     entry.flush(&pool).await?;
     let response: DiaryEntryResponseDto = entry.into();
@@ -50,7 +52,8 @@ pub(crate) async fn create_diary_entry(
     Json(entry): Json<PostDiaryEntryDtoRequest>,
 ) -> Result<impl IntoResponse> {
     let mut entry = DiaryEntry::new(
-        entry.date.parse().map_err(|_| Error::TimeError)?,
+        chrono::NaiveDateTime::parse_from_str(&entry.date, "%Y-%m-%dT%H:%M:%S%.fZ")
+            .map_err(|_| Error::TimeError)?,
         &entry.title,
         &entry.content,
     );
@@ -74,9 +77,9 @@ pub(crate) async fn get_diary(
     State(AppState { config: _, pool }): State<AppState>,
     Path(Params { start, end }): Path<Params>,
 ) -> Result<impl IntoResponse> {
-    let start = chrono::NaiveDateTime::parse_from_str(&start, "%Y-%m-%d %H:%M:%S")
+    let start = chrono::NaiveDateTime::parse_from_str(&start, "%Y-%m-%dT%H:%M:%S%.fZ")
         .map_err(|_| Error::TimeError)?;
-    let end = chrono::NaiveDateTime::parse_from_str(&end, "%Y-%m-%d %H:%M:%S")
+    let end = chrono::NaiveDateTime::parse_from_str(&end, "%Y-%m-%dT%H:%M:%S%.fZ")
         .map_err(|_| Error::TimeError)?;
     let entries = DiaryEntry::find_by_date_range(start, end, &pool).await?;
     let response: GetDiaryResponseDto = GetDiaryResponseDto {

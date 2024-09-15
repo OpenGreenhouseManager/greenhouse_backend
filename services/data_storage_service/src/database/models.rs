@@ -118,11 +118,11 @@ impl Into<DiaryEntryResponseDto> for DiaryEntry {
     fn into(self) -> DiaryEntryResponseDto {
         DiaryEntryResponseDto {
             id: self.id.to_string(),
-            date: self.entry_date.to_string(),
+            date: self.entry_date.format("%Y-%m-%dT%H:%M:%S%.fZ").to_string(),
             title: self.title,
             content: self.content,
-            created_at: self.created_at.to_string(),
-            updated_at: self.updated_at.to_string(),
+            created_at: self.created_at.format("%Y-%m-%dT%H:%M:%S%.fZ").to_string(),
+            updated_at: self.updated_at.format("%Y-%m-%dT%H:%M:%S%.fZ").to_string(),
         }
     }
 }
@@ -186,10 +186,19 @@ mod tests {
 
         let response: DiaryEntryResponseDto = entry.into();
         assert_ne!(response.id, "");
-        assert_eq!(response.date, entry_date.to_string());
+        assert_eq!(
+            response.date,
+            entry_date.format("%Y-%m-%dT%H:%M:%S%.fZ").to_string()
+        );
         assert_eq!(response.title, title);
         assert_eq!(response.content, content);
-        assert_eq!(response.created_at, created_at.to_string());
-        assert_eq!(response.updated_at, updated_at.to_string());
+        assert_eq!(
+            response.created_at,
+            created_at.format("%Y-%m-%dT%H:%M:%S%.fZ").to_string()
+        );
+        assert_eq!(
+            response.updated_at,
+            updated_at.format("%Y-%m-%dT%H:%M:%S%.fZ").to_string()
+        );
     }
 }
