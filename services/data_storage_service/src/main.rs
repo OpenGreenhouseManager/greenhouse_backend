@@ -23,7 +23,7 @@ struct Config {
     service_port: u32,
     #[serde(rename = "DATABASE_URL")]
     database_url: String,
-    #[serde(rename = "JWT_SECRET")]
+    #[serde(rename = "SENTRY_URL")]
     sentry_url: String,
 }
 
