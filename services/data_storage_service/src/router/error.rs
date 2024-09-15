@@ -5,10 +5,16 @@ use axum::{
 use derive_more::From;
 use serde::Serialize;
 
+use crate::database;
+
 pub type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, Serialize, From)]
-pub enum Error {}
+pub enum Error {
+    TimeError,
+    #[from]
+    Database(database::Error),
+}
 
 // region:    --- Error Boilerplate
 impl core::fmt::Display for Error {

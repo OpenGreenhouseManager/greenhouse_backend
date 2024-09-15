@@ -2,22 +2,20 @@ use super::{schema::diary_entry, Error, Result};
 use crate::Pool;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
+use greenhouse_core::data_storage_service_dto::diary_dtos::get_diary_entry::DiaryEntryResponseDto;
 use serde::Deserialize;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Queryable, Selectable, Deserialize, AsChangeset, Insertable)]
+#[derive(Debug, Clone, Deserialize, Queryable, Selectable, AsChangeset, Insertable)]
 #[diesel(table_name = crate::database::schema::diary_entry)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[serde(remote = "DiaryEntry")]
 pub struct DiaryEntry {
-    #[serde(getter = "DiaryEntry::id")]
     id: Uuid,
     pub entry_date: chrono::NaiveDateTime,
     pub title: String,
     pub content: String,
-    #[serde(getter = "DiaryEntry::created_at")]
     created_at: chrono::NaiveDateTime,
-    #[serde(getter = "DiaryEntry::updated_at")]
     updated_at: chrono::NaiveDateTime,
 }
 
@@ -49,16 +47,27 @@ impl DiaryEntry {
             })
     }
 
-    pub fn id(&self) -> Uuid {
-        self.id
-    }
-
-    pub fn created_at(&self) -> chrono::NaiveDateTime {
-        self.created_at
-    }
-
-    pub fn updated_at(&self) -> chrono::NaiveDateTime {
-        self.updated_at
+    pub async fn find_by_date_range(
+        start: chrono::NaiveDateTime,
+        end: chrono::NaiveDateTime,
+        pool: &Pool,
+    ) -> Result<Vec<Self>> {
+        let mut conn = pool.get().await.map_err(|e| {
+            sentry::capture_error(&e);
+            Error::DatabaseConnection
+        })?;
+        diary_entry::table
+            .filter(
+                diary_entry::entry_date
+                    .ge(start)
+                    .and(diary_entry::entry_date.le(end)),
+            )
+            .load(&mut conn)
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                Error::FindError
+            })
     }
 
     pub async fn flush(&mut self, pool: &Pool) -> Result<()> {
@@ -105,6 +114,19 @@ impl DiaryEntry {
     }
 }
 
+impl Into<DiaryEntryResponseDto> for DiaryEntry {
+    fn into(self) -> DiaryEntryResponseDto {
+        DiaryEntryResponseDto {
+            id: self.id.to_string(),
+            date: self.entry_date.to_string(),
+            title: self.title,
+            content: self.content,
+            created_at: self.created_at.to_string(),
+            updated_at: self.updated_at.to_string(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -144,5 +166,30 @@ mod tests {
         let entry = DiaryEntry::new(entry_date, title, content);
 
         assert_eq!(entry.created_at, entry.updated_at);
+    }
+
+    #[test]
+    fn test_into_diary_entry_response_dto() {
+        let entry_date = chrono::Utc::now().naive_utc();
+        let title = "Test Title";
+        let content = "Test Content";
+        let created_at = chrono::Utc::now().naive_utc();
+        let updated_at = chrono::Utc::now().naive_utc();
+        let entry = DiaryEntry {
+            id: Uuid::new_v4(),
+            entry_date,
+            title: String::from(title),
+            content: String::from(content),
+            created_at,
+            updated_at,
+        };
+
+        let response: DiaryEntryResponseDto = entry.into();
+        assert_ne!(response.id, "");
+        assert_eq!(response.date, entry_date.to_string());
+        assert_eq!(response.title, title);
+        assert_eq!(response.content, content);
+        assert_eq!(response.created_at, created_at.to_string());
+        assert_eq!(response.updated_at, updated_at.to_string());
     }
 }

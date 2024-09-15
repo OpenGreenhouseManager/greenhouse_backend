@@ -1,14 +1,14 @@
 pub struct PostDiaryEntryDtoRequest {
-    date: String,
-    title: String,
-    content: String,
+    pub date: String,
+    pub title: String,
+    pub content: String,
 }
 
 pub struct PostDiaryEntryDtoResponse {
-    id: String,
-    date: String,
-    title: String,
-    content: String,
-    created_at: String,
-    updated_at: String,
+    pub id: String,
+    pub date: String,
+    pub title: String,
+    pub content: String,
+    pub created_at: String,
+    pub updated_at: String,
 }
