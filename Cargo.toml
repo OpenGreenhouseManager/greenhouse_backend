@@ -3,38 +3,39 @@ resolver = "2"
 members = [
     "api/script",
     "api/web",
-    "examples/hybrid_device"
-,
+    "examples/hybrid_device",
     "greenhouse_core",
-    "services/auth_service"]
+    "services/auth_service",
+    "services/data_storage_service"]
 default-members = [
     "api/web",
     "api/script",
     "services/auth_service",
+    "services/data_storage_service",
     "greenhouse_core",
 ]
 
 [workspace.dependencies]
 axum = { version = "0.7.5", features = ["macros", "tracing"] }
-derive_more = "0.99.17"
-tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread"] }
-reqwest = "0.12.4"
-serde = { version = "1.0.202", features = ["serde_derive"] }
+derive_more = {version = "1.0.0", features = ["full"] }
+tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread"] }
+reqwest = "0.12.7"
+serde = { version = "1.0.210", features = ["serde_derive"] }
 greenhouse_core = { path = "./greenhouse_core" }
-serde_json = "1.0.68"
-serde_yaml = "0.9.33"
+serde_json = "1.0.128"
+serde_yaml = "0.9.34+deprecated"
 bb8 = "0.8.5"
-diesel = "2.2"
+diesel = "2.2.4"
 diesel-async = { version = "0.5.0", features = ["postgres", "bb8"] }
-uuid = "1.9.1"
+uuid = "1.10.0"
 bcrypt = "0.15.1"
 rand = "0.8.5"
 jsonwebtoken = "9.3.0"
 chrono = "0.4.38"
 diesel_migrations = "2.2.0"
-tower-cookies = "0.10"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-tower-http = { version = "0.5.0", features = ["trace"] }
+tower-cookies = "0.10.0"
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+tower-http = { version = "0.5.2", features = ["trace"] }
 sentry = "0.34.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
