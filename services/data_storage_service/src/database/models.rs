@@ -158,7 +158,6 @@ mod tests {
     }
 
     #[test]
-
     fn check_for_created_at_and_updated_at() {
         let entry_date = chrono::Utc::now().naive_utc();
         let title = "Test Title";
