@@ -1,5 +1,6 @@
 use super::{schema::diary_entry, Error, Result};
 use crate::Pool;
+use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use greenhouse_core::data_storage_service_dto::diary_dtos::get_diary_entry::DiaryEntryResponseDto;
@@ -12,16 +13,16 @@ use uuid::Uuid;
 #[serde(remote = "DiaryEntry")]
 pub struct DiaryEntry {
     id: Uuid,
-    pub entry_date: chrono::NaiveDateTime,
+    pub entry_date: DateTime<Utc>,
     pub title: String,
     pub content: String,
-    created_at: chrono::NaiveDateTime,
-    updated_at: chrono::NaiveDateTime,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
 }
 
 impl DiaryEntry {
-    pub fn new(entry_date: chrono::NaiveDateTime, title: &str, content: &str) -> Self {
-        let now = chrono::Utc::now().naive_utc();
+    pub fn new(entry_date: DateTime<Utc>, title: &str, content: &str) -> Self {
+        let now = chrono::Utc::now();
         Self {
             id: Uuid::new_v4(),
             entry_date,
@@ -48,8 +49,8 @@ impl DiaryEntry {
     }
 
     pub async fn find_by_date_range(
-        start: chrono::NaiveDateTime,
-        end: chrono::NaiveDateTime,
+        start: DateTime<Utc>,
+        end: DateTime<Utc>,
         pool: &Pool,
     ) -> Result<Vec<Self>> {
         let mut conn = pool.get().await.map_err(|e| {
@@ -75,7 +76,7 @@ impl DiaryEntry {
             sentry::capture_error(&e);
             Error::DatabaseConnection
         })?;
-        self.updated_at = chrono::Utc::now().naive_utc();
+        self.updated_at = chrono::Utc::now();
         let db_entry = self.clone();
         diesel::insert_into(diary_entry::table)
             .values(&db_entry)
@@ -133,7 +134,7 @@ mod tests {
 
     #[test]
     fn test_new_diary_entry() {
-        let entry_date = chrono::Utc::now().naive_utc();
+        let entry_date = chrono::Utc::now();
         let title = "Test Title";
         let content = "Test Content";
 
@@ -147,7 +148,7 @@ mod tests {
 
     #[test]
     fn check_for_id_collision() {
-        let entry_date = chrono::Utc::now().naive_utc();
+        let entry_date = chrono::Utc::now();
         let title = "Test Title";
         let content = "Test Content";
 
@@ -159,7 +160,7 @@ mod tests {
 
     #[test]
     fn check_for_created_at_and_updated_at() {
-        let entry_date = chrono::Utc::now().naive_utc();
+        let entry_date = chrono::Utc::now();
         let title = "Test Title";
         let content = "Test Content";
         let entry = DiaryEntry::new(entry_date, title, content);
@@ -169,11 +170,11 @@ mod tests {
 
     #[test]
     fn test_into_diary_entry_response_dto() {
-        let entry_date = chrono::Utc::now().naive_utc();
+        let entry_date = chrono::Utc::now();
         let title = "Test Title";
         let content = "Test Content";
-        let created_at = chrono::Utc::now().naive_utc();
-        let updated_at = chrono::Utc::now().naive_utc();
+        let created_at = chrono::Utc::now();
+        let updated_at = chrono::Utc::now();
         let entry = DiaryEntry {
             id: Uuid::new_v4(),
             entry_date,
