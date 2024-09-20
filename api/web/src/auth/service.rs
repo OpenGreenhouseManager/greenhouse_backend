@@ -18,7 +18,13 @@ pub async fn register(
         .await
         .map_err(|e| {
             sentry::configure_scope(|scope| {
-                scope.set_extra("username", register_request.username.clone().into());
+                let mut map = std::collections::BTreeMap::new();
+                map.insert(
+                    String::from("username"),
+                    register_request.username.clone().into(),
+                );
+
+                scope.set_context("username", sentry::protocol::Context::Other(map));
             });
 
             sentry::capture_error(&e);
@@ -26,7 +32,10 @@ pub async fn register(
         })?;
     resp.json().await.map_err(|e| {
         sentry::configure_scope(|scope| {
-            scope.set_extra("username", register_request.username.into());
+            let mut map = std::collections::BTreeMap::new();
+            map.insert(String::from("username"), register_request.username.into());
+
+            scope.set_context("username", sentry::protocol::Context::Other(map));
         });
         sentry::capture_error(&e);
 
@@ -42,7 +51,13 @@ pub async fn login(base_ulr: &str, login_request: LoginRequestDto) -> Result<Log
         .await
         .map_err(|e| {
             sentry::configure_scope(|scope| {
-                scope.set_extra("username", login_request.username.clone().into());
+                let mut map = std::collections::BTreeMap::new();
+                map.insert(
+                    String::from("username"),
+                    login_request.username.clone().into(),
+                );
+
+                scope.set_context("username", sentry::protocol::Context::Other(map));
             });
             sentry::capture_error(&e);
             Error::InternalError
