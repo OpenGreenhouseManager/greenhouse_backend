@@ -1,5 +1,3 @@
-use core::panic;
-
 use super::error::Result;
 use axum::{
     extract::{Path, State},
