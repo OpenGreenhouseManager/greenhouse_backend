@@ -7,7 +7,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Utc};
 use greenhouse_core::data_storage_service_dto::diary_dtos::{
     get_diary::GetDiaryResponseDto, get_diary_entry::DiaryEntryResponseDto,
     post_diary_entry::PostDiaryEntryDtoRequest, put_diary_entry::PutDiaryEntryDtoRequest,
