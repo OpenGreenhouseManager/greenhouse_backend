@@ -20,3 +20,9 @@ tracing-subscriber = { workspace = true }
 tower-http = { workspace = true, features = ["trace", "cors"] }
 sentry = { workspace = true, features = ["debug-images", "tower"] }
 jsonwebtoken = { workspace = true }
+uuid = { workspace = true, features = [
+    "v4",                
+    "fast-rng",          
+    "macro-diagnostics", 
+    "serde"
+] }

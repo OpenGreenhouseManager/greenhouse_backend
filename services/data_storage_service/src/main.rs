@@ -7,6 +7,7 @@ use core::panic;
 use diesel::{Connection, PgConnection};
 use diesel_async::{pooled_connection::AsyncDieselConnectionManager, AsyncPgConnection};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations};
+use greenhouse_core::data_storage_service_dto::diary_dtos::endpoints::DIARY;
 use serde::Deserialize;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -74,10 +75,7 @@ fn main() {
             let state = AppState { config, pool };
 
             let app = Router::new()
-                .nest(
-                    "/diary_entry",
-                    router::diary_entry_router::routes(state.clone()),
-                )
+                .nest(DIARY, router::diary_entry_router::routes(state.clone()))
                 .layer(TraceLayer::new_for_http());
 
             let listener = tokio::net::TcpListener::bind(url).await.unwrap();

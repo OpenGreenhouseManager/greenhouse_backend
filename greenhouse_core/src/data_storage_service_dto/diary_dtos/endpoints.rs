@@ -1,1 +1,1 @@
-pub const DIARY: &str = "/api/diary";
+pub const DIARY: &str = "/diary";
