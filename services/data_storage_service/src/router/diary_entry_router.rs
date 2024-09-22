@@ -13,7 +13,7 @@ use greenhouse_core::data_storage_service_dto::diary_dtos::{
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::{database::models::DiaryEntry, router::error::Error, AppState};
+use crate::{database::diary_models::DiaryEntry, router::error::Error, AppState};
 
 #[derive(Deserialize)]
 pub struct Params {
