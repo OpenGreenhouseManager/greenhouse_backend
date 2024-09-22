@@ -52,8 +52,7 @@ pub struct Alert {
     pub name: String,
     pub value: String,
     pub note: Option<String>,
-    pub start_at: DateTime<Utc>,
-    pub end_at: DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
     pub data_source_id: Uuid,
 }
 
@@ -63,8 +62,7 @@ impl Alert {
         name: &str,
         value: &str,
         note: Option<&str>,
-        start_at: DateTime<Utc>,
-        end_at: DateTime<Utc>,
+        created_at: DateTime<Utc>,
         data_source_id: Uuid,
     ) -> Self {
         Self {
@@ -73,8 +71,7 @@ impl Alert {
             name: String::from(name),
             value: String::from(value),
             note: note.map(String::from),
-            start_at,
-            end_at,
+            created_at,
             data_source_id,
         }
     }

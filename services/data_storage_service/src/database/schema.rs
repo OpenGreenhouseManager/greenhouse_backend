@@ -17,8 +17,7 @@ diesel::table! {
         name -> Varchar,
         value -> Text,
         note -> Nullable<Text>,
-        start_at -> Timestamptz,
-        end_at -> Timestamptz,
+        created_at -> Timestamptz,
         data_source_id -> Uuid,
     }
 }
