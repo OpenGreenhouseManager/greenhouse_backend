@@ -13,12 +13,11 @@ diesel::table! {
     alert (id) {
         id -> Uuid,
         severity -> Severity,
-        #[max_length = 255]
-        name -> Varchar,
+        identifier -> Uuid,
         value -> Text,
         note -> Nullable<Text>,
         created_at -> Timestamptz,
-        data_source_id -> Uuid,
+        datasource_id -> Uuid,
     }
 }
 
@@ -46,7 +45,7 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(alert -> data_source (data_source_id));
+diesel::joinable!(alert -> data_source (id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     alert,
