@@ -10,6 +10,15 @@ use diesel_async::RunQueryDsl;
 use std::io::Write;
 use uuid::Uuid;
 
+#[derive(Deserialize)]
+pub struct AlertQuery {
+    start: Option<String>,
+    end: Option<String>,
+    datasource_id: Option<String>,
+    severity: Option<String>,
+    identifier: Option<String>,
+}
+
 #[derive(Debug, Clone, PartialEq, FromSqlRow, AsExpression, Eq)]
 #[diesel(sql_type = sql_types::Severity)]
 pub enum Severity {
@@ -49,30 +58,30 @@ impl FromSql<sql_types::Severity, Pg> for Severity {
 pub struct Alert {
     pub id: Uuid,
     pub severity: Severity,
-    pub name: String,
+    pub identifier: Uuid,
     pub value: String,
     pub note: Option<String>,
     pub created_at: DateTime<Utc>,
-    pub data_source_id: Uuid,
+    pub datasource_id: Uuid,
 }
 
 impl Alert {
     pub fn new(
         severity: Severity,
-        name: &str,
+        identifier: Uuid,
         value: &str,
         note: Option<&str>,
         created_at: DateTime<Utc>,
-        data_source_id: Uuid,
+        datasource_id: Uuid,
     ) -> Self {
         Self {
             id: Uuid::new_v4(),
             severity,
-            name: String::from(name),
+            identifier,
             value: String::from(value),
             note: note.map(String::from),
             created_at,
-            data_source_id,
+            datasource_id,
         }
     }
 
@@ -91,19 +100,69 @@ impl Alert {
             })
     }
 
-    pub async fn find_by_data_source_id(data_source_id: Uuid, pool: &Pool) -> Result<Vec<Self>> {
+    pub async fn find_by_data_source_id(datasource_id: Uuid, pool: &Pool) -> Result<Vec<Self>> {
         let mut conn = pool.get().await.map_err(|e| {
             sentry::capture_error(&e);
             Error::DatabaseConnection
         })?;
         alert::table
-            .filter(alert::data_source_id.eq(data_source_id))
+            .filter(alert::datasource_id.eq(datasource_id))
             .load(&mut conn)
             .await
             .map_err(|e| {
                 sentry::capture_error(&e);
                 Error::FindError
             })
+    }
+
+    pub async fn query(query: AlertQuery, pool: &Pool) -> Result<Vec<Self>> {
+        let mut conn = pool.get().await.map_err(|e| {
+            sentry::capture_error(&e);
+            Error::DatabaseConnection
+        })?;
+        let mut query = alert::table.into_boxed();
+        if let Some(start) = query.start {
+            query = query.filter(alert::created_at.ge(start));
+        }
+        if let Some(end) = query.end {
+            query = query.filter(alert::created_at.le(end));
+        }
+        if let Some(datasource_id) = query.datasource_id {
+            query = query.filter(alert::datasource_id.eq(datasource_id));
+        }
+        if let Some(severity) = query.severity {
+            query = query.filter(alert::severity.eq(severity));
+        }
+        if let Some(identifier) = query.identifier {
+            query = query.filter(alert::identifier.eq(identifier));
+        }
+        query.load(&mut conn).await.map_err(|e| {
+            sentry::capture_error(&e);
+            Error::FindError
+        })
+    }
+
+    pub async fn aggrigate(pool: &Pool) -> Result<Vec<AlertAggrigatedDto>> {
+        let mut conn = pool.get().await.map_err(|e| {
+            sentry::capture_error(&e);
+            Error::DatabaseConnection
+        })?;
+        let a = alert::table
+            .select((
+                diesel::dsl::count_star(),
+                alert::identifier,
+                alert::datasource_id,
+                alert::severity,
+                diesel::dsl::max(alert::created_at),
+                diesel::dsl::min(alert::created_at),
+            ))
+            .group_by((alert::identifier, alert::datasource_id, alert::severity))
+            .load(&mut conn)
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                Error::FindError
+            })?;
     }
 }
 
