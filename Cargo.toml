@@ -31,7 +31,7 @@ uuid = "1.10.0"
 bcrypt = "0.15.1"
 rand = "0.8.5"
 jsonwebtoken = "9.3.0"
-chrono = "0.4.38"
+chrono = { version = "0.4.30", features = ["serde"]  }
 diesel_migrations = "2.2.0"
 tower-cookies = "0.10.0"
 tracing = "0.1.40"
