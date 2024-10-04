@@ -196,7 +196,7 @@ impl Alert {
     }
 
     pub async fn aggrigate(
-        intervalQuery: IntervalQuery,
+        interval_query: IntervalQuery,
         pool: &Pool,
     ) -> Result<Vec<AggrigatedAlert>> {
         let mut conn = pool.get().await.map_err(|e| {
@@ -216,10 +216,10 @@ impl Alert {
             ))
             .into_boxed();
 
-        if let Some(start) = intervalQuery.start {
+        if let Some(start) = interval_query.start {
             query = query.filter(alert::created_at.ge(start));
         }
-        if let Some(end) = intervalQuery.end {
+        if let Some(end) = interval_query.end {
             query = query.filter(alert::created_at.le(end));
         }
 
