@@ -12,15 +12,20 @@ use greenhouse_core::data_storage_service_dto::alert_dto::get_aggrigated_alert::
 use greenhouse_core::data_storage_service_dto::alert_dto::post_create_alert::CreateAlertDto;
 use serde::Deserialize;
 use std::io::Write;
-use std::vec;
 use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct AlertQuery {
     severity: Option<Severity>,
-    identifier: Option<Uuid>,
+    identifier: Option<String>,
     created_at: Option<DateTime<Utc>>,
     datasource_id: Option<Uuid>,
+}
+
+#[derive(Deserialize)]
+pub struct IntervalQuery {
+    start: Option<DateTime<Utc>>,
+    end: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, PartialEq, FromSqlRow, Eq, Deserialize)]
@@ -29,10 +34,32 @@ pub struct AggrigatedAlert {
     pub severity: Severity,
     pub count: i64,
     pub identifier: String,
-    pub latest_value: String,
-    pub last_note: String,
     pub first_date: String,
     pub last_date: String,
+}
+
+impl AggrigatedAlert {
+    pub fn new(
+        datasource_id: Uuid,
+        severity: Severity,
+        count: i64,
+        identifier: String,
+        first_date: Option<DateTime<Utc>>,
+        last_date: Option<DateTime<Utc>>,
+    ) -> Self {
+        Self {
+            datasource_id,
+            severity,
+            count,
+            identifier,
+            first_date: first_date
+                .map(|d| d.format("%Y-%m-%dT%H:%M:%S%.fZ").to_string())
+                .unwrap_or_default(),
+            last_date: last_date
+                .map(|d| d.format("%Y-%m-%dT%H:%M:%S%.fZ").to_string())
+                .unwrap_or_default(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, FromSqlRow, AsExpression, Eq, Deserialize)]
@@ -74,7 +101,7 @@ impl FromSql<sql_types::Severity, Pg> for Severity {
 pub struct Alert {
     pub id: Uuid,
     pub severity: Severity,
-    pub identifier: Uuid,
+    pub identifier: String,
     pub value: String,
     pub note: Option<String>,
     pub created_at: DateTime<Utc>,
@@ -168,36 +195,64 @@ impl Alert {
         })
     }
 
-    pub async fn aggrigate(pool: &Pool) -> Result<Vec<AggrigatedAlert>> {
+    pub async fn aggrigate(
+        intervalQuery: IntervalQuery,
+        pool: &Pool,
+    ) -> Result<Vec<AggrigatedAlert>> {
         let mut conn = pool.get().await.map_err(|e| {
             sentry::capture_error(&e);
             Error::DatabaseConnection
         })?;
 
-        let query = alert::table
-            .group_by((alert::datasource_id, alert::severity))
+        let mut query = alert::table
+            .group_by((alert::datasource_id, alert::severity, alert::identifier))
             .select((
                 alert::datasource_id,
                 alert::severity,
-                diesel::dsl::count_star(),
+                alert::identifier,
+                diesel::dsl::count(alert::id),
+                diesel::dsl::min(alert::created_at),
+                diesel::dsl::max(alert::created_at),
             ))
-            .load::<(Uuid, Severity, i64)>(&mut conn)
+            .into_boxed();
+
+        if let Some(start) = intervalQuery.start {
+            query = query.filter(alert::created_at.ge(start));
+        }
+        if let Some(end) = intervalQuery.end {
+            query = query.filter(alert::created_at.le(end));
+        }
+
+        let query = query
+            .load::<(
+                Uuid,
+                Severity,
+                String,
+                i64,
+                Option<DateTime<Utc>>,
+                Option<DateTime<Utc>>,
+            )>(&mut conn)
             .await
             .map_err(|e| {
                 sentry::capture_error(&e);
                 Error::FindError
             })?;
 
-        //Ok(query
-        //    .into_iter()
-        //    .map(|(datasource_id, severity, count)| AggrigatedAlert {
-        //        datasource_id,
-        //        severity,
-        //        count,
-        //    })
-        //    .collect())
-
-        Ok(vec![])
+        Ok(query
+            .into_iter()
+            .map(
+                |(datasource_id, severity, identifier, count, first_date, last_date)| {
+                    AggrigatedAlert::new(
+                        datasource_id,
+                        severity,
+                        count,
+                        identifier,
+                        first_date,
+                        last_date,
+                    )
+                },
+            )
+            .collect())
     }
 }
 
@@ -206,8 +261,8 @@ impl From<AggrigatedAlert> for AlertAggrigatedDto {
         Self {
             count: alert.count,
             identifier: alert.identifier,
+            severity: alert.severity.into(),
             source: alert.datasource_id.into(),
-            latest_value: alert.latest_value,
             first: alert.first_date,
             last: alert.last_date,
         }

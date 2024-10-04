@@ -3,7 +3,7 @@ CREATE TYPE severity AS ENUM ('fatal', 'error', 'warning', 'info');
 CREATE TABLE alert (
     id UUID PRIMARY KEY,
     severity severity NOT NULL,
-    identifier UUID NOT NULL,
+    identifier TEXT NOT NULL,
     value TEXT NOT NULL,
     note TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,

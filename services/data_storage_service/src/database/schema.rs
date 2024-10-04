@@ -13,7 +13,7 @@ diesel::table! {
     alert (id) {
         id -> Uuid,
         severity -> Severity,
-        identifier -> Uuid,
+        identifier -> Text,
         value -> Text,
         note -> Nullable<Text>,
         created_at -> Timestamptz,

@@ -10,7 +10,7 @@ use greenhouse_core::data_storage_service_dto::alert_dto::{
 };
 
 use crate::{
-    database::alert_models::{Alert, AlertQuery},
+    database::alert_models::{Alert, AlertQuery, IntervalQuery},
     AppState,
 };
 
@@ -36,8 +36,9 @@ async fn filter(
 
 async fn alert_subset(
     State(AppState { config: _, pool }): State<AppState>,
+    Query(query): Query<IntervalQuery>,
 ) -> Result<impl IntoResponse> {
-    let a: Vec<AlertAggrigatedDto> = Alert::aggrigate(&pool)
+    let a: Vec<AlertAggrigatedDto> = Alert::aggrigate(query, &pool)
         .await?
         .into_iter()
         .map(|a| a.into())
