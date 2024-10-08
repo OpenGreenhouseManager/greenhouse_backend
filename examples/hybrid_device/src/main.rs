@@ -19,6 +19,7 @@ struct ExampleDeviceConfig {
     pub max: i32,
 }
 
+#[allow(clippy::needless_return)]
 #[tokio::main]
 async fn main() {
     let config = match read_config_file() {
@@ -44,7 +45,6 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
     println!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, router).await.unwrap();
-    return;
 }
 
 fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> String {
