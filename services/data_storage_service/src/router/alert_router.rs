@@ -5,14 +5,31 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use chrono::{DateTime, Utc};
 use greenhouse_core::data_storage_service_dto::alert_dto::{
     alert::AlertDto, get_aggrigated_alert::AlertAggrigatedDto, post_create_alert::CreateAlertDto,
 };
+use serde::Deserialize;
+use uuid::Uuid;
 
 use crate::{
-    database::alert_models::{Alert, AlertQuery, IntervalQuery},
+    database::{alert_models::Alert, severity_models::Severity},
     AppState,
 };
+
+#[derive(Deserialize)]
+pub struct AlertQuery {
+    pub severity: Option<Severity>,
+    pub identifier: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub datasource_id: Option<Uuid>,
+}
+
+#[derive(Deserialize)]
+pub struct IntervalQuery {
+    pub start: Option<DateTime<Utc>>,
+    pub end: Option<DateTime<Utc>>,
+}
 
 pub(crate) fn routes(state: AppState) -> Router {
     Router::new()
