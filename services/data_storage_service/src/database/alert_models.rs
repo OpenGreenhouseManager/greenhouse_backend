@@ -25,7 +25,6 @@ pub struct Alert {
 
 impl Alert {
     pub async fn create(alert: CreateAlertDto, pool: &Pool) -> Result<Self> {
-        let now = Utc::now();
         let alert = Self {
             id: Uuid::new_v4(),
             severity: alert.severity.into(),
@@ -35,7 +34,7 @@ impl Alert {
             })?,
             value: alert.value.unwrap_or_default(),
             note: alert.note,
-            created_at: now,
+            created_at: Utc::now(),
             datasource_id: alert.datasource_id.parse().map_err(|e| {
                 sentry::capture_error(&e);
                 Error::CreationError
