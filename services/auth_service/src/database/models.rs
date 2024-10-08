@@ -84,6 +84,7 @@ mod tests {
         assert_eq!(user.role, "test");
     }
 
+    #[allow(clippy::needless_return)] // https://github.com/rust-lang/rust-clippy/issues/13458
     #[tokio::test]
     async fn check_login() {
         let user = User::new("testUser1", "testPassword1", "test").expect("Failed to create user");
