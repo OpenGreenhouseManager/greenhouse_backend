@@ -44,6 +44,7 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
     println!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, router).await.unwrap();
+    return;
 }
 
 fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> String {
