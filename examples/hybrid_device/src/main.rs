@@ -20,39 +20,30 @@ struct ExampleDeviceConfig {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), String> {
+async fn main() {
     let config = match read_config_file() {
         Ok(config) => config,
         Err(_) => {
             let default_config = Config::<ExampleDeviceConfig>::default();
-            match update_config_file(&default_config) {
-                Ok(_) => default_config,
-                Err(e) => return Err(e.to_string()),
-            }
+            update_config_file(&default_config).unwrap();
+            default_config
         }
     };
 
-    let device_service = match DeviceService::new_hybrid_device(
+    let device_service = DeviceService::new_hybrid_device(
         read_handler,
         write_handler,
         status_handler,
         config_interceptor_handler,
-    ) {
-        Ok(device_service) => device_service,
-        Err(e) => return Err(e.to_string()),
-    };
+    )
+    .unwrap();
     let router = init_hybrid_router(device_service);
 
     let url = format!("0.0.0.0:{}", config.port);
 
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
     println!("listening on {}", listener.local_addr().unwrap());
-    match axum::serve(listener, router).await {
-        Ok(_) => Ok(()),
-        Err(e) => Err(e.to_string()),
-    }?;
-
-    Ok(())
+    axum::serve(listener, router).await.unwrap();
 }
 
 fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> String {
