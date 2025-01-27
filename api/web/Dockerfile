@@ -1,4 +1,4 @@
-ARG RUST_VERSION=1.78.0
+ARG RUST_VERSION=1.82.0
 
 FROM rust:${RUST_VERSION}-slim-bookworm AS builder
 WORKDIR /app
@@ -7,7 +7,7 @@ COPY . .
 RUN apt-get update -y && apt-get upgrade -y && \ 
   apt-get install --no-install-recommends -y \
     pkg-config=1.8.1-1 \
-    libssl-dev=3.0.13-1~deb12u1
+    libssl-dev=3.0.15-1~deb12u1
 
 RUN \
   --mount=type=cache,target=/app/target/ \
@@ -31,7 +31,7 @@ RUN chown appuser /usr/local/bin/web_api && \
 
 RUN apt-get update -y && apt-get upgrade -y && \ 
   apt-get install --no-install-recommends -y \
-    libpq-dev=15.7-0+deb12u1\
+        libpq-dev=15.10-0+deb12u1\
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
