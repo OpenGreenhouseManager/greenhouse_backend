@@ -19,6 +19,7 @@ struct ExampleDeviceConfig {
     pub max: i32,
 }
 
+#[allow(clippy::needless_return)]
 #[tokio::main]
 async fn main() {
     let config = match read_config_file() {

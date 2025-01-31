@@ -4,13 +4,11 @@ use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use greenhouse_core::data_storage_service_dto::diary_dtos::get_diary_entry::DiaryEntryResponseDto;
-use serde::Deserialize;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Deserialize, Queryable, Selectable, AsChangeset, Insertable)]
+#[derive(Debug, Clone, Queryable, Selectable, AsChangeset, Insertable)]
 #[diesel(table_name = crate::database::schema::diary_entry)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-#[serde(remote = "DiaryEntry")]
 pub struct DiaryEntry {
     id: Uuid,
     pub entry_date: DateTime<Utc>,

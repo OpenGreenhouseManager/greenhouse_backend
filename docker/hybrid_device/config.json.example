@@ -1,0 +1,10 @@
+{
+    "mode": "Input",
+    "port": 9099,
+    "input_type": null,
+    "output_type": null,
+    "additional_config":{
+        "min": 0,
+        "max": 100
+    }
+}
