@@ -33,11 +33,13 @@ RUN chown appuser /usr/local/bin/data_storage_service && \
 RUN apt-get update -y && apt-get upgrade -y && \ 
   apt-get install --no-install-recommends -y \
     libpq-dev=15.10-0+deb12u1\
+    ca-certificates=20230311\
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 USER appuser
 ENV RUST_LOG="data_storage_service=debug,info"
+ENV RUST_BACKTRACE=full
 RUN mkdir /usr/local/bin/config
 WORKDIR /usr/local/bin/
 ENTRYPOINT ["data_storage_service"]

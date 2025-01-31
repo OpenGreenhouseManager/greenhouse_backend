@@ -8,8 +8,6 @@ services:
       - ./docker/hybrid_device:/usr/local/bin/config
     ports:
       - "9099:9099"
-    depends_on:
-      - db
 
   auth_service:
     build:
@@ -21,6 +19,7 @@ services:
       - "9091:5000"
     depends_on:
       - db
+    restart: unless-stopped
     networks:
       - backend
 
@@ -34,6 +33,7 @@ services:
       - "9092:5000"
     depends_on:
       - db
+    restart: unless-stopped
     networks:
       - backend
 
@@ -47,6 +47,8 @@ services:
       - "9090:5100"
     depends_on:
       - auth_service
+      - data_storage_service
+    restart: unless-stopped
     networks:
       - backend
       - frontend
@@ -57,11 +59,11 @@ services:
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: auth
     ports:
       - 5432:5432
     volumes:
       - db-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - backend
 

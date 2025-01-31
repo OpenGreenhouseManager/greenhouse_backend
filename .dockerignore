@@ -5,6 +5,5 @@
 target
 Dockerfile
 justfile
-.env
 README.md
 rust-toolchain.toml
