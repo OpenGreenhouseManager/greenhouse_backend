@@ -39,7 +39,6 @@ RUN apt-get update -y && apt-get upgrade -y && \
 
 USER appuser
 ENV RUST_LOG="auth_service=debug,info"
-ENV RUST_BACKTRACE=full
 RUN mkdir /usr/local/bin/config
 WORKDIR /usr/local/bin/
 ENTRYPOINT ["auth_service"]
