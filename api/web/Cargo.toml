@@ -26,3 +26,13 @@ uuid = { workspace = true, features = [
     "macro-diagnostics", 
     "serde"
 ] }
+
+[dev-dependencies]
+mockito = "1.2.0"
+tower = { version = "0.4", features = ["util"] }
+hyper = "0.14"
+serde_json = "1.0"
+
+[lib]
+name = "api_web"
+path = "src/lib.rs"
