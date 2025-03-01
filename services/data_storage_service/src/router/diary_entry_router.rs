@@ -51,8 +51,43 @@ pub(crate) async fn update_diary_entry(
     })?;
 
     entry.content = update.content.clone();
+    
+    // Handle alert IDs if provided
+    if let Some(alert_ids) = update.alert_ids {
+        // First, get current alerts to determine which ones to add/remove
+        let current_alerts = entry.get_alerts(&pool).await?;
+        let current_alert_ids: Vec<String> = current_alerts
+            .iter()
+            .map(|alert| alert.id.to_string())
+            .collect();
+        
+        // Add new alerts
+        for alert_id_str in &alert_ids {
+            if !current_alert_ids.contains(alert_id_str) {
+                let alert_id = alert_id_str.parse::<Uuid>().map_err(|e| {
+                    sentry::capture_error(&e);
+                    Error::UuidError
+                })?;
+                entry.link_alert(alert_id, &pool).await?;
+            }
+        }
+        
+        // Remove alerts that are no longer linked
+        for current_id_str in &current_alert_ids {
+            if !alert_ids.contains(current_id_str) {
+                let alert_id = current_id_str.parse::<Uuid>().map_err(|e| {
+                    sentry::capture_error(&e);
+                    Error::UuidError
+                })?;
+                entry.unlink_alert(alert_id, &pool).await?;
+            }
+        }
+    }
+    
+    // Return response with alerts
     entry.flush(&pool).await?;
-    let response: DiaryEntryResponseDto = entry.into();
+    let response = entry.to_response_dto_with_alerts(&pool).await?;
+    
     Ok(Json(response))
 }
 
@@ -61,7 +96,7 @@ pub(crate) async fn create_diary_entry(
     State(AppState { config: _, pool }): State<AppState>,
     Json(entry): Json<PostDiaryEntryDtoRequest>,
 ) -> Result<impl IntoResponse> {
-    let mut entry = DiaryEntry::new(
+    let mut diary_entry = DiaryEntry::new(
         entry.date.parse::<DateTime<Utc>>().map_err(|e| {
             sentry::configure_scope(|scope| {
                 let mut map = std::collections::BTreeMap::new();
@@ -76,8 +111,21 @@ pub(crate) async fn create_diary_entry(
         &entry.title,
         &entry.content,
     );
-    entry.flush(&pool).await?;
-    let response: DiaryEntryResponseDto = entry.into();
+    diary_entry.flush(&pool).await?;
+    
+    // Handle alert IDs if provided
+    if let Some(alert_ids) = entry.alert_ids {
+        for alert_id_str in alert_ids {
+            let alert_id = alert_id_str.parse::<Uuid>().map_err(|e| {
+                sentry::capture_error(&e);
+                Error::UuidError
+            })?;
+            diary_entry.link_alert(alert_id, &pool).await?;
+        }
+    }
+    
+    // Return response with alerts
+    let response = diary_entry.to_response_dto_with_alerts(&pool).await?;
     Ok(Json(response))
 }
 
@@ -87,7 +135,7 @@ pub(crate) async fn get_diary_entry(
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse> {
     let entry = DiaryEntry::find_by_id(id, &pool).await?;
-    let response: DiaryEntryResponseDto = entry.into();
+    let response = entry.to_response_dto_with_alerts(&pool).await?;
     Ok(Json(response))
 }
 

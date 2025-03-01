@@ -70,6 +70,21 @@ impl Alert {
             })
     }
 
+    pub async fn find_by_ids(ids: &[Uuid], pool: &Pool) -> Result<Vec<Self>> {
+        let mut conn = pool.get().await.map_err(|e| {
+            sentry::capture_error(&e);
+            Error::DatabaseConnection
+        })?;
+        alert::table
+            .filter(alert::id.eq_any(ids))
+            .load(&mut conn)
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                Error::FindError
+            })
+    }
+
     pub async fn find_by_data_source_id(datasource_id: Uuid, pool: &Pool) -> Result<Vec<Self>> {
         let mut conn = pool.get().await.map_err(|e| {
             sentry::capture_error(&e);
