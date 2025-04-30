@@ -1,8 +1,8 @@
 use auth::middleware::check_token;
-use axum::{extract::FromRef, middleware, Router};
+use axum::{Router, extract::FromRef, middleware};
 use reqwest::{
-    header::{ACCEPT, AUTHORIZATION},
     Method,
+    header::{ACCEPT, AUTHORIZATION},
 };
 use serde::Deserialize;
 use tower_cookies::CookieManagerLayer;
@@ -104,11 +104,11 @@ fn load_config() -> Config {
         Ok(f) => match serde_yaml::from_reader(f) {
             Ok(config) => config,
             Err(e) => {
-                panic!("Failed to read config file: {}", e)
+                panic!("Failed to read config file: {e}")
             }
         },
         Err(_) => {
-            panic!("Failed to open config file at: {}", file_path)
+            panic!("Failed to open config file at: {file_path}")
         }
     }
 }
