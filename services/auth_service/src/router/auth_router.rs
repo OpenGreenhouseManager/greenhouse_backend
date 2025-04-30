@@ -1,20 +1,20 @@
 use super::{Error, Result};
 use crate::token;
 use crate::{
-    database::schema::users::dsl::users, token::one_time_token::check_one_time_token, Config, Pool,
+    AppState,
+    database::{self, models::User},
 };
 use crate::{
-    database::{self, models::User},
-    AppState,
+    Config, Pool, database::schema::users::dsl::users, token::one_time_token::check_one_time_token,
 };
 use axum::{
+    Json,
     extract::State,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
 use database::schema::users::{id, login_session, username};
-use diesel::{query_dsl::methods::FilterDsl, ExpressionMethods};
+use diesel::{ExpressionMethods, query_dsl::methods::FilterDsl};
 use diesel_async::RunQueryDsl;
 use greenhouse_core::auth_service_dto::generate_one_time_token::{
     GenerateOneTimeTokenRequestDto, GenerateOneTimeTokenResponseDto,

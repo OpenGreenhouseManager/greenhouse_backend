@@ -1,6 +1,6 @@
 use super::{Error, Result};
 use crate::smart_device_dto::{self, config::ConfigResponseDto};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 const CONFIG_FILE_NAME: &str = "./config/config.json";
 

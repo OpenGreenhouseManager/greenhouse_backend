@@ -2,11 +2,11 @@ pub use self::error::{Error, Result};
 
 extern crate diesel_migrations;
 use crate::diesel_migrations::MigrationHarness;
-use axum::{extract::FromRef, Router};
+use axum::{Router, extract::FromRef};
 use core::panic;
 use diesel::{Connection, PgConnection};
-use diesel_async::{pooled_connection::AsyncDieselConnectionManager, AsyncPgConnection};
-use diesel_migrations::{embed_migrations, EmbeddedMigrations};
+use diesel_async::{AsyncPgConnection, pooled_connection::AsyncDieselConnectionManager};
+use diesel_migrations::{EmbeddedMigrations, embed_migrations};
 use greenhouse_core::data_storage_service_dto::{
     alert_dto::endpoints::ALERT, diary_dtos::endpoints::DIARY,
 };

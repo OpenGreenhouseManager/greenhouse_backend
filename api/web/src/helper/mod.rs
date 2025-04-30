@@ -5,7 +5,7 @@ pub mod token {
     pub use super::error::{Error, Result};
 
     use greenhouse_core::auth_service_dto::user_token::UserToken;
-    use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
+    use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
 
     pub fn get_claims(token: String) -> Result<UserToken> {
         let key = DecodingKey::from_secret(&[]);

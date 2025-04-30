@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use axum::{extract::State, http::StatusCode, Json};
-use serde::{de::DeserializeOwned, Serialize};
+use axum::{Json, extract::State, http::StatusCode};
+use serde::{Serialize, de::DeserializeOwned};
 
 use crate::smart_device_dto::{
     self,

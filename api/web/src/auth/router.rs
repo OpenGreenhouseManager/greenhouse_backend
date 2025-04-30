@@ -1,14 +1,14 @@
-use crate::{auth::Result, AppState};
+use crate::{AppState, auth::Result};
 use axum::{
+    Json, Router,
     extract::State,
     response::{IntoResponse, Response},
     routing::post,
-    Json, Router,
 };
 use greenhouse_core::auth_service_dto::{login::LoginRequestDto, register::RegisterRequestDto};
-use tower_cookies::{cookie::SameSite, Cookie, Cookies};
+use tower_cookies::{Cookie, Cookies, cookie::SameSite};
 
-use super::{service, AUTH_TOKEN};
+use super::{AUTH_TOKEN, service};
 
 pub(crate) fn routes(state: AppState) -> Router {
     Router::new()

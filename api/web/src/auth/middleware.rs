@@ -6,8 +6,8 @@ use axum::{
 };
 use tower_cookies::{Cookie, Cookies};
 
-use super::{service, AUTH_TOKEN};
-use crate::{auth::Error, AppState};
+use super::{AUTH_TOKEN, service};
+use crate::{AppState, auth::Error};
 
 pub(crate) async fn check_token(
     State(AppState { config }): State<AppState>,
