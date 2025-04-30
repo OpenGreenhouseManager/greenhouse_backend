@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use axum::{http::StatusCode, Json};
+use axum::{Json, http::StatusCode};
 use greenhouse_core::{
     smart_device_dto::{config::ConfigRequestDto, status::DeviceStatusResponseDto},
     smart_device_interface::{
-        config::{read_config_file, update_config_file, Config},
+        config::{Config, read_config_file, update_config_file},
         device_service::DeviceService,
         hybrid_device::init_hybrid_router,
     },

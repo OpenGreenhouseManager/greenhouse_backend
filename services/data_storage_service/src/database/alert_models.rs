@@ -1,8 +1,8 @@
 use super::aggrigated_alert::AggrigatedAlert;
 use super::severity_models::Severity;
-use super::{schema::alert, Error, Result};
-use crate::router::alert_router::{AlertQuery, IntervalQuery};
+use super::{Error, Result, schema::alert};
 use crate::Pool;
+use crate::router::alert_router::{AlertQuery, IntervalQuery};
 use chrono::{DateTime, Utc};
 use diesel::*;
 use diesel_async::RunQueryDsl;

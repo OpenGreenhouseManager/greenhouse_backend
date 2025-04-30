@@ -1,13 +1,13 @@
 [package]
 name = "example-hybrid-device"
 version = "0.0.1"
-edition = "2021"
+edition = "2024"
 publish = false
 
 [dependencies]
-axum = { version = "0.8.1", features = ["macros"] }
-derive_more = "1.0.0"
+axum = { version = "0.8.3", features = ["macros"] }
+derive_more = {version = "2.0.1", features = ["full"] }
 greenhouse_core = { path = "../../greenhouse_core" }
-serde = { version = "1.0.217", features = ["derive"] }
-serde_derive = "1.0.217"
-tokio = { version = "1.43.0", features = ["macros", "rt-multi-thread"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_derive = "1.0.219"
+tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread"] }

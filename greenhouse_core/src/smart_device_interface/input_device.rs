@@ -1,8 +1,8 @@
 use axum::{
-    routing::{get, post},
     Router,
+    routing::{get, post},
 };
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
 use crate::smart_device_dto::endpoints::{CONFIG, STATUS, WRITE};
 

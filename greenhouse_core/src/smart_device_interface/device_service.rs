@@ -1,8 +1,8 @@
-use super::config::{read_config_file, update_config_file, Config};
 use super::Result;
+use super::config::{Config, read_config_file, update_config_file};
 use crate::smart_device_dto::{config::ConfigRequestDto, status::DeviceStatusResponseDto};
 use axum::http::StatusCode;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 use std::sync::Arc;
 
 type ReadHandler<T> = Option<Arc<dyn (Fn(Arc<Config<T>>) -> String) + Send + Sync>>;
@@ -32,9 +32,9 @@ where
         write_handler: impl (Fn(String, Arc<Config<T>>) -> StatusCode) + Send + Sync + 'static,
         status_handler: impl (Fn(Arc<Config<T>>) -> DeviceStatusResponseDto) + Send + Sync + 'static,
         config_interceptor_handler: impl (Fn(ConfigRequestDto<T>, Arc<Config<T>>) -> Config<T>)
-            + Send
-            + Sync
-            + 'static,
+        + Send
+        + Sync
+        + 'static,
     ) -> Result<Self> {
         let config = read_config_file()?;
 
@@ -51,9 +51,9 @@ where
         read_handler: impl (Fn(Arc<Config<T>>) -> String) + Send + Sync + 'static,
         status_handler: impl (Fn(Arc<Config<T>>) -> DeviceStatusResponseDto) + Send + Sync + 'static,
         config_interceptor_handler: impl (Fn(ConfigRequestDto<T>, Arc<Config<T>>) -> Config<T>)
-            + Send
-            + Sync
-            + 'static,
+        + Send
+        + Sync
+        + 'static,
     ) -> Result<Self> {
         let config = match read_config_file() {
             Ok(config) => config,
@@ -76,9 +76,9 @@ where
         write_handler: impl (Fn(String, Arc<Config<T>>) -> StatusCode) + Send + Sync + 'static,
         status_handler: impl (Fn(Arc<Config<T>>) -> DeviceStatusResponseDto) + Send + Sync + 'static,
         config_interceptor_handler: impl (Fn(ConfigRequestDto<T>, Arc<Config<T>>) -> Config<T>)
-            + Send
-            + Sync
-            + 'static,
+        + Send
+        + Sync
+        + 'static,
     ) -> Result<Self> {
         let config = match read_config_file() {
             Ok(config) => config,

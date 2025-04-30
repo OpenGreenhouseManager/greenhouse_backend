@@ -1,4 +1,4 @@
-use super::{schema::diary_entry, Error, Result};
+use super::{Error, Result, schema::diary_entry};
 use crate::Pool;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;

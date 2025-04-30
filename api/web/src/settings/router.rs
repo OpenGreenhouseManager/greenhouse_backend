@@ -1,11 +1,11 @@
 use crate::helper;
 use crate::settings::{Error, Result};
-use crate::{auth::AUTH_TOKEN, settings::service, AppState};
+use crate::{AppState, auth::AUTH_TOKEN, settings::service};
 use axum::routing::post;
 use axum::{
+    Json, Router,
     extract::State,
     response::{IntoResponse, Response},
-    Json, Router,
 };
 use greenhouse_core::auth_service_dto::generate_one_time_token::GenerateOneTimeTokenRequestDto;
 use tower_cookies::Cookies;

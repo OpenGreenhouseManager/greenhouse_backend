@@ -1,9 +1,9 @@
 use super::error::Result;
 use axum::{
+    Json, Router,
     extract::{Query, State},
     response::IntoResponse,
     routing::{get, post},
-    Json, Router,
 };
 use chrono::{DateTime, Utc};
 use greenhouse_core::data_storage_service_dto::alert_dto::{
@@ -13,8 +13,8 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::{
-    database::{alert_models::Alert, severity_models::Severity},
     AppState,
+    database::{alert_models::Alert, severity_models::Severity},
 };
 
 #[derive(Deserialize)]

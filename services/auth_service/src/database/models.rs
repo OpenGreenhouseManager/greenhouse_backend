@@ -89,13 +89,16 @@ mod tests {
     async fn check_login() {
         let user = User::new("testUser1", "testPassword1", "test").expect("Failed to create user");
 
-        assert!(user
-            .check_login("testPassword1")
-            .await
-            .expect("Failed to check login"));
-        assert!(!user
-            .check_login("wrongPassword")
-            .await
-            .expect("Failed to check login"));
+        assert!(
+            user.check_login("testPassword1")
+                .await
+                .expect("Failed to check login")
+        );
+        assert!(
+            !user
+                .check_login("wrongPassword")
+                .await
+                .expect("Failed to check login")
+        );
     }
 }

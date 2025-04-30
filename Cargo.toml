@@ -16,26 +16,26 @@ default-members = [
 ]
 
 [workspace.dependencies]
-axum = { version = "0.8.1", features = ["macros", "tracing"] }
-derive_more = {version = "1.0.0", features = ["full"] }
-tokio = { version = "1.43.0", features = ["macros", "rt-multi-thread"] }
-reqwest = "0.12.12"
-serde = { version = "1.0.217", features = ["serde_derive"] }
+axum = { version = "0.8.3", features = ["macros", "tracing"] }
+derive_more = {version = "2.0.1", features = ["full"] }
+tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread"] }
+reqwest = "0.12.15"
+serde = { version = "1.0.219", features = ["serde_derive"] }
 greenhouse_core = { path = "./greenhouse_core" }
-serde_json = "1.0.137"
+serde_json = "1.0.140"
 serde_yaml = "0.9.34+deprecated"
 bb8 = "0.8.6"
-diesel = "2.2.6"
+diesel = "2.2.10"
 diesel-async = { version = "0.5.2", features = ["postgres", "bb8"] }
-uuid = "1.12.1"
-bcrypt = "0.16.0"
-rand = "0.9.0"
-jsonwebtoken = "9.3.0"
-chrono = { version = "0.4.39", features = ["serde"]  }
+uuid = "1.16.0"
+bcrypt = "0.17.0"
+rand = "0.9.1"
+jsonwebtoken = "9.3.1"
+chrono = { version = "0.4.41", features = ["serde"]  }
 diesel_migrations = "2.2.0"
 tower-cookies = "0.11.0"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 tower-http = { version = "0.6.2", features = ["trace"] }
-sentry = "0.36.0"
+sentry = "0.37.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

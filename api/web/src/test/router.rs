@@ -1,8 +1,8 @@
-use crate::{auth::Result, AppState};
+use crate::{AppState, auth::Result};
 use axum::{
+    Router,
     response::{IntoResponse, Response},
     routing::get,
-    Router,
 };
 
 pub(crate) fn routes(state: AppState) -> Router {
