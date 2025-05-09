@@ -1,5 +1,25 @@
 [build]
-target = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu"]
+target = ["x86_64-unknown-linux-gnu", "armv7-unknown-linux-gnueabihf"]
+
+[target.armv7-unknown-linux-gnueabihf]
+linker = "arm-linux-gnueabihf-gcc"
+rustflags = [
+  "-L/usr/lib/arm-linux-gnueabihf",
+  "-L/usr/arm-linux-gnueabihf/lib",
+]
+# PKG_CONFIG_LIBDIR=/usr/lib/arm-linux-gnueabihf/pkgconfig
+# PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabihf/pkgconfig
+# OPENSSL_LIB_DIR=/usr/lib/arm-linux-gnueabihf
+
+[target.x86_64-unknown-linux-gnu]
+linker = "gcc"
+rustflags = [
+  "-L/usr/lib/x86_64-linux-gnu", 
+  "-L/usr/x86_64-linux-gnu/lib"
+]
+# PKG_CONFIG_LIBDIR=/usr/lib/x86_64-linux-gnu/pkgconfig
+# PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
+# OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu
 
 [target.riscv32imc-esp-espidf]
 linker = "ldproxy"
