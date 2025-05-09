@@ -1,6 +1,6 @@
 ARG RUST_VERSION=1.86.0
 
-FROM rust:${RUST_VERSION}-slim-bookworm AS builder
+FROM --platform=$BUILDPLATFORM rust:${RUST_VERSION}-slim-bookworm AS builder
 WORKDIR /app
 COPY . .
 
@@ -14,9 +14,9 @@ RUN \
   --mount=type=cache,target=/app/target/ \
   --mount=type=cache,target=/usr/local/cargo/registry/ \
   cargo build --release --package data_storage_service --bin data_storage_service && \
-  cp ./target/release/data_storage_service /
+  cp ./target/${BUILDPLATFORM}/release/data_storage_service /
 
-FROM debian:bookworm-slim AS final
+FROM --platform=$BUILDPLATFORM debian:bookworm-slim AS final
 RUN adduser \
   --disabled-password \
   --gecos "" \
