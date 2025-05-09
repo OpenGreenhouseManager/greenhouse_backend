@@ -28,4 +28,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           context: .
           push: true
+          tags: maudidocker/greenhouse_data_storage_service:latest
           file: services/data_storage_service/Dockerfile 
