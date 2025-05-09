@@ -15,7 +15,7 @@ jobs:
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
+      - uses: actions/checkout@v3
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -25,7 +25,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
+          context: .
           push: true
-          tags: user/app:latest
           file: services/data_storage_service/Dockerfile 
