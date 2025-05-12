@@ -27,3 +27,4 @@ jobs:
           labels: ${{ steps.metadata.outputs.labels }}
           cache: true
           cache-repository: ghcr.io/${{ github.repository }}/cache
+          file: services/data_storage_service/Dockerfile
