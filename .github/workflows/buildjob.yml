@@ -28,7 +28,7 @@ jobs:
         with:
           push: true
           tags: ${{ steps.metadata.outputs.tags }}
-          target: arm64
+          target: linux/arm64
           labels: ${{ steps.metadata.outputs.labels }}
           cache: true
           cache-repository: ghcr.io/${{ github.repository }}/cache
