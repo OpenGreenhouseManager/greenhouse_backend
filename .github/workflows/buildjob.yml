@@ -12,7 +12,7 @@ permissions:
   id-token: write
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: [ubuntu-latest, ubuntu-24.04-arm]
     steps:
       - uses: actions/checkout@v3
       - uses: docker/metadata-action@v3
@@ -28,7 +28,6 @@ jobs:
         with:
           push: true
           tags: ${{ steps.metadata.outputs.tags }}
-          target: linux/arm64
           labels: ${{ steps.metadata.outputs.labels }}
           cache: true
           cache-repository: ghcr.io/${{ github.repository }}/cache
