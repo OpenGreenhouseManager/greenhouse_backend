@@ -27,7 +27,7 @@ jobs:
       - uses: int128/kaniko-action@v1
         with:
           push: true
-          tags: ${{ steps.metadata.outputs.tags }}
+          tags: ${{ steps.metadata.outputs.tags }}/ci-cd:latest-arm64v8
           labels: ${{ steps.metadata.outputs.labels }}
           cache: true
           cache-repository: ghcr.io/${{ github.repository }}/cache
