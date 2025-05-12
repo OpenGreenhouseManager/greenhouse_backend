@@ -14,7 +14,7 @@ RUN \
   --mount=type=cache,target=/app/target/ \
   --mount=type=cache,target=/usr/local/cargo/registry/ \
   cargo build --release --package data_storage_service --bin data_storage_service && \
-  cp ./target/${TARGETPLATFORM}/release/data_storage_service /
+  cp "./target/${TARGETPLATFORM}/release/data_storage_service" /
 
 FROM debian:bookworm-slim AS final
 RUN adduser \
