@@ -23,6 +23,8 @@ jobs:
       - uses: int128/kaniko-action@v1
         with:
           push: true
+          tags: latest
+          labels: label
           cache: true
           cache-repository: ghcr.io/${{ github.repository }}/cache
           file: services/data_storage_service/Dockerfile
