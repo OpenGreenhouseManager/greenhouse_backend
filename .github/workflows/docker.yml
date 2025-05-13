@@ -32,7 +32,6 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: services/data_storage_service/Dockerfile
           push: false
           platforms: linux/amd64,linux/arm64
           tags: ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
@@ -62,7 +61,26 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: services/data_storage_service/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
+          
+          
+      # service data_storage
+      - name: Docker meta
+        id: meta-delta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ghcr.io/opengreenhousemanager/greenhouse_backend
+      - name: Publish
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          file: services/data_storage_service/Dockerfile
+          tags: ${{ steps.meta-delta.outputs.tags }}
+          build-args: |
+            BASE_IMAGE=ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
+          labels: ${{ steps.meta-delta.outputs.labels }}
