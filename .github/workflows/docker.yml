@@ -1,0 +1,68 @@
+name: Docker Test & Publish
+
+on:
+  push:
+    tags:
+      - "*"
+
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "Dockerfile"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  base:
+    name: Test base image build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      # Configure build environment
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Build the image
+      - name: Build base image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: services/data_storage_service/Dockerfile
+          push: false
+          platforms: linux/amd64,linux/arm64
+          tags: ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
+          cache-from: type=gha,scope=buildx-base-multi-arch
+          cache-to: type=gha,scope=buildx-base-multi-arch,mode=max
+
+  publish:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    name: Publish Docker images
+    steps:
+      # Configure build environment
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Github Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build the image
+      - name: Build base image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: services/data_storage_service/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
