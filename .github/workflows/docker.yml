@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - "*"
+    branches:
+      - GRN-62-refactor-docker-files
 
   pull_request:
     branches:
@@ -19,7 +21,7 @@ jobs:
   base:
     name: Test base image build
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    #wif: github.event_name == 'pull_request'
     steps:
       # Configure build environment
       - name: Checkout
@@ -40,7 +42,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
+    #eif: github.event_name != 'pull_request'
     name: Publish Docker images
     steps:
       # Configure build environment
