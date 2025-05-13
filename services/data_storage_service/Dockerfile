@@ -1,4 +1,5 @@
 
+# hadolint ignore=DL3007
 FROM ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest AS builder
 
 FROM debian:bookworm-slim AS final
