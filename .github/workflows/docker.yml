@@ -21,7 +21,7 @@ jobs:
   base:
     name: Test base image build
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    # eif: github.event_name == 'pull_request'
     steps:
       # Configure build environment
       - name: Checkout
@@ -36,7 +36,7 @@ jobs:
           context: .
           push: false
           platforms: linux/amd64,linux/arm64
-          tags: ghcr.io/${{ github.repository.lowercase }}/base:latest
+          tags: ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
           cache-from: type=gha,scope=buildx-base-multi-arch
           cache-to: type=gha,scope=buildx-base-multi-arch,mode=max
 
@@ -64,7 +64,7 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: ghcr.io/${{ github.repository.lowercase }}/base:latest
+          tags: ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
 
       # revoltchat/server
       - name: Docker meta
@@ -82,5 +82,5 @@ jobs:
           file: crates/delta/Dockerfile
           tags: ${{ steps.meta-delta.outputs.tags }}
           build-args: |
-            BASE_IMAGE=ghcr.io/${{ github.repository.lowercase }}/base:latest
+            BASE_IMAGE=ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
           labels: ${{ steps.meta-delta.outputs.labels }}
