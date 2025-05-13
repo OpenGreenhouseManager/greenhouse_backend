@@ -4,10 +4,12 @@ on:
   push:
     tags:
       - "*"
+    branches:
+      - GRN-61-build-docker-images-in-pipeline
+
   pull_request:
     branches:
       - main
-      - GRN-61-build-docker-images-in-pipeline
     paths:
       - "Dockerfile"
 
