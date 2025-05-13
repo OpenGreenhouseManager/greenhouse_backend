@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - GRN-61-build-docker-images-in-pipeline
+      # - GRN-61-build-docker-images-in-pipeline
 permissions:
   contents: read
   packages: write
