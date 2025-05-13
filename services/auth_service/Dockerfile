@@ -14,7 +14,7 @@ RUN \
   --mount=type=cache,target=/app/target/ \
   --mount=type=cache,target=/usr/local/cargo/registry/ \
   cargo build --release --package auth_service --bin auth_service && \
-  cp ./target/release/auth_service /
+  cp "./target/${TARGETPLATFORM}/release/auth_service" /
 
 FROM debian:bookworm-slim AS final
 RUN adduser \

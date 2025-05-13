@@ -41,7 +41,7 @@ USER appuser
 ENV RUST_LOG="data_storage_service=debug,info"
 RUN mkdir /usr/local/bin/config
 WORKDIR /usr/local/bin/
-#ENTRYPOINT ["data_storage_service"]
+ENTRYPOINT ["data_storage_service"]
 EXPOSE 9091
 #keep this container alive
-ENTRYPOINT [ "tail", "-f", "/dev/null" ]
+#ENTRYPOINT [ "tail", "-f", "/dev/null" ]

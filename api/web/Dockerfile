@@ -13,7 +13,7 @@ RUN \
   --mount=type=cache,target=/app/target/ \
   --mount=type=cache,target=/usr/local/cargo/registry/ \
   cargo build --release --package web_api --bin web_api && \
-  cp ./target/release/web_api /
+  cp "./target/${TARGETPLATFORM}/release/web_api" /
 
 FROM debian:bookworm-slim AS final
 RUN adduser \

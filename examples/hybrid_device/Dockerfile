@@ -13,7 +13,7 @@ RUN \
   --mount=type=cache,target=/app/target/ \
   --mount=type=cache,target=/usr/local/cargo/registry/ \
   cargo build --release --package example-hybrid-device --bin example-hybrid-device && \
-  cp ./target/release/example-hybrid-device /
+  cp "./target/${TARGETPLATFORM}/release/example-hybrid-device" /
 
 FROM debian:bookworm-slim AS final
 RUN adduser \
