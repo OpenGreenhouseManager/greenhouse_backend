@@ -19,6 +19,7 @@ RUN apt-get update -y && apt-get upgrade -y && \
 COPY scripts/build-image-layer.sh /tmp/
 RUN sh /tmp/build-image-layer.sh tools
 
+# Build the application
 RUN \
   --mount=type=cache,target=/app/target/ \
   --mount=type=cache,target=/usr/local/cargo/registry/ \
