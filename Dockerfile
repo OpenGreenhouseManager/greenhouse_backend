@@ -24,4 +24,4 @@ RUN \
   --mount=type=cache,target=/app/target/ \
   --mount=type=cache,target=/usr/local/cargo/registry/ \
   sh /tmp/build-image-layer.sh apps && \
-  cp "./target/${TARGETPLATFORM}/release/" /
+  cp "./target/release/" /
