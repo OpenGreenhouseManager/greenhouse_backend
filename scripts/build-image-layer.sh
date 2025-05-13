@@ -31,7 +31,6 @@ apps() {
     cargo build -j 10 --locked --release
   else
     cargo build -j 10 --locked --release --target "${BUILD_TARGET}"
-    mv target _target && mv _target/"${BUILD_TARGET}" target
   fi
 }
 
