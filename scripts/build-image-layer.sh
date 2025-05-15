@@ -14,8 +14,12 @@ else
 fi
 
 tools() {
-  apt-get install -y "${LINKER_PACKAGE}"
-  rustup target add "${BUILD_TARGET}"
+  if [ -z "$TARGETARCH" ]; then
+    :
+  else
+    apt-get install -y "${LINKER_PACKAGE}"
+    rustup target add "${BUILD_TARGET}"
+  fi
 }
 
 deps() {
