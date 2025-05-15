@@ -100,7 +100,7 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          file: services/api/web/Dockerfile
+          file: api/web/Dockerfile
           tags: ghcr.io/opengreenhousemanager/greenhouse_backend/web_api:latest
           build-args: |
             BASE_IMAGE=ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
