@@ -82,7 +82,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           file: services/data_storage_service/Dockerfile
-          tags: ${{ steps.meta-delta.outputs.tags }}
+          tags: ghcr.io/opengreenhousemanager/greenhouse_backend/data_storage_service:latest
           build-args: |
             BASE_IMAGE=ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
           labels: ${{ steps.meta-delta.outputs.labels }}
