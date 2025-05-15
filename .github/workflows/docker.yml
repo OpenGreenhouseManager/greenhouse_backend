@@ -4,9 +4,6 @@ on:
   push:
     tags:
       - "*"
-    branches:
-      - GRN-62-refactor-docker-files
-
   pull_request:
     branches:
       - main
