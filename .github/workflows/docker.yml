@@ -21,7 +21,7 @@ jobs:
   base:
     name: Test base image build
     runs-on: ubuntu-latest
-    #wif: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request'
     steps:
       # Configure build environment
       - name: Checkout
@@ -42,7 +42,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    #eif: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request'
     name: Publish Docker images
     steps:
       # Configure build environment
