@@ -71,7 +71,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ghcr.io/opengreenhousemanager/greenhouse_backend
+            ghcr.io/opengreenhousemanager/data_storage
       - name: Publish
         uses: docker/build-push-action@v4
         with:
@@ -90,7 +90,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ghcr.io/opengreenhousemanager/greenhouse_backend
+            ghcr.io/opengreenhousemanager/web_api
       - name: Publish
         uses: docker/build-push-action@v4
         with:
@@ -109,7 +109,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ghcr.io/opengreenhousemanager/greenhouse_backend
+            ghcr.io/opengreenhousemanager/auth_service
       - name: Publish
         uses: docker/build-push-action@v4
         with:
