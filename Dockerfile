@@ -7,8 +7,8 @@ COPY . .
 RUN apt-get update -y && apt-get upgrade -y && \ 
   apt-get install --no-install-recommends -y \
     pkg-config=1.8.1-1 \
-    libssl-dev=3.0.15-1~deb12u1 \
-    libpq-dev=15.12-0+deb12u2  && \
+    libssl-dev=3.0.16-1~deb12u1 \
+    libpq-dev=15.13-0+deb12u1  && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

@@ -17,7 +17,7 @@ RUN chown appuser /usr/local/bin/auth_service && \
 
 RUN apt-get update -y && apt-get upgrade -y && \ 
   apt-get install --no-install-recommends -y \
-    libpq-dev=15.12-0+deb12u2\
+    libpq-dev=15.13-0+deb12u1\
     ca-certificates=20230311\
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
