@@ -71,7 +71,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ghcr.io/opengreenhousemanager/greenhouse_backend
+            ghcr.io/opengreenhousemanager/data_storage
       - name: Publish
         uses: docker/build-push-action@v4
         with:
@@ -79,7 +79,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           file: services/data_storage_service/Dockerfile
-          tags: ghcr.io/opengreenhousemanager/greenhouse_backend/data_storage_service:latest
+          tags: ${{ steps.meta-data_storage.outputs.tags }}
           build-args: |
             BASE_IMAGE=ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
           labels: ${{ steps.meta-data_storage.outputs.labels }}
@@ -90,7 +90,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ghcr.io/opengreenhousemanager/greenhouse_backend
+            ghcr.io/opengreenhousemanager/web_api
       - name: Publish
         uses: docker/build-push-action@v4
         with:
@@ -98,7 +98,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           file: api/web/Dockerfile
-          tags: ghcr.io/opengreenhousemanager/greenhouse_backend/web_api:latest
+          tags: ${{ steps.meta-web_api.outputs.tags }}
           build-args: |
             BASE_IMAGE=ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
           labels: ${{ steps.meta-web_api.outputs.labels }}
@@ -109,7 +109,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ghcr.io/opengreenhousemanager/greenhouse_backend
+            ghcr.io/opengreenhousemanager/auth_service
       - name: Publish
         uses: docker/build-push-action@v4
         with:
@@ -117,7 +117,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           file: services/auth_service/Dockerfile
-          tags: ghcr.io/opengreenhousemanager/greenhouse_backend/auth_service:latest
+          tags: ${{ steps.meta-auth_service.outputs.tags }}
           build-args: |
             BASE_IMAGE=ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
           labels: ${{ steps.meta-auth_service.outputs.labels }}
