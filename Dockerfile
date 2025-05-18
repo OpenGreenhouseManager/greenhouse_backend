@@ -1,6 +1,4 @@
-ARG RUST_VERSION=1.87.0
-
-FROM rust:${RUST_VERSION}-slim-bookworm AS builder
+FROM rust-lang/rust:nightly AS builder
 WORKDIR /app
 COPY . .
 
