@@ -4,6 +4,8 @@ FROM rust:${RUST_VERSION}-slim-bookworm AS builder
 WORKDIR /app
 COPY . .
 
+ARG TARGETARCH
+
 RUN apt-get update -y && apt-get upgrade -y && \ 
   apt-get install --no-install-recommends -y \
     pkg-config=1.8.1-1 \
