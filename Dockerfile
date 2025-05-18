@@ -11,7 +11,7 @@ RUN apt-get update -y && apt-get upgrade -y && \
     libpq-dev=15.13-0+deb12u1  && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
-    rustup default nightly && \
+    rustup toolchain install nightly && \
     rustup update nightly
 
 
