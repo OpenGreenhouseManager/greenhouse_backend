@@ -8,7 +8,8 @@ RUN apt-get update -y && apt-get upgrade -y && \
     libssl-dev=3.0.16-1~deb12u1 \
     libpq-dev=15.13-0+deb12u1  && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
 
 
 COPY scripts/build-image-layer.sh /tmp/
