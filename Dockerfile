@@ -12,7 +12,8 @@ RUN apt-get update -y && apt-get upgrade -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     rustup toolchain install nightly && \
-    rustup update nightly
+    rustup update nightly && \
+    rustup default nightly
 
 
 COPY scripts/build-image-layer.sh /tmp/
