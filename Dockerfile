@@ -1,8 +1,10 @@
-ARG RUST_VERSION=1.86.0
+ARG RUST_VERSION=1.87.0
 
 FROM rust:${RUST_VERSION}-slim-bookworm AS builder
 WORKDIR /app
 COPY . .
+
+ARG TARGETARCH
 
 RUN apt-get update -y && apt-get upgrade -y && \ 
   apt-get install --no-install-recommends -y \
@@ -10,7 +12,10 @@ RUN apt-get update -y && apt-get upgrade -y && \
     libssl-dev=3.0.16-1~deb12u1 \
     libpq-dev=15.13-0+deb12u1  && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    rustup toolchain install nightly && \
+    rustup update nightly && \
+    rustup default nightly
 
 
 COPY scripts/build-image-layer.sh /tmp/
