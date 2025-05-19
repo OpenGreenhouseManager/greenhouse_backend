@@ -29,7 +29,7 @@ deps() {
   if [ -z "$TARGETARCH" ]; then
     cargo build -j 10 --release
   else
-    cargo build -j 10 --release --target "${BUILD_TARGET}"
+    cargo build -j 10 --release
   fi
 }
 
@@ -37,7 +37,7 @@ apps() {
   if [ -z "$TARGETARCH" ]; then
     cargo build -j 10 --release
   else
-    cargo build -j 10 --release --target "${BUILD_TARGET}"
+    cargo build -j 10 --release
   fi
 }
 
