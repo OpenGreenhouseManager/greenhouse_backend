@@ -23,6 +23,11 @@ pub(crate) async fn api_register_handler(
     cookie: Cookies,
     Json(register_request): Json<RegisterRequestDto>,
 ) -> Result<Response> {
+    tracing::trace!(
+        "Registering user with username: {} and one-time token: {}",
+        register_request.username,
+        register_request.one_time_token
+    );
     match service::register(&config.service_addresses.auth_service, register_request).await {
         Ok(token) => {
             let mut c = Cookie::new(AUTH_TOKEN, token.token.clone());
@@ -35,6 +40,7 @@ pub(crate) async fn api_register_handler(
         }
         Err(e) => {
             cookie.remove(Cookie::from(AUTH_TOKEN));
+            tracing::error!("Error during registration: {:?}", e);
             Err(e)
         }
     }
@@ -46,6 +52,7 @@ pub(crate) async fn api_login_handler(
     cookie: Cookies,
     Json(login_request): Json<LoginRequestDto>,
 ) -> Result<Response> {
+    tracing::trace!("Logging in user with username: {}", login_request.username,);
     match service::login(&config.service_addresses.auth_service, login_request).await {
         Ok(token) => {
             let mut c = Cookie::new(AUTH_TOKEN, token.token.clone());
@@ -58,6 +65,7 @@ pub(crate) async fn api_login_handler(
         }
         Err(e) => {
             cookie.remove(Cookie::from(AUTH_TOKEN));
+            tracing::error!("Error during login: {:?}", e);
             Err(e)
         }
     }

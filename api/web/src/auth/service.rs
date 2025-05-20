@@ -27,6 +27,13 @@ pub async fn register(
                 scope.set_context("username", sentry::protocol::Context::Other(map));
             });
 
+            tracing::error!(
+                "Error in post to service: {:?} with username: {} for url {}",
+                e,
+                register_request.username,
+                base_ulr
+            );
+
             sentry::capture_error(&e);
             Error::InternalError
         })?;
@@ -38,6 +45,8 @@ pub async fn register(
             scope.set_context("username", sentry::protocol::Context::Other(map));
         });
         sentry::capture_error(&e);
+
+        tracing::error!("Error in response json: {:?}", e,);
 
         Error::InternalError
     })
@@ -60,6 +69,14 @@ pub async fn login(base_ulr: &str, login_request: LoginRequestDto) -> Result<Log
                 scope.set_context("username", sentry::protocol::Context::Other(map));
             });
             sentry::capture_error(&e);
+
+            tracing::error!(
+                "Error in post to service: {:?} with username: {} for url {}",
+                e,
+                login_request.username,
+                base_ulr
+            );
+
             Error::InternalError
         })?;
     resp.json().await.map_err(|e| {
@@ -67,6 +84,9 @@ pub async fn login(base_ulr: &str, login_request: LoginRequestDto) -> Result<Log
             scope.set_extra("username", login_request.username.into());
         });
         sentry::capture_error(&e);
+
+        tracing::error!("Error in response json: {:?}", e,);
+
         Error::InternalError
     })
 }
@@ -82,6 +102,14 @@ pub async fn check_token(base_ulr: &str, token: &str) -> Result<()> {
         .await
         .map_err(|e| {
             sentry::capture_error(&e);
+
+            tracing::error!(
+                "Error in post to service: {:?} with token: {} for url {}",
+                e,
+                token,
+                base_ulr
+            );
+
             Error::InternalError
         })?;
     if resp.status().is_success() {

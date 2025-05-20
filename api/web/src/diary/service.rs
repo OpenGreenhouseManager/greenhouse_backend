@@ -14,10 +14,21 @@ pub async fn create_diary_entry(base_ulr: &str, entry: PostDiaryEntryDtoRequest)
         .await
         .map_err(|e| {
             sentry::capture_error(&e);
+
+            tracing::error!(
+                "Error in post to service: {:?} with entry: {:?} for url {}",
+                e,
+                entry,
+                base_ulr
+            );
+
             Error::InternalError
         })?;
     resp.error_for_status().map_err(|e| {
         sentry::capture_error(&e);
+
+        tracing::error!("Error from service: {:?} for entry {:?}", e, entry);
+
         Error::InternalError
     })?;
 
@@ -36,10 +47,21 @@ pub async fn update_diary_entry(
         .await
         .map_err(|e| {
             sentry::capture_error(&e);
+
+            tracing::error!(
+                "Error in put to service: {:?} with entry: {:?} for url {}",
+                e,
+                update,
+                base_ulr
+            );
+
             Error::InternalError
         })?;
     resp.error_for_status().map_err(|e| {
         sentry::capture_error(&e);
+
+        tracing::error!("Error from service: {:?} for entry {:?}", e, update);
+
         Error::InternalError
     })?;
 
@@ -53,10 +75,21 @@ pub async fn get_diary_entry(base_ulr: &str, id: Uuid) -> Result<DiaryEntryRespo
         .await
         .map_err(|e| {
             sentry::capture_error(&e);
+
+            tracing::error!(
+                "Error in get to service: {:?} with id: {:?} for url {}",
+                e,
+                id,
+                base_ulr
+            );
+
             Error::InternalError
         })?;
     resp.json().await.map_err(|e| {
         sentry::capture_error(&e);
+
+        tracing::error!("Error in get to service: {:?} with id: {:?}", e, id);
+
         Error::InternalError
     })
 }
@@ -68,10 +101,20 @@ pub async fn get_diary(base_ulr: &str, start: String, end: String) -> Result<Get
         .await
         .map_err(|e| {
             sentry::capture_error(&e);
+
+            tracing::error!(
+                "Error in get to service: {:?} with start: {:?} and end: {:?} for url {}",
+                e,
+                start,
+                end,
+                base_ulr
+            );
+
             Error::InternalError
         })?;
     resp.json().await.map_err(|e| {
         sentry::capture_error(&e);
+        tracing::error!("Error in get to service: {:?}", e,);
         Error::InternalError
     })
 }

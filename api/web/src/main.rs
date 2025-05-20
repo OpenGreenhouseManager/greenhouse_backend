@@ -71,6 +71,7 @@ fn main() {
                 .allow_credentials(true)
                 .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
                 .allow_origin([
+                    "0.0.0.0".parse().unwrap(),
                     "http://localhost:4200".parse().unwrap(),
                     "https://localhost:5001".parse().unwrap(),
                 ]);

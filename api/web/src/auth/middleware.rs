@@ -26,7 +26,7 @@ pub(crate) async fn check_token(
         return next.run(req).await;
     }
 
-    sentry::capture_error(&Error::CookieNotFound);
     cookies.remove(Cookie::from(AUTH_TOKEN));
+    tracing::trace!("Invalid Cookie");
     Response::builder().status(403).body(Body::empty()).unwrap()
 }
