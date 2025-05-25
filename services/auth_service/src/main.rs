@@ -2,22 +2,19 @@ pub use self::error::{Error, Result};
 
 extern crate diesel_migrations;
 use crate::diesel_migrations::MigrationHarness;
-use axum::{Router, extract::FromRef, routing::post};
+use axum::extract::FromRef;
 use core::panic;
 use diesel::{Connection, PgConnection};
 use diesel_async::{AsyncPgConnection, pooled_connection::AsyncDieselConnectionManager};
 use diesel_migrations::{EmbeddedMigrations, embed_migrations};
-use greenhouse_core::auth_service_dto::endpoints;
-use router::auth_router::{check_token, generate_one_time_token, login, register, register_admin};
 use serde::Deserialize;
-use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+mod app;
 pub mod database;
 mod error;
 mod router;
 pub mod token;
-
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
 #[derive(Clone, Deserialize)]
@@ -76,19 +73,7 @@ fn main() {
                 .await
                 .unwrap();
 
-            let state = AppState { config, pool };
-
-            let app = Router::new()
-                .route(endpoints::REGISTER, post(register))
-                .route(endpoints::LOGIN, post(login))
-                .route(endpoints::CHECK_TOKEN, post(check_token))
-                .route(endpoints::ADMIN_REGISTER, post(register_admin))
-                .route(
-                    endpoints::GENERATE_ONE_TIME_TOKEN,
-                    post(generate_one_time_token),
-                )
-                .layer(TraceLayer::new_for_http())
-                .with_state(state);
+            let app = app::app(config, pool);
 
             let listener = tokio::net::TcpListener::bind(url).await.unwrap();
             tracing::info!("listening on {}", listener.local_addr().unwrap());
