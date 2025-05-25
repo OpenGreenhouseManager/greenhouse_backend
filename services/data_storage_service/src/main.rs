@@ -2,18 +2,16 @@ pub use self::error::{Error, Result};
 
 extern crate diesel_migrations;
 use crate::diesel_migrations::MigrationHarness;
-use axum::{Router, extract::FromRef};
+use axum::extract::FromRef;
 use core::panic;
 use diesel::{Connection, PgConnection};
 use diesel_async::{AsyncPgConnection, pooled_connection::AsyncDieselConnectionManager};
 use diesel_migrations::{EmbeddedMigrations, embed_migrations};
-use greenhouse_core::data_storage_service_dto::{
-    alert_dto::endpoints::ALERT, diary_dtos::endpoints::DIARY,
-};
+
 use serde::Deserialize;
-use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+mod app;
 pub mod database;
 mod error;
 mod router;
@@ -74,12 +72,7 @@ fn main() {
                 .await
                 .unwrap();
 
-            let state = AppState { config, pool };
-
-            let app = Router::new()
-                .nest(ALERT, router::alert_router::routes(state.clone()))
-                .nest(DIARY, router::diary_entry_router::routes(state.clone()))
-                .layer(TraceLayer::new_for_http());
+            let app = app::app(config, pool);
 
             let listener = tokio::net::TcpListener::bind(url).await.unwrap();
             tracing::info!("listening on {}", listener.local_addr().unwrap());
