@@ -5,31 +5,14 @@ use axum::{
     response::IntoResponse,
     routing::{get, post},
 };
-use chrono::{DateTime, Utc};
 use greenhouse_core::data_storage_service_dto::alert_dto::{
-    alert::AlertDto, get_aggrigated_alert::AlertAggrigatedDto, post_create_alert::CreateAlertDto,
-};
-use serde::Deserialize;
-use uuid::Uuid;
-
-use crate::{
-    AppState,
-    database::{alert_models::Alert, severity_models::Severity},
+    alert::AlertDto,
+    get_aggrigated_alert::AlertAggrigatedDto,
+    post_create_alert::CreateAlertDto,
+    query::{AlertQuery, IntervalQuery},
 };
 
-#[derive(Deserialize)]
-pub struct AlertQuery {
-    pub severity: Option<Severity>,
-    pub identifier: Option<String>,
-    pub created_at: Option<DateTime<Utc>>,
-    pub datasource_id: Option<Uuid>,
-}
-
-#[derive(Deserialize)]
-pub struct IntervalQuery {
-    pub start: Option<DateTime<Utc>>,
-    pub end: Option<DateTime<Utc>>,
-}
+use crate::{AppState, database::alert_models::Alert};
 
 pub(crate) fn routes(state: AppState) -> Router {
     Router::new()
@@ -41,9 +24,9 @@ pub(crate) fn routes(state: AppState) -> Router {
 
 async fn filter(
     State(AppState { config: _, pool }): State<AppState>,
-    query: Query<AlertQuery>,
+    Query(query): Query<AlertQuery>,
 ) -> Result<impl IntoResponse> {
-    let a: Vec<AlertDto> = Alert::query(query.0, &pool)
+    let a: Vec<AlertDto> = Alert::query(query, &pool)
         .await?
         .into_iter()
         .map(|a| a.into())

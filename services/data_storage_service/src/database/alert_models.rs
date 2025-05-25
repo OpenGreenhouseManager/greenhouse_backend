@@ -2,14 +2,15 @@ use super::aggrigated_alert::AggrigatedAlert;
 use super::severity_models::Severity;
 use super::{Error, Result, schema::alert};
 use crate::Pool;
-use crate::router::alert_router::{AlertQuery, IntervalQuery};
 use chrono::{DateTime, Utc};
 use diesel::*;
 use diesel_async::RunQueryDsl;
-use greenhouse_core::data_storage_service_dto::alert_dto::alert::AlertDto;
-use greenhouse_core::data_storage_service_dto::alert_dto::post_create_alert::CreateAlertDto;
+use greenhouse_core::data_storage_service_dto::alert_dto::{
+    alert::AlertDto,
+    post_create_alert::CreateAlertDto,
+    query::{AlertQuery, IntervalQuery},
+};
 use uuid::Uuid;
-
 #[derive(Clone, Queryable, Selectable, Insertable)]
 #[diesel(table_name = crate::database::schema::alert)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
@@ -98,7 +99,23 @@ impl Alert {
             query = query.filter(alert::datasource_id.eq(datasource_id));
         }
         if let Some(severity) = alert_query.severity {
-            query = query.filter(alert::severity.eq(severity));
+            let query_severity;
+            match severity {
+                greenhouse_core::data_storage_service_dto::alert_dto::alert::Severity::Info => {
+                    query_severity = Severity::Info
+                }
+                greenhouse_core::data_storage_service_dto::alert_dto::alert::Severity::Warning => {
+                    query_severity = Severity::Warning
+                }
+                greenhouse_core::data_storage_service_dto::alert_dto::alert::Severity::Error => {
+                    query_severity = Severity::Error
+                }
+                greenhouse_core::data_storage_service_dto::alert_dto::alert::Severity::Fatal => {
+                    query_severity = Severity::Fatal
+                }
+            }
+
+            query = query.filter(alert::severity.eq(query_severity));
         }
         if let Some(identifier) = alert_query.identifier {
             query = query.filter(alert::identifier.eq(identifier));

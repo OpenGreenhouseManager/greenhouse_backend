@@ -11,6 +11,13 @@ axum = { workspace = true, optional = true }
 derive_more = { workspace = true }
 serde = { workspace = true }
 serde_json ={ workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+uuid = { workspace = true, features = [
+    "v4",                
+    "fast-rng",          
+    "macro-diagnostics", 
+    "serde"
+] }
 
 [features]
 default = ["api_web_dto", "api_script_dto", "auth_service_dto", "smart_device_dto", "smart_device_interface", "data_storage_service_dto"]

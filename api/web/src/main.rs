@@ -8,6 +8,7 @@ use serde::Deserialize;
 use tower_cookies::CookieManagerLayer;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+pub mod alert;
 pub mod auth;
 pub mod diary;
 pub mod helper;
@@ -80,6 +81,7 @@ fn main() {
                 .nest("/api", test::router::routes(state.clone()))
                 .nest("/api/settings", settings::router::routes(state.clone()))
                 .nest("/api/diary", diary::router::routes(state.clone()))
+                .nest("/api/alert", alert::router::routes(state.clone()))
                 .layer(middleware::from_fn_with_state(state.clone(), check_token))
                 .merge(auth::router::routes(state))
                 .layer(CookieManagerLayer::new())
