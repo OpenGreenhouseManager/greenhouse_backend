@@ -1,41 +1,13 @@
-pub use self::error::{Error, Result};
-
 extern crate diesel_migrations;
 use crate::diesel_migrations::MigrationHarness;
-use axum::extract::FromRef;
+use auth_service::{Config, Pool};
 use core::panic;
 use diesel::{Connection, PgConnection};
-use diesel_async::{AsyncPgConnection, pooled_connection::AsyncDieselConnectionManager};
+use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_migrations::{EmbeddedMigrations, embed_migrations};
-use serde::Deserialize;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-mod app;
-pub mod database;
-mod error;
-mod router;
-pub mod token;
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
-
-#[derive(Clone, Deserialize)]
-struct Config {
-    #[serde(rename = "SERVICE_PORT")]
-    service_port: u32,
-    #[serde(rename = "DATABASE_URL")]
-    database_url: String,
-    #[serde(rename = "JWT_SECRET")]
-    jwt_secret: String,
-    #[serde(rename = "SENTRY_URL")]
-    sentry_url: String,
-}
-
-type Pool = bb8::Pool<AsyncDieselConnectionManager<AsyncPgConnection>>;
-
-#[derive(FromRef, Clone)]
-struct AppState {
-    config: Config,
-    pool: Pool,
-}
 
 fn main() {
     let config = load_config();
@@ -73,7 +45,7 @@ fn main() {
                 .await
                 .unwrap();
 
-            let app = app::app(config, pool);
+            let app = auth_service::app(config, pool);
 
             let listener = tokio::net::TcpListener::bind(url).await.unwrap();
             tracing::info!("listening on {}", listener.local_addr().unwrap());
