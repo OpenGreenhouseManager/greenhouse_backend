@@ -1,0 +1,19 @@
+[package]
+name = "integration-tests"
+version = "0.1.0"
+edition = "2024"
+
+[dev-dependencies]
+web_api = { path = "../api/web" }
+auth_service = { path = "../services/auth_service" }
+data_storage_service = { path = "../services/data_storage_service" }
+sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio", "macros"] }
+reqwest = { version = "0.12.15", features = ["json"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+testcontainers = "0.24"
+axum = { workspace = true, features = ["tracing"]}
+serde = { workspace = true }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+once_cell = "1.21.3"
+diesel =  { workspace = true, features = [ "uuid", "postgres" ] }
+diesel-async =  { workspace = true }

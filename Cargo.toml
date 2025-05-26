@@ -4,7 +4,7 @@ members = [
     "api/script",
     "api/web",
     "examples/hybrid_device",
-    "greenhouse_core",
+    "greenhouse_core", "integration-tests",
     "services/auth_service",
     "services/data_storage_service"]
 default-members = [
