@@ -1,13 +1,43 @@
 use auth::middleware::check_token;
+use axum::extract::FromRef;
 use axum::{Router, middleware};
 use reqwest::{
     Method,
     header::{ACCEPT, AUTHORIZATION},
 };
+use serde::Deserialize;
 use tower_cookies::CookieManagerLayer;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
-use crate::{AppState, Config, alert, auth, diary, settings, test};
+pub mod alert;
+pub mod auth;
+pub mod diary;
+pub mod helper;
+pub mod settings;
+pub mod test;
+
+#[derive(Clone, Deserialize)]
+pub struct ServiceAddresses {
+    #[serde(rename = "AUTH_SERVICE")]
+    pub auth_service: String,
+    #[serde(rename = "DATA_STORAGE_SERVICE")]
+    pub data_storage_service: String,
+}
+
+#[derive(Clone, Deserialize)]
+pub struct Config {
+    #[serde(rename = "API_PORT")]
+    pub api_port: u32,
+    #[serde(rename = "SERVICE_ADDRESSES")]
+    pub service_addresses: ServiceAddresses,
+    #[serde(rename = "SENTRY_URL")]
+    pub sentry_url: String,
+}
+
+#[derive(FromRef, Clone)]
+struct AppState {
+    config: Config,
+}
 
 pub fn app(config: Config) -> Router {
     let state = AppState { config };

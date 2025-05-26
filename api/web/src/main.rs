@@ -1,36 +1,5 @@
-use axum::extract::FromRef;
-use serde::Deserialize;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-pub mod alert;
-mod app;
-pub mod auth;
-pub mod diary;
-pub mod helper;
-pub mod settings;
-pub mod test;
-
-#[derive(Clone, Deserialize)]
-struct ServiceAddresses {
-    #[serde(rename = "AUTH_SERVICE")]
-    auth_service: String,
-    #[serde(rename = "DATA_STORAGE_SERVICE")]
-    data_storage_service: String,
-}
-
-#[derive(Clone, Deserialize)]
-struct Config {
-    #[serde(rename = "API_PORT")]
-    api_port: u32,
-    #[serde(rename = "SERVICE_ADDRESSES")]
-    service_addresses: ServiceAddresses,
-    #[serde(rename = "SENTRY_URL")]
-    sentry_url: String,
-}
-
-#[derive(FromRef, Clone)]
-struct AppState {
-    config: Config,
-}
+use web_api::Config;
 
 fn main() {
     let config = load_config();
@@ -60,7 +29,7 @@ fn main() {
             // build our application with a route
             let url = format!("0.0.0.0:{}", config.api_port);
 
-            let app = app::app(config);
+            let app = web_api::app(config);
 
             // run it
             let listener = tokio::net::TcpListener::bind(url).await.unwrap();

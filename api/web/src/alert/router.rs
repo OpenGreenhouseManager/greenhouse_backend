@@ -37,7 +37,6 @@ async fn create_alert(
     State(AppState { config }): State<AppState>,
     Json(alert): Json<CreateAlertDto>,
 ) -> Result<impl IntoResponse> {
-    let entry =
-        service::create_alert(&config.service_addresses.data_storage_service, alert).await?;
+    service::create_alert(&config.service_addresses.data_storage_service, alert).await?;
     Ok(())
 }
