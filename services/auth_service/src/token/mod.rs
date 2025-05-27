@@ -1,19 +1,19 @@
-pub use self::error::{Error, Result};
+pub(crate) use self::error::Error;
 mod error;
 
-pub mod one_time_token {
-    pub use super::error::{Error, Result};
+pub(crate) mod one_time_token {
+    pub(crate) use super::error::{Error, Result};
 
     use std::hash::{DefaultHasher, Hash, Hasher};
 
-    pub fn generate_one_time_token(user_name: &str, secret: &str) -> u64 {
+    pub(crate) fn generate_one_time_token(user_name: &str, secret: &str) -> u64 {
         let mut hasher = DefaultHasher::new();
         let str = String::from(user_name) + secret;
         str.hash(&mut hasher);
         hasher.finish()
     }
 
-    pub fn check_one_time_token(user_name: &str, token: u64, secret: &str) -> Result<()> {
+    pub(crate) fn check_one_time_token(user_name: &str, token: u64, secret: &str) -> Result<()> {
         let new_token = generate_one_time_token(user_name, secret);
         if new_token == token {
             return Ok(());
@@ -22,14 +22,14 @@ pub mod one_time_token {
     }
 }
 
-pub mod user_token {
-    pub use super::error::{Error, Result};
+pub(crate) mod user_token {
+    pub(crate) use super::error::{Error, Result};
     use chrono::Utc;
     use greenhouse_core::auth_service_dto::user_token::UserToken;
     use jsonwebtoken::{EncodingKey, Header};
     static THREE_HOUR: i64 = 60 * 60 * 3;
 
-    pub fn generate_token(user_name: &str, role: &str, secret: &str) -> Result<String> {
+    pub(crate) fn generate_token(user_name: &str, role: &str, secret: &str) -> Result<String> {
         let now = Utc::now().timestamp_nanos_opt().ok_or(Error::InvalidTime)? / 1_000_000_000;
         let payload = UserToken {
             iat: now,
@@ -59,7 +59,7 @@ pub mod user_token {
         })
     }
 
-    pub fn get_claims(token: &str, secret: &str) -> Result<UserToken> {
+    pub(crate) fn get_claims(token: &str, secret: &str) -> Result<UserToken> {
         Ok(jsonwebtoken::decode::<UserToken>(
             token,
             &jsonwebtoken::DecodingKey::from_secret(secret.as_bytes()),

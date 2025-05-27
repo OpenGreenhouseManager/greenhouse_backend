@@ -1,9 +1,9 @@
 use serde::Serialize;
 
-pub type Result<T> = core::result::Result<T, Error>;
+pub(crate) type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, Serialize, PartialEq)]
-pub enum Error {
+pub(crate) enum Error {
     InvalidTime,
     JwtEncode,
     JwtDecode,

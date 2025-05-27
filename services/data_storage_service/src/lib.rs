@@ -1,5 +1,4 @@
 extern crate diesel_migrations;
-pub use self::error::{Error, Result};
 use axum::Router;
 use axum::extract::FromRef;
 use diesel_async::{AsyncPgConnection, pooled_connection::AsyncDieselConnectionManager};
@@ -9,8 +8,7 @@ use greenhouse_core::data_storage_service_dto::{
 use serde::Deserialize;
 use tower_http::trace::TraceLayer;
 
-pub mod database;
-mod error;
+pub(crate) mod database;
 mod router;
 
 #[derive(Clone, Deserialize)]

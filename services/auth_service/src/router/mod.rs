@@ -1,3 +1,3 @@
-pub use self::error::{Error, Result};
-pub mod auth_router;
+pub(crate) use self::error::{Error, Result};
+pub(crate) mod auth_router;
 mod error;

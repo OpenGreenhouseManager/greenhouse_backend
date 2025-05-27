@@ -10,7 +10,7 @@ use serialize::{IsNull, Output, ToSql};
 
 #[derive(Debug, Clone, PartialEq, FromSqlRow, AsExpression, Eq, Deserialize)]
 #[diesel(sql_type = sql_types::Severity)]
-pub enum Severity {
+pub(crate) enum Severity {
     Info,
     Warning,
     Error,

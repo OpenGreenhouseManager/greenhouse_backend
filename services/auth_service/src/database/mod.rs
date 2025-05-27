@@ -1,4 +1,4 @@
 mod error;
-pub mod models;
-pub mod schema;
-pub use self::error::{Error, Result};
+pub(crate) mod models;
+pub(crate) mod schema;
+pub(crate) use self::error::{Error, Result};

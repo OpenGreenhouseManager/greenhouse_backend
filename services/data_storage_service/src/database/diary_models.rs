@@ -9,17 +9,17 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Queryable, Selectable, AsChangeset, Insertable)]
 #[diesel(table_name = crate::database::schema::diary_entry)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct DiaryEntry {
+pub(crate) struct DiaryEntry {
     id: Uuid,
-    pub entry_date: DateTime<Utc>,
-    pub title: String,
-    pub content: String,
+    pub(crate) entry_date: DateTime<Utc>,
+    pub(crate) title: String,
+    pub(crate) content: String,
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
 
 impl DiaryEntry {
-    pub fn new(entry_date: DateTime<Utc>, title: &str, content: &str) -> Self {
+    pub(crate) fn new(entry_date: DateTime<Utc>, title: &str, content: &str) -> Self {
         let now = chrono::Utc::now();
         Self {
             id: Uuid::new_v4(),
@@ -31,7 +31,7 @@ impl DiaryEntry {
         }
     }
 
-    pub async fn find_by_id(id: Uuid, pool: &Pool) -> Result<Self> {
+    pub(crate) async fn find_by_id(id: Uuid, pool: &Pool) -> Result<Self> {
         let mut conn = pool.get().await.map_err(|e| {
             sentry::capture_error(&e);
             Error::DatabaseConnection
@@ -42,11 +42,11 @@ impl DiaryEntry {
             .await
             .map_err(|e| {
                 sentry::capture_error(&e);
-                Error::FindError
+                Error::Find
             })
     }
 
-    pub async fn find_by_date_range(
+    pub(crate) async fn find_by_date_range(
         start: DateTime<Utc>,
         end: DateTime<Utc>,
         pool: &Pool,
@@ -65,11 +65,11 @@ impl DiaryEntry {
             .await
             .map_err(|e| {
                 sentry::capture_error(&e);
-                Error::FindError
+                Error::Find
             })
     }
 
-    pub async fn flush(&mut self, pool: &Pool) -> Result<()> {
+    pub(crate) async fn flush(&mut self, pool: &Pool) -> Result<()> {
         let mut conn = pool.get().await.map_err(|e| {
             sentry::capture_error(&e);
             Error::DatabaseConnection
@@ -85,32 +85,32 @@ impl DiaryEntry {
             .await
             .map_err(|e| {
                 sentry::capture_error(&e);
-                Error::CreationError
+                Error::Creation
             })?;
 
         Ok(())
     }
 
-    pub async fn delete(&self, pool: &Pool) -> Result<()> {
-        let mut conn: bb8::PooledConnection<
-            '_,
-            diesel_async::pooled_connection::AsyncDieselConnectionManager<
-                diesel_async::AsyncPgConnection,
-            >,
-        > = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
-        diesel::delete(diary_entry::table.filter(diary_entry::id.eq(self.id)))
-            .execute(&mut conn)
-            .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::CreationError
-            })?;
-
-        Ok(())
-    }
+    //pub(crate) async fn delete(&self, pool: &Pool) -> Result<()> {
+    //    let mut conn: bb8::PooledConnection<
+    //        '_,
+    //        diesel_async::pooled_connection::AsyncDieselConnectionManager<
+    //            diesel_async::AsyncPgConnection,
+    //        >,
+    //    > = pool.get().await.map_err(|e| {
+    //        sentry::capture_error(&e);
+    //        Error::DatabaseConnection
+    //    })?;
+    //    diesel::delete(diary_entry::table.filter(diary_entry::id.eq(self.id)))
+    //        .execute(&mut conn)
+    //        .await
+    //        .map_err(|e| {
+    //            sentry::capture_error(&e);
+    //            Error::CreationError
+    //        })?;
+    //
+    //    Ok(())
+    //}
 }
 
 impl From<DiaryEntry> for DiaryEntryResponseDto {

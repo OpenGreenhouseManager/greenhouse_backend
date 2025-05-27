@@ -3,7 +3,6 @@ use crate::router::auth_router::{
 };
 
 extern crate diesel_migrations;
-pub use self::error::{Error, Result};
 use axum::extract::FromRef;
 use axum::{Router, routing::post};
 use diesel::{Connection, PgConnection};
@@ -14,10 +13,9 @@ use greenhouse_core::auth_service_dto::endpoints;
 use serde::Deserialize;
 use tower_http::trace::TraceLayer;
 
-pub mod database;
-mod error;
+pub(crate) mod database;
 mod router;
-pub mod token;
+pub(crate) mod token;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
