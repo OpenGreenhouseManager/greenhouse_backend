@@ -184,7 +184,7 @@ async fn start_web_api() -> tokio::task::JoinHandle<Result<(), std::io::Error>> 
 //    hasher.finish()
 //}
 
-pub async fn login() -> String {
+pub async fn admin_login() -> String {
     register_admin().await;
 
     api_login().await
