@@ -7,7 +7,7 @@ use greenhouse_core::auth_service_dto::{
     token::TokenRequestDto,
 };
 
-pub async fn register(
+pub(crate) async fn register(
     base_ulr: &str,
     register_request: RegisterRequestDto,
 ) -> Result<RegisterResponseDto> {
@@ -35,7 +35,7 @@ pub async fn register(
             );
 
             sentry::capture_error(&e);
-            Error::InternalError
+            Error::Internal
         })?;
     resp.json().await.map_err(|e| {
         sentry::configure_scope(|scope| {
@@ -48,11 +48,14 @@ pub async fn register(
 
         tracing::error!("Error in response json: {:?}", e,);
 
-        Error::InternalError
+        Error::Internal
     })
 }
 
-pub async fn login(base_ulr: &str, login_request: LoginRequestDto) -> Result<LoginResponseDto> {
+pub(crate) async fn login(
+    base_ulr: &str,
+    login_request: LoginRequestDto,
+) -> Result<LoginResponseDto> {
     let resp = reqwest::Client::new()
         .post(base_ulr.to_string() + endpoints::LOGIN)
         .json(&login_request)
@@ -77,7 +80,7 @@ pub async fn login(base_ulr: &str, login_request: LoginRequestDto) -> Result<Log
                 base_ulr
             );
 
-            Error::InternalError
+            Error::Internal
         })?;
     resp.json().await.map_err(|e| {
         sentry::configure_scope(|scope| {
@@ -87,11 +90,11 @@ pub async fn login(base_ulr: &str, login_request: LoginRequestDto) -> Result<Log
 
         tracing::error!("Error in response json: {:?}", e,);
 
-        Error::InternalError
+        Error::Internal
     })
 }
 
-pub async fn check_token(base_ulr: &str, token: &str) -> Result<()> {
+pub(crate) async fn check_token(base_ulr: &str, token: &str) -> Result<()> {
     let resp = reqwest::Client::new()
         .post(base_ulr.to_string() + endpoints::CHECK_TOKEN)
         .json(&TokenRequestDto {
@@ -110,7 +113,7 @@ pub async fn check_token(base_ulr: &str, token: &str) -> Result<()> {
                 base_ulr
             );
 
-            Error::InternalError
+            Error::Internal
         })?;
     if resp.status().is_success() {
         return Ok(());

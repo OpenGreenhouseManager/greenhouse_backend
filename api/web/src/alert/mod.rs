@@ -1,4 +1,4 @@
 mod error;
-pub mod router;
-pub mod service;
-pub use self::error::{Error, Result};
+pub(crate) mod router;
+pub(crate) mod service;
+pub(crate) use self::error::{Error, Result};

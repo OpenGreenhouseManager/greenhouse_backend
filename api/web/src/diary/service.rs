@@ -6,7 +6,10 @@ use uuid::Uuid;
 
 use crate::diary::{Error, Result};
 
-pub async fn create_diary_entry(base_ulr: &str, entry: PostDiaryEntryDtoRequest) -> Result<()> {
+pub(crate) async fn create_diary_entry(
+    base_ulr: &str,
+    entry: PostDiaryEntryDtoRequest,
+) -> Result<()> {
     let resp = reqwest::Client::new()
         .post(base_ulr.to_string() + endpoints::DIARY)
         .json(&entry)
@@ -35,7 +38,7 @@ pub async fn create_diary_entry(base_ulr: &str, entry: PostDiaryEntryDtoRequest)
     Ok(())
 }
 
-pub async fn update_diary_entry(
+pub(crate) async fn update_diary_entry(
     base_ulr: &str,
     id: Uuid,
     update: PutDiaryEntryDtoRequest,
@@ -68,7 +71,7 @@ pub async fn update_diary_entry(
     Ok(())
 }
 
-pub async fn get_diary_entry(base_ulr: &str, id: Uuid) -> Result<DiaryEntryResponseDto> {
+pub(crate) async fn get_diary_entry(base_ulr: &str, id: Uuid) -> Result<DiaryEntryResponseDto> {
     let resp = reqwest::Client::new()
         .get(base_ulr.to_string() + endpoints::DIARY + "/" + &id.to_string())
         .send()
@@ -94,7 +97,11 @@ pub async fn get_diary_entry(base_ulr: &str, id: Uuid) -> Result<DiaryEntryRespo
     })
 }
 
-pub async fn get_diary(base_ulr: &str, start: String, end: String) -> Result<GetDiaryResponseDto> {
+pub(crate) async fn get_diary(
+    base_ulr: &str,
+    start: String,
+    end: String,
+) -> Result<GetDiaryResponseDto> {
     let resp = reqwest::Client::new()
         .get(base_ulr.to_string() + endpoints::DIARY + "/" + &start + "/" + &end)
         .send()

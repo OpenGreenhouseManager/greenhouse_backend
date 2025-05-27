@@ -8,7 +8,7 @@ use greenhouse_core::data_storage_service_dto::alert_dto::{
 
 use crate::alert::{Error, Result};
 
-pub async fn get_filtered_alert(base_ulr: &str, query: AlertQuery) -> Result<Vec<AlertDto>> {
+pub(crate) async fn get_filtered_alert(base_ulr: &str, query: AlertQuery) -> Result<Vec<AlertDto>> {
     let resp = reqwest::Client::new()
         .get(base_ulr.to_string() + endpoints::ALERT + "/filter")
         .query(&query)
@@ -35,7 +35,7 @@ pub async fn get_filtered_alert(base_ulr: &str, query: AlertQuery) -> Result<Vec
     })
 }
 
-pub async fn get_alert_subset(
+pub(crate) async fn get_alert_subset(
     base_ulr: &str,
     query: IntervalQuery,
 ) -> Result<Vec<AlertAggrigatedDto>> {
@@ -65,7 +65,7 @@ pub async fn get_alert_subset(
     })
 }
 
-pub async fn create_alert(base_ulr: &str, alert: CreateAlertDto) -> Result<AlertDto> {
+pub(crate) async fn create_alert(base_ulr: &str, alert: CreateAlertDto) -> Result<AlertDto> {
     let resp = reqwest::Client::new()
         .post(base_ulr.to_string() + endpoints::ALERT)
         .json(&alert)

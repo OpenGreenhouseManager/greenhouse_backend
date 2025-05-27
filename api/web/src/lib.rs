@@ -9,12 +9,12 @@ use serde::Deserialize;
 use tower_cookies::CookieManagerLayer;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
-pub mod alert;
-pub mod auth;
-pub mod diary;
-pub mod helper;
-pub mod settings;
-pub mod test;
+pub(crate) mod alert;
+pub(crate) mod auth;
+pub(crate) mod diary;
+pub(crate) mod helper;
+pub(crate) mod settings;
+pub(crate) mod test;
 
 #[derive(Clone, Deserialize)]
 pub struct ServiceAddresses {
