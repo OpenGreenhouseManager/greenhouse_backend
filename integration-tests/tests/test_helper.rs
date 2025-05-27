@@ -1,19 +1,15 @@
-use chrono::Utc;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use greenhouse_core::auth_service_dto::register_admin::RegisterAdminRequestDto;
-use greenhouse_core::auth_service_dto::user_token::UserToken;
-use jsonwebtoken::{EncodingKey, Header};
-use std::hash::{DefaultHasher, Hash, Hasher};
 use testcontainers::{ContainerAsync, ImageExt};
 use testcontainers_modules::postgres::{self, Postgres};
 use testcontainers_modules::testcontainers::runners::AsyncRunner;
 use tokio::task::JoinHandle;
 
-pub(crate) const TEST_USERNAME: &str = "testuser";
-pub(crate) const TEST_PASSWORD: &str = "testpassword";
-pub(crate) const AUTH_SECRET: &str = "testpassword";
+pub const TEST_USERNAME: &str = "testuser";
+pub const TEST_PASSWORD: &str = "testpassword";
+pub const AUTH_SECRET: &str = "testpassword";
 
-pub(crate) struct TestContext {
+pub struct TestContext {
     auth_postgres_container: Option<ContainerAsync<Postgres>>,
     data_storage_postgres_container: Option<ContainerAsync<Postgres>>,
     auth_service: Option<JoinHandle<Result<(), std::io::Error>>>,
@@ -22,7 +18,7 @@ pub(crate) struct TestContext {
 }
 
 impl TestContext {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             auth_postgres_container: None,
             data_storage_postgres_container: None,
@@ -32,7 +28,7 @@ impl TestContext {
         }
     }
 
-    pub(crate) async fn start_all_services(&mut self) {
+    pub async fn start_all_services(&mut self) {
         if self.data_storage_postgres_container.is_none() {
             self.data_storage_postgres_container = Some(start_data_storage_postgres().await);
         }
@@ -76,7 +72,7 @@ impl TestContext {
         }
     }
 
-    pub(crate) async fn stop(&self) {
+    pub async fn stop(&self) {
         if let Some(container) = &self.auth_postgres_container {
             container.stop().await.unwrap();
         }
@@ -92,6 +88,12 @@ impl TestContext {
         if let Some(web_api) = &self.web_api {
             web_api.abort();
         }
+    }
+}
+
+impl Default for TestContext {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -175,20 +177,20 @@ async fn start_web_api() -> tokio::task::JoinHandle<Result<(), std::io::Error>> 
     tokio::spawn(async move { axum::serve(listener, api_app).await })
 }
 
-pub(crate) fn generate_one_time_token(user_name: &str, secret: &str) -> u64 {
-    let mut hasher = DefaultHasher::new();
-    let str = String::from(user_name) + secret;
-    str.hash(&mut hasher);
-    hasher.finish()
-}
+//pub fn generate_one_time_token(user_name: &str, secret: &str) -> u64 {
+//    let mut hasher = DefaultHasher::new();
+//    let str = String::from(user_name) + secret;
+//    str.hash(&mut hasher);
+//    hasher.finish()
+//}
 
-pub(crate) async fn login() -> String {
+pub async fn login() -> String {
     register_admin().await;
 
     api_login().await
 }
 
-pub(crate) async fn register_admin() {
+pub async fn register_admin() {
     let client = reqwest::Client::new();
     let response = client
         .post("http://localhost:3001/registerAdmin")
@@ -203,7 +205,7 @@ pub(crate) async fn register_admin() {
     assert!(response.status().is_success(), "Failed to register admin");
 }
 
-pub(crate) async fn api_login() -> String {
+pub async fn api_login() -> String {
     let client = reqwest::Client::new();
     let response = client
         .post("http://localhost:3000/api/login")
