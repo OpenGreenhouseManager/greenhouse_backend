@@ -28,6 +28,7 @@ jobs:
           - command: clippy
             args: --all-targets --all-features --workspace  -- -D warnings
           - command: test
+            args: --release --workspace --all-features
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
