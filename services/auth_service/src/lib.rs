@@ -6,8 +6,10 @@ extern crate diesel_migrations;
 pub use self::error::{Error, Result};
 use axum::extract::FromRef;
 use axum::{Router, routing::post};
+use diesel::{Connection, PgConnection};
 use diesel_async::AsyncPgConnection;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
+use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 use greenhouse_core::auth_service_dto::endpoints;
 use serde::Deserialize;
 use tower_http::trace::TraceLayer;
@@ -16,6 +18,8 @@ pub mod database;
 mod error;
 mod router;
 pub mod token;
+
+const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
 #[derive(Clone, Deserialize)]
 pub struct Config {
@@ -38,6 +42,8 @@ pub struct AppState {
 }
 
 pub fn app(config: Config, pool: Pool) -> Router {
+    run_migration(&config.database_url);
+
     let state = AppState { config, pool };
 
     Router::new()
@@ -51,4 +57,9 @@ pub fn app(config: Config, pool: Pool) -> Router {
         )
         .layer(TraceLayer::new_for_http())
         .with_state(state)
+}
+
+fn run_migration(database_url: &str) {
+    let mut conn = PgConnection::establish(database_url).unwrap();
+    conn.run_pending_migrations(MIGRATIONS).unwrap();
 }

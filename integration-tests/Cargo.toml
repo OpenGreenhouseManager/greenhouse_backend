@@ -5,6 +5,7 @@ edition = "2024"
 
 [dev-dependencies]
 web_api = { path = "../api/web" }
+greenhouse_core = { workspace = true, features = ["auth_service_dto"] }
 auth_service = { path = "../services/auth_service" }
 data_storage_service = { path = "../services/data_storage_service" }
 sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio", "macros"] }
@@ -17,3 +18,6 @@ serde_json = { version = "1.0", features = ["preserve_order"] }
 once_cell = "1.21.3"
 diesel =  { workspace = true, features = [ "uuid", "postgres" ] }
 diesel-async =  { workspace = true }
+chrono = { workspace = true }
+jsonwebtoken = { workspace = true }
+testcontainers-modules = { version = "0.12.0", features = ["postgres", "blocking"] }

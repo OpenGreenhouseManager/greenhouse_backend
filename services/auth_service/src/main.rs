@@ -1,13 +1,8 @@
 extern crate diesel_migrations;
-use crate::diesel_migrations::MigrationHarness;
 use auth_service::{Config, Pool};
 use core::panic;
-use diesel::{Connection, PgConnection};
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
-use diesel_migrations::{EmbeddedMigrations, embed_migrations};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
-const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
 fn main() {
     let config = load_config();
@@ -34,8 +29,6 @@ fn main() {
                 .with(tracing_subscriber::fmt::layer())
                 .init();
 
-            run_migration(&config.database_url);
-
             let url = format!("0.0.0.0:{}", config.service_port);
 
             let pool = Pool::builder()
@@ -51,11 +44,6 @@ fn main() {
             tracing::info!("listening on {}", listener.local_addr().unwrap());
             axum::serve(listener, app).await.unwrap();
         });
-}
-
-fn run_migration(database_url: &str) {
-    let mut conn = PgConnection::establish(database_url).unwrap();
-    conn.run_pending_migrations(MIGRATIONS).unwrap();
 }
 
 fn load_config() -> Config {
