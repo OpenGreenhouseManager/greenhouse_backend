@@ -126,7 +126,7 @@ async fn test_register_with_invalid_one_time_token() {
                 one_time_token: invalid_one_time_token,
             },
         )
-        .header("Cookie", format!("auth-token={}", token))
+        .header("Cookie", format!("auth-token={token}"))
         .send()
         .await
         .unwrap();
