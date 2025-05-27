@@ -99,23 +99,8 @@ impl Alert {
             query = query.filter(alert::datasource_id.eq(datasource_id));
         }
         if let Some(severity) = alert_query.severity {
-            let query_severity;
-            match severity {
-                greenhouse_core::data_storage_service_dto::alert_dto::alert::Severity::Info => {
-                    query_severity = Severity::Info
-                }
-                greenhouse_core::data_storage_service_dto::alert_dto::alert::Severity::Warning => {
-                    query_severity = Severity::Warning
-                }
-                greenhouse_core::data_storage_service_dto::alert_dto::alert::Severity::Error => {
-                    query_severity = Severity::Error
-                }
-                greenhouse_core::data_storage_service_dto::alert_dto::alert::Severity::Fatal => {
-                    query_severity = Severity::Fatal
-                }
-            }
-
-            query = query.filter(alert::severity.eq(query_severity));
+            let s: Severity = severity.into();
+            query = query.filter(alert::severity.eq(s));
         }
         if let Some(identifier) = alert_query.identifier {
             query = query.filter(alert::identifier.eq(identifier));

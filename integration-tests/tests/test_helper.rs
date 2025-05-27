@@ -5,19 +5,19 @@ use testcontainers::{GenericImage, ImageExt, core::IntoContainerPort, runners::A
 const AUTH_POSTGRES_URL: &str = "postgres://postgres:password@localhost:5432";
 const DATA_STORAGE_POSTGRES_URL: &str = "postgres://postgres:password@localhost:5433";
 
-const AUTH_SERVICE_CONFIG: Lazy<auth_service::Config> = Lazy::new(|| auth_service::Config {
+static AUTH_SERVICE_CONFIG: Lazy<auth_service::Config> = Lazy::new(|| auth_service::Config {
     service_port: 3001,
-    database_url: format!("{}/auth_service", AUTH_POSTGRES_URL),
+    database_url: format!("{AUTH_POSTGRES_URL}/auth_service"),
     jwt_secret: String::from("supersecretkey"),
     sentry_url: String::from("http://localhost:9000"),
 });
-const DATA_STORAGE_SERVICE_CONFIG: Lazy<data_storage_service::Config> =
+static DATA_STORAGE_SERVICE_CONFIG: Lazy<data_storage_service::Config> =
     Lazy::new(|| data_storage_service::Config {
         service_port: 3002,
-        database_url: format!("{}/data_storage_service", DATA_STORAGE_POSTGRES_URL),
+        database_url: format!("{DATA_STORAGE_POSTGRES_URL}/data_storage_service"),
         sentry_url: String::from("http://localhost:9000"),
     });
-const WEB_API_CONFIG: Lazy<web_api::Config> = Lazy::new(|| web_api::Config {
+static WEB_API_CONFIG: Lazy<web_api::Config> = Lazy::new(|| web_api::Config {
     api_port: 3000,
     service_addresses: web_api::ServiceAddresses {
         auth_service: String::from("http://localhost:3001"),
