@@ -7,10 +7,10 @@ use serde::Serialize;
 
 use crate::database;
 
-pub type Result<T> = core::result::Result<T, Error>;
+pub(crate) type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, Serialize, From)]
-pub enum Error {
+pub(crate) enum Error {
     TimeError,
     #[from]
     Database(database::Error),

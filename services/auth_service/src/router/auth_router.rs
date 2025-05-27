@@ -27,7 +27,7 @@ use greenhouse_core::auth_service_dto::{
 };
 
 #[axum::debug_handler]
-pub async fn register(
+pub(crate) async fn register(
     State(AppState { config, pool }): State<AppState>,
     Json(user): Json<RegisterRequestDto>,
 ) -> Result<Response> {
@@ -48,7 +48,7 @@ pub async fn register(
 }
 
 #[axum::debug_handler]
-pub async fn register_admin(
+pub(crate) async fn register_admin(
     State(AppState { config, pool }): State<AppState>,
     Json(user): Json<RegisterAdminRequestDto>,
 ) -> Result<Response> {
@@ -62,7 +62,7 @@ pub async fn register_admin(
 }
 
 #[axum::debug_handler]
-pub async fn generate_one_time_token(
+pub(crate) async fn generate_one_time_token(
     State(AppState { config, pool: _ }): State<AppState>,
     Json(user): Json<GenerateOneTimeTokenRequestDto>,
 ) -> Result<Response> {
@@ -74,7 +74,7 @@ pub async fn generate_one_time_token(
     .into_response())
 }
 
-pub async fn register_user(
+pub(crate) async fn register_user(
     name: &str,
     password: &str,
     role: &str,
@@ -117,7 +117,7 @@ pub async fn register_user(
 }
 
 #[axum::debug_handler]
-pub async fn login(
+pub(crate) async fn login(
     State(AppState { config, pool }): State<AppState>,
     Json(login): Json<LoginRequestDto>,
 ) -> Result<Response> {
@@ -185,7 +185,7 @@ pub async fn login(
 }
 
 #[axum::debug_handler]
-pub async fn check_token(
+pub(crate) async fn check_token(
     State(AppState { config, pool }): State<AppState>,
     Json(token): Json<TokenRequestDto>,
 ) -> Result<Response> {

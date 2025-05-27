@@ -1,42 +1,13 @@
-pub use self::error::{Error, Result};
-
 extern crate diesel_migrations;
 use crate::diesel_migrations::MigrationHarness;
-use axum::{Router, extract::FromRef};
 use core::panic;
+use data_storage_service::{Config, Pool};
 use diesel::{Connection, PgConnection};
-use diesel_async::{AsyncPgConnection, pooled_connection::AsyncDieselConnectionManager};
+use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_migrations::{EmbeddedMigrations, embed_migrations};
-use greenhouse_core::data_storage_service_dto::{
-    alert_dto::endpoints::ALERT, diary_dtos::endpoints::DIARY,
-};
-use serde::Deserialize;
-use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-pub mod database;
-mod error;
-mod router;
-
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
-
-#[derive(Clone, Deserialize)]
-struct Config {
-    #[serde(rename = "SERVICE_PORT")]
-    service_port: u32,
-    #[serde(rename = "DATABASE_URL")]
-    database_url: String,
-    #[serde(rename = "SENTRY_URL")]
-    sentry_url: String,
-}
-
-type Pool = bb8::Pool<AsyncDieselConnectionManager<AsyncPgConnection>>;
-
-#[derive(FromRef, Clone)]
-struct AppState {
-    config: Config,
-    pool: Pool,
-}
 
 fn main() {
     let config = load_config();
@@ -74,12 +45,7 @@ fn main() {
                 .await
                 .unwrap();
 
-            let state = AppState { config, pool };
-
-            let app = Router::new()
-                .nest(ALERT, router::alert_router::routes(state.clone()))
-                .nest(DIARY, router::diary_entry_router::routes(state.clone()))
-                .layer(TraceLayer::new_for_http());
+            let app = data_storage_service::app(config, pool);
 
             let listener = tokio::net::TcpListener::bind(url).await.unwrap();
             tracing::info!("listening on {}", listener.local_addr().unwrap());

@@ -1,7 +1,7 @@
 mod error;
-pub mod middleware;
-pub mod router;
-pub mod service;
+pub(crate) mod middleware;
+pub(crate) mod router;
+pub(crate) mod service;
 
-pub use self::error::{Error, Result};
-pub const AUTH_TOKEN: &str = "auth-token";
+pub(crate) use self::error::{Error, Result};
+pub(crate) const AUTH_TOKEN: &str = "auth-token";

@@ -1,7 +1,7 @@
-pub mod aggrigated_alert;
-pub mod alert_models;
-pub mod diary_models;
+pub(crate) mod aggrigated_alert;
+pub(crate) mod alert_models;
+pub(crate) mod diary_models;
 mod error;
-pub mod schema;
-pub mod severity_models;
-pub use self::error::{Error, Result};
+pub(crate) mod schema;
+pub(crate) mod severity_models;
+pub(crate) use self::error::{Error, Result};

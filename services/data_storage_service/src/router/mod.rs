@@ -1,3 +1,3 @@
-pub mod alert_router;
-pub mod diary_entry_router;
+pub(crate) mod alert_router;
+pub(crate) mod diary_entry_router;
 mod error;

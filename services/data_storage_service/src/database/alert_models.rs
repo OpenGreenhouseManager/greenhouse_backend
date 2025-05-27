@@ -2,42 +2,43 @@ use super::aggrigated_alert::AggrigatedAlert;
 use super::severity_models::Severity;
 use super::{Error, Result, schema::alert};
 use crate::Pool;
-use crate::router::alert_router::{AlertQuery, IntervalQuery};
 use chrono::{DateTime, Utc};
 use diesel::*;
 use diesel_async::RunQueryDsl;
-use greenhouse_core::data_storage_service_dto::alert_dto::alert::AlertDto;
-use greenhouse_core::data_storage_service_dto::alert_dto::post_create_alert::CreateAlertDto;
+use greenhouse_core::data_storage_service_dto::alert_dto::{
+    alert::AlertDto,
+    post_create_alert::CreateAlertDto,
+    query::{AlertQuery, IntervalQuery},
+};
 use uuid::Uuid;
-
 #[derive(Clone, Queryable, Selectable, Insertable)]
 #[diesel(table_name = crate::database::schema::alert)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct Alert {
-    pub id: Uuid,
-    pub severity: Severity,
-    pub identifier: String,
-    pub value: String,
-    pub note: Option<String>,
-    pub created_at: DateTime<Utc>,
-    pub datasource_id: Uuid,
+pub(crate) struct Alert {
+    pub(crate) id: Uuid,
+    pub(crate) severity: Severity,
+    pub(crate) identifier: String,
+    pub(crate) value: String,
+    pub(crate) note: Option<String>,
+    pub(crate) created_at: DateTime<Utc>,
+    pub(crate) datasource_id: Uuid,
 }
 
 impl Alert {
-    pub async fn create(alert: CreateAlertDto, pool: &Pool) -> Result<Self> {
+    pub(crate) async fn create(alert: CreateAlertDto, pool: &Pool) -> Result<Self> {
         let alert = Self {
             id: Uuid::new_v4(),
             severity: alert.severity.into(),
             identifier: alert.identifier.parse().map_err(|e| {
                 sentry::capture_error(&e);
-                Error::CreationError
+                Error::Creation
             })?,
             value: alert.value.unwrap_or_default(),
             note: alert.note,
             created_at: Utc::now(),
             datasource_id: alert.datasource_id.parse().map_err(|e| {
                 sentry::capture_error(&e);
-                Error::CreationError
+                Error::Creation
             })?,
         };
         let mut conn = pool.get().await.map_err(|e| {
@@ -50,42 +51,45 @@ impl Alert {
             .await
             .map_err(|e| {
                 sentry::capture_error(&e);
-                Error::CreationError
+                Error::Creation
             })?;
         Ok(alert)
     }
 
-    pub async fn find_by_id(id: Uuid, pool: &Pool) -> Result<Self> {
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
-        alert::table
-            .filter(alert::id.eq(id))
-            .first(&mut conn)
-            .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::FindError
-            })
-    }
+    //pub(crate) async fn find_by_id(id: Uuid, pool: &Pool) -> Result<Self> {
+    //    let mut conn = pool.get().await.map_err(|e| {
+    //        sentry::capture_error(&e);
+    //        Error::DatabaseConnection
+    //    })?;
+    //    alert::table
+    //        .filter(alert::id.eq(id))
+    //        .first(&mut conn)
+    //        .await
+    //        .map_err(|e| {
+    //            sentry::capture_error(&e);
+    //            Error::FindError
+    //        })
+    //}
+    //
+    //pub(crate) async fn find_by_data_source_id(
+    //    datasource_id: Uuid,
+    //    pool: &Pool,
+    //) -> Result<Vec<Self>> {
+    //    let mut conn = pool.get().await.map_err(|e| {
+    //        sentry::capture_error(&e);
+    //        Error::DatabaseConnection
+    //    })?;
+    //    alert::table
+    //        .filter(alert::datasource_id.eq(datasource_id))
+    //        .load(&mut conn)
+    //        .await
+    //        .map_err(|e| {
+    //            sentry::capture_error(&e);
+    //            Error::FindError
+    //        })
+    //}
 
-    pub async fn find_by_data_source_id(datasource_id: Uuid, pool: &Pool) -> Result<Vec<Self>> {
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
-        alert::table
-            .filter(alert::datasource_id.eq(datasource_id))
-            .load(&mut conn)
-            .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::FindError
-            })
-    }
-
-    pub async fn query(alert_query: AlertQuery, pool: &Pool) -> Result<Vec<Self>> {
+    pub(crate) async fn query(alert_query: AlertQuery, pool: &Pool) -> Result<Vec<Self>> {
         let mut conn = pool.get().await.map_err(|e| {
             sentry::capture_error(&e);
             Error::DatabaseConnection
@@ -98,18 +102,19 @@ impl Alert {
             query = query.filter(alert::datasource_id.eq(datasource_id));
         }
         if let Some(severity) = alert_query.severity {
-            query = query.filter(alert::severity.eq(severity));
+            let s: Severity = severity.into();
+            query = query.filter(alert::severity.eq(s));
         }
         if let Some(identifier) = alert_query.identifier {
             query = query.filter(alert::identifier.eq(identifier));
         }
         query.load(&mut conn).await.map_err(|e| {
             sentry::capture_error(&e);
-            Error::FindError
+            Error::Find
         })
     }
 
-    pub async fn aggrigate(
+    pub(crate) async fn aggrigate(
         interval_query: IntervalQuery,
         pool: &Pool,
     ) -> Result<Vec<AggrigatedAlert>> {
@@ -149,7 +154,7 @@ impl Alert {
             .await
             .map_err(|e| {
                 sentry::capture_error(&e);
-                Error::FindError
+                Error::Find
             })?;
 
         Ok(query

@@ -1,41 +1,5 @@
-use auth::middleware::check_token;
-use axum::{Router, extract::FromRef, middleware};
-use reqwest::{
-    Method,
-    header::{ACCEPT, AUTHORIZATION},
-};
-use serde::Deserialize;
-use tower_cookies::CookieManagerLayer;
-use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-pub mod auth;
-pub mod diary;
-pub mod helper;
-pub mod settings;
-pub mod test;
-
-#[derive(Clone, Deserialize)]
-struct ServiceAddresses {
-    #[serde(rename = "AUTH_SERVICE")]
-    auth_service: String,
-    #[serde(rename = "DATA_STORAGE_SERVICE")]
-    data_storage_service: String,
-}
-
-#[derive(Clone, Deserialize)]
-struct Config {
-    #[serde(rename = "API_PORT")]
-    api_port: u32,
-    #[serde(rename = "SERVICE_ADDRESSES")]
-    service_addresses: ServiceAddresses,
-    #[serde(rename = "SENTRY_URL")]
-    sentry_url: String,
-}
-
-#[derive(FromRef, Clone)]
-struct AppState {
-    config: Config,
-}
+use web_api::Config;
 
 fn main() {
     let config = load_config();
@@ -64,26 +28,8 @@ fn main() {
 
             // build our application with a route
             let url = format!("0.0.0.0:{}", config.api_port);
-            let state = AppState { config };
 
-            let cors = CorsLayer::new()
-                .allow_headers([AUTHORIZATION, ACCEPT, reqwest::header::CONTENT_TYPE])
-                .allow_credentials(true)
-                .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
-                .allow_origin([
-                    "http://localhost:4200".parse().unwrap(),
-                    "https://localhost:5001".parse().unwrap(),
-                ]);
-
-            let app = Router::new()
-                .nest("/api", test::router::routes(state.clone()))
-                .nest("/api/settings", settings::router::routes(state.clone()))
-                .nest("/api/diary", diary::router::routes(state.clone()))
-                .layer(middleware::from_fn_with_state(state.clone(), check_token))
-                .merge(auth::router::routes(state))
-                .layer(CookieManagerLayer::new())
-                .layer(cors)
-                .layer(TraceLayer::new_for_http());
+            let app = web_api::app(config);
 
             // run it
             let listener = tokio::net::TcpListener::bind(url).await.unwrap();

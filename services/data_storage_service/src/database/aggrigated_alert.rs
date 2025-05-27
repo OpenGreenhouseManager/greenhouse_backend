@@ -6,17 +6,17 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, FromSqlRow, Eq, Deserialize)]
-pub struct AggrigatedAlert {
-    pub datasource_id: Uuid,
-    pub severity: Severity,
-    pub count: i64,
-    pub identifier: String,
-    pub first_date: String,
-    pub last_date: String,
+pub(crate) struct AggrigatedAlert {
+    pub(crate) datasource_id: Uuid,
+    pub(crate) severity: Severity,
+    pub(crate) count: i64,
+    pub(crate) identifier: String,
+    pub(crate) first_date: String,
+    pub(crate) last_date: String,
 }
 
 impl AggrigatedAlert {
-    pub fn new(
+    pub(crate) fn new(
         datasource_id: Uuid,
         severity: Severity,
         count: i64,

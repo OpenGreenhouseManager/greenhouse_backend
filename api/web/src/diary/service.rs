@@ -6,7 +6,10 @@ use uuid::Uuid;
 
 use crate::diary::{Error, Result};
 
-pub async fn create_diary_entry(base_ulr: &str, entry: PostDiaryEntryDtoRequest) -> Result<()> {
+pub(crate) async fn create_diary_entry(
+    base_ulr: &str,
+    entry: PostDiaryEntryDtoRequest,
+) -> Result<()> {
     let resp = reqwest::Client::new()
         .post(base_ulr.to_string() + endpoints::DIARY)
         .json(&entry)
@@ -14,17 +17,28 @@ pub async fn create_diary_entry(base_ulr: &str, entry: PostDiaryEntryDtoRequest)
         .await
         .map_err(|e| {
             sentry::capture_error(&e);
+
+            tracing::error!(
+                "Error in post to service: {:?} with entry: {:?} for url {}",
+                e,
+                entry,
+                base_ulr
+            );
+
             Error::InternalError
         })?;
     resp.error_for_status().map_err(|e| {
         sentry::capture_error(&e);
+
+        tracing::error!("Error from service: {:?} for entry {:?}", e, entry);
+
         Error::InternalError
     })?;
 
     Ok(())
 }
 
-pub async fn update_diary_entry(
+pub(crate) async fn update_diary_entry(
     base_ulr: &str,
     id: Uuid,
     update: PutDiaryEntryDtoRequest,
@@ -36,42 +50,78 @@ pub async fn update_diary_entry(
         .await
         .map_err(|e| {
             sentry::capture_error(&e);
+
+            tracing::error!(
+                "Error in put to service: {:?} with entry: {:?} for url {}",
+                e,
+                update,
+                base_ulr
+            );
+
             Error::InternalError
         })?;
     resp.error_for_status().map_err(|e| {
         sentry::capture_error(&e);
+
+        tracing::error!("Error from service: {:?} for entry {:?}", e, update);
+
         Error::InternalError
     })?;
 
     Ok(())
 }
 
-pub async fn get_diary_entry(base_ulr: &str, id: Uuid) -> Result<DiaryEntryResponseDto> {
+pub(crate) async fn get_diary_entry(base_ulr: &str, id: Uuid) -> Result<DiaryEntryResponseDto> {
     let resp = reqwest::Client::new()
         .get(base_ulr.to_string() + endpoints::DIARY + "/" + &id.to_string())
         .send()
         .await
         .map_err(|e| {
             sentry::capture_error(&e);
+
+            tracing::error!(
+                "Error in get to service: {:?} with id: {:?} for url {}",
+                e,
+                id,
+                base_ulr
+            );
+
             Error::InternalError
         })?;
     resp.json().await.map_err(|e| {
         sentry::capture_error(&e);
+
+        tracing::error!("Error in get to service: {:?} with id: {:?}", e, id);
+
         Error::InternalError
     })
 }
 
-pub async fn get_diary(base_ulr: &str, start: String, end: String) -> Result<GetDiaryResponseDto> {
+pub(crate) async fn get_diary(
+    base_ulr: &str,
+    start: String,
+    end: String,
+) -> Result<GetDiaryResponseDto> {
     let resp = reqwest::Client::new()
         .get(base_ulr.to_string() + endpoints::DIARY + "/" + &start + "/" + &end)
         .send()
         .await
         .map_err(|e| {
             sentry::capture_error(&e);
+
+            tracing::error!(
+                "Error in get to service: {:?} with start: {:?} and end: {:?} for url {}",
+                e,
+                start,
+                end,
+                base_ulr
+            );
+
             Error::InternalError
         })?;
     resp.json().await.map_err(|e| {
         sentry::capture_error(&e);
+        tracing::error!("Error in get to service: {:?}", e,);
         Error::InternalError
     })
 }

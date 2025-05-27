@@ -16,7 +16,7 @@ use uuid::Uuid;
 use crate::{AppState, database::diary_models::DiaryEntry, router::error::Error};
 
 #[derive(Deserialize)]
-pub struct Params {
+pub(crate) struct Params {
     start: String,
     end: String,
 }

@@ -9,16 +9,16 @@ use uuid::Uuid;
 #[derive(Debug, Queryable, Selectable, Deserialize, Insertable)]
 #[diesel(table_name = crate::database::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct User {
-    pub id: Uuid,
-    pub username: String,
-    pub role: String,
-    pub login_session: String,
+pub(crate) struct User {
+    pub(crate) id: Uuid,
+    pub(crate) username: String,
+    pub(crate) role: String,
+    pub(crate) login_session: String,
     hash: String,
 }
 
 impl User {
-    pub fn new(username: &str, password: &str, role: &str) -> Result<Self> {
+    pub(crate) fn new(username: &str, password: &str, role: &str) -> Result<Self> {
         let password_hash = bcrypt::hash_with_result(password, 12).map_err(|e| {
             sentry::configure_scope(|scope| {
                 scope.set_user(Some(sentry::User {
@@ -44,7 +44,7 @@ impl User {
         })
     }
 
-    pub fn refresh_token(&mut self, jws_secret: &str) -> Result<String> {
+    pub(crate) fn refresh_token(&mut self, jws_secret: &str) -> Result<String> {
         let login_session =
             token::user_token::generate_token(&self.username, &self.role, jws_secret)?;
 
@@ -52,7 +52,7 @@ impl User {
         Ok(login_session)
     }
 
-    pub async fn check_login(&self, password: &str) -> Result<bool> {
+    pub(crate) async fn check_login(&self, password: &str) -> Result<bool> {
         bcrypt::verify(password, &self.hash).map_err(|e| {
             sentry::configure_scope(|scope| {
                 scope.set_user(Some(sentry::User {
