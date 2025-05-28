@@ -21,3 +21,9 @@ diesel-async =  { workspace = true }
 chrono = { workspace = true }
 jsonwebtoken = { workspace = true }
 testcontainers-modules = { version = "0.12.0", features = ["postgres", "blocking"] }
+uuid = { workspace = true, features = [
+    "v4",                
+    "fast-rng",          
+    "macro-diagnostics", 
+    "serde"
+] }
