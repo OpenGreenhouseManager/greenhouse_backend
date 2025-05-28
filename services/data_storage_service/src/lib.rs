@@ -1,7 +1,9 @@
 extern crate diesel_migrations;
 use axum::Router;
 use axum::extract::FromRef;
+use diesel::{Connection, PgConnection};
 use diesel_async::{AsyncPgConnection, pooled_connection::AsyncDieselConnectionManager};
+use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 use greenhouse_core::data_storage_service_dto::{
     alert_dto::endpoints::ALERT, diary_dtos::endpoints::DIARY,
 };
@@ -10,6 +12,8 @@ use tower_http::trace::TraceLayer;
 
 pub(crate) mod database;
 mod router;
+
+const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
 #[derive(Clone, Deserialize)]
 pub struct Config {
@@ -30,10 +34,17 @@ pub struct AppState {
 }
 
 pub fn app(config: Config, pool: Pool) -> Router {
+    run_migration(&config.database_url);
+
     let state = AppState { config, pool };
 
     Router::new()
         .nest(ALERT, router::alert_router::routes(state.clone()))
         .nest(DIARY, router::diary_entry_router::routes(state.clone()))
         .layer(TraceLayer::new_for_http())
+}
+
+fn run_migration(database_url: &str) {
+    let mut conn = PgConnection::establish(database_url).unwrap();
+    conn.run_pending_migrations(MIGRATIONS).unwrap();
 }
