@@ -1,5 +1,3 @@
-// cargo +nightly -Zscript scripts/generate_data.rs http://localhost:5001 < --diary > < --alert >
-
 #!/usr/bin/env -S cargo +nightly -Zscript
 ---cargo
 package.edition = "2024"
@@ -18,6 +16,7 @@ uuid = { version ="1.16.0", features = [
     "serde"
 ] }
 ---
+// cargo +nightly -Zscript scripts/generate_data.rs http://localhost:5001 < --diary > < --alert >
 
 use chrono::{DateTime, Days, Local, NaiveDate, NaiveDateTime, Utc};
 use greenhouse_core::data_storage_service_dto::diary_dtos::post_diary_entry::PostDiaryEntryDtoRequest;
@@ -92,15 +91,16 @@ async fn generate_diary_entries(url: String) {
 async fn generate_alerts(url: String) {
     let mut rng = rand::thread_rng();
     let mut requests = Vec::new();
-    let alert_datasource_uuids: Vec<Uuid> = (0..10)
-        .map(|_| Uuid::new_v4())
+    let alert_datasources: Vec<(Uuid, Vec<Uuid>)> = (0..3)
+        .map(|_| (Uuid::new_v4(), (0..5).map(|_| Uuid::new_v4()).collect()))
         .collect();
     for i in 0..50 {
+        let (datasource_ids, identifiers) = &alert_datasources[rng.gen_range(0..alert_datasources.len())];
         let alert = CreateAlertDto {
-            identifier: format!("alert-{}", i),
+            identifier: identifiers[rng.gen_range(0..identifiers.len())].to_string(),
             value: Some(rng.gen_range(1..100).to_string()),
             note: Some(format!("Alert note {}", i)),
-            datasource_id: alert_datasource_uuids[rng.gen_range(0..alert_datasource_uuids.len())].to_string(),
+            datasource_id: datasource_ids.to_string(),
             severity: match rng.gen_range(0..=3) {
                 0 => greenhouse_core::data_storage_service_dto::alert_dto::alert::Severity::Info,
                 1 => greenhouse_core::data_storage_service_dto::alert_dto::alert::Severity::Warning,
