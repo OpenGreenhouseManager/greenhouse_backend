@@ -26,7 +26,15 @@ async fn main() {
     }
     let url = env::args().nth(1).unwrap();
     println!("Generating data for url: {}", url);
-    generate_diary_entries(url).await;
+
+    let args = env::args().collect();
+    if args.contains("--diary"){
+        generate_diary_entries(url).await;
+    }
+    if args.contains("--alerts") {
+        generate_alerts(url).await;
+    }
+
 }
 
 async fn generate_diary_entries(url: String) {
@@ -65,5 +73,42 @@ async fn generate_diary_entries(url: String) {
             }
         }
     }
-            
+}
+
+async fn generate_alerts(url: String) {
+    let mut rng = rand::thread_rng();
+    let mut requests = Vec::new();
+
+    for i in 0..50 {
+        let alert = CreateAlertDto {
+            title: format!("Alert number {}", i),
+            description: format!("Alert description {}", rng.gen_range(1..100)),
+            severity: rng.gen_range(1..=5),
+            created_at: Utc::now().to_string(),
+        };
+
+        requests.push(alert);
+    }
+    let mut futures = Vec::new();
+
+    for alert in requests {
+        let future = reqwest::Client::new()
+            .post(url.to_string() + "/alerts")
+            .json(&alert)
+            .send();
+        futures.push(future);
+    }
+
+    let res = join_all(futures).await;
+
+    for response in res {
+        match response {
+            Ok(res) => {
+                println!("Response: {:?}", res);
+            }
+            Err(err) => {
+                println!("Error: {:?}", err);
+            }
+        }
+    }
 }
