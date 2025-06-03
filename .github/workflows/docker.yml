@@ -64,7 +64,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
           
-          
       # service data_storage
       - name: Docker meta
         id: meta-data_storage
@@ -83,6 +82,25 @@ jobs:
           build-args: |
             BASE_IMAGE=ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
           labels: ${{ steps.meta-data_storage.outputs.labels }}
+
+      # service device
+      - name: Docker meta
+        id: meta-device_service
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ghcr.io/opengreenhousemanager/device_service
+      - name: Publish
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          file: services/device_service/Dockerfile
+          tags: ${{ steps.meta-device_service.outputs.tags }}
+          build-args: |
+            BASE_IMAGE=ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
+          labels: ${{ steps.meta-device_service.outputs.labels }}
 
       # service web_api
       - name: Docker meta
