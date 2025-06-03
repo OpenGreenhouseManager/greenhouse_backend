@@ -5,9 +5,19 @@ package.edition = "2024"
 time = "0.1.25"
 chrono = { version = "0.4", features = ["serde"] }
 greenhouse_core = "0.0.8"
+greenhouse_core = "0.0.8"
 rand = "0.9.1"
 reqwest = {version = "0.12.15", features = ["json"]}
 tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread"] }
+futures = "0.3" 
+uuid = { version ="1.16.0", features = [
+    "v4",                
+    "fast-rng",          
+    "macro-diagnostics", 
+    "serde"
+] }
+---
+// cargo +nightly -Zscript scripts/generate_data.rs http://localhost:5001 < --diary > < --alert >
 futures = "0.3" 
 uuid = { version ="1.16.0", features = [
     "v4",                
