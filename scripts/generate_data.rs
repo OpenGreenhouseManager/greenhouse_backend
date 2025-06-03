@@ -91,9 +91,12 @@ async fn generate_diary_entries(url: String) {
 async fn generate_alerts(url: String) {
     let mut rng = rand::thread_rng();
     let mut requests = Vec::new();
-    let alert_datasources: Vec<(Uuid, Vec<Uuid>)> = (0..3)
-        .map(|_| (Uuid::new_v4(), (0..5).map(|_| Uuid::new_v4()).collect()))
-        .collect();
+    let alert_datasources: Vec<(Uuid, Vec<String>)> = vec![
+        (Uuid::parse_str("ecf9ce4f-d58c-4a72-ba51-08da69e3af7d").unwrap(), vec![String::from("Temp"), String::from("Humidity")]),
+        (Uuid::parse_str("2b67d459-7b44-4e23-b9cc-12baf43c4440").unwrap(), vec![String::from("Light"), String::from("Soil Moisture")]),
+        (Uuid::parse_str("c72db714-d2ca-4c84-b360-202a69832cb2").unwrap(), vec![String::from("CO2"), String::from("Water Level")]),
+    ];
+
     for i in 0..50 {
         let (datasource_ids, identifiers) = &alert_datasources[rng.gen_range(0..alert_datasources.len())];
         let alert = CreateAlertDto {
