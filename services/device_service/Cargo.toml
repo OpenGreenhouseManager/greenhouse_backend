@@ -1,0 +1,20 @@
+[package]
+name = "device_service"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = { workspace = true, features = ["tracing"]}
+bb8 = { workspace = true }
+diesel =  { workspace = true, features = [ "uuid", "postgres" ] }
+diesel-async =  { workspace = true }
+greenhouse_core = { workspace = true, features = ["auth_service_dto"] }
+serde = { workspace = true }
+serde_json ={ workspace = true }
+serde_yaml = { workspace = true }
+tokio = { workspace = true }
+diesel_migrations = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tower-http = { workspace = true, features = ["trace"] }
+sentry = { workspace = true, features = ["debug-images", "tower"] }
