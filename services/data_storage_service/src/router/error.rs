@@ -1,11 +1,10 @@
+use crate::database;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
 use derive_more::From;
 use serde::Serialize;
-
-use crate::database;
 
 pub(crate) type Result<T> = core::result::Result<T, Error>;
 

@@ -1,17 +1,19 @@
+use crate::database;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use derive_more::From;
 use serde::Serialize;
 
 pub(crate) type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, From)]
 pub(crate) enum Error {
-    DatabaseConnection,
-    UsernameTaken,
-    UserNotFound,
-    OneTimeToken,
+    SmartDeviceNotReachable,
+    SmartDeviceResponse,
+    #[from]
+    Database(database::Error),
 }
 
 // region:    --- Error Boilerplate
