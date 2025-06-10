@@ -6,7 +6,7 @@ members = [
     "examples/hybrid_device",
     "greenhouse_core", "integration-tests",
     "services/auth_service",
-    "services/data_storage_service"]
+    "services/data_storage_service", "services/device_service"]
 default-members = [
     "api/web",
     "api/script",

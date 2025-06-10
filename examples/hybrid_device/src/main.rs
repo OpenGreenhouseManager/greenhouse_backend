@@ -2,7 +2,10 @@ use std::sync::Arc;
 
 use axum::{Json, http::StatusCode};
 use greenhouse_core::{
-    smart_device_dto::{config::ConfigRequestDto, status::DeviceStatusResponseDto},
+    smart_device_dto::{
+        config::ConfigRequestDto,
+        status::{DeviceStatusDto, DeviceStatusResponseDto},
+    },
     smart_device_interface::{
         config::{Config, read_config_file, update_config_file},
         device_service::DeviceService,
@@ -12,6 +15,7 @@ use greenhouse_core::{
 use serde_derive::{Deserialize, Serialize};
 
 static mut SAVED_NUMBER: i32 = 20;
+const DATASOURCE_ID: &str = "7a224a14-6e07-45a3-91da-b7584a5731c1";
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 struct ExampleDeviceConfig {
@@ -64,7 +68,10 @@ fn write_handler(json: String, config: Arc<Config<ExampleDeviceConfig>>) -> Stat
 
 fn status_handler(_: Arc<Config<ExampleDeviceConfig>>) -> DeviceStatusResponseDto {
     // Implement your status handler here
-    DeviceStatusResponseDto::Online
+    DeviceStatusResponseDto {
+        status: DeviceStatusDto::Online,
+        datasource_id: From::from(DATASOURCE_ID),
+    }
 }
 
 fn config_interceptor_handler(

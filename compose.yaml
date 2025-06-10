@@ -36,6 +36,20 @@ services:
     networks:
       - backend
 
+  device_service:
+    build:
+      context: ./
+      dockerfile: ./services/device_service/Dockerfile
+    volumes:
+      - ./docker/device_service:/usr/local/bin/config
+    ports:
+      - "9093:5000"
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - backend
+
   web_api:
     build:
       context: ./
