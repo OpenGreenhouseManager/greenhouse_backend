@@ -19,8 +19,6 @@ pub struct Config {
     pub service_port: u32,
     #[serde(rename = "DATABASE_URL")]
     pub database_url: String,
-    #[serde(rename = "JWT_SECRET")]
-    pub jwt_secret: String,
     #[serde(rename = "SENTRY_URL")]
     pub sentry_url: String,
 }
@@ -39,7 +37,7 @@ pub fn app(config: Config, pool: Pool) -> Router {
     let state = AppState { config, pool };
 
     Router::new()
-        .nest("/", router::device_router::routes(state.clone()))
+        .merge(router::device_router::routes(state.clone()))
         .layer(TraceLayer::new_for_http())
 }
 
