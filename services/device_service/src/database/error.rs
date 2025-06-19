@@ -4,7 +4,6 @@ pub(crate) type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, Serialize)]
 pub(crate) enum Error {
-    InvalidHash,
     Creation,
     DatabaseConnection,
     Find,
