@@ -5,9 +5,7 @@ use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 fn main() {
-    tracing::info!("0");
     let config = load_config();
-    tracing::info!("1");
 
     let _guard = sentry::init((
         config.sentry_url.clone(),
@@ -16,7 +14,6 @@ fn main() {
             ..Default::default()
         },
     ));
-    tracing::info!("2");
 
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
@@ -31,7 +28,6 @@ fn main() {
                 )
                 .with(tracing_subscriber::fmt::layer())
                 .init();
-            tracing::info!("3");
 
             let url = format!("0.0.0.0:{}", config.service_port);
 
@@ -41,13 +37,10 @@ fn main() {
                 ))
                 .await
                 .unwrap();
-            tracing::info!("4");
 
             let app = device_service::app(config, pool);
-            tracing::info!("5");
 
             let listener = tokio::net::TcpListener::bind(url).await.unwrap();
-            tracing::info!("6");
             tracing::info!("listening on {}", listener.local_addr().unwrap());
             axum::serve(listener, app).await.unwrap();
         });
