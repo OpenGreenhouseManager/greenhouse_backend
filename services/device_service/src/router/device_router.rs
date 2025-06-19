@@ -58,7 +58,7 @@ pub(crate) async fn create_device(
         entry.can_script,
     );
     entry.flush(&pool).await?;
-    
+
     let response: DeviceResponseDto = entry.into();
     Ok(Json(response))
 }
