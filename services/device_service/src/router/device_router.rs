@@ -39,9 +39,9 @@ pub(crate) async fn update_device(
     let mut entry = Device::find_by_id(id, &pool).await?;
     entry.name = update.name.clone();
     entry.description = update.description.clone();
-
     entry.address = update.address.clone();
     entry.flush(&pool).await?;
+
     let response: DeviceResponseDto = entry.into();
     Ok(Json(response))
 }
@@ -58,6 +58,7 @@ pub(crate) async fn create_device(
         entry.can_script,
     );
     entry.flush(&pool).await?;
+    
     let response: DeviceResponseDto = entry.into();
     Ok(Json(response))
 }
