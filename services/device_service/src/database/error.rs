@@ -1,18 +1,12 @@
-use crate::database;
-use axum::{
-    http::StatusCode,
-    response::{IntoResponse, Response},
-};
-use derive_more::From;
 use serde::Serialize;
 
 pub(crate) type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, Serialize, From)]
+#[derive(Debug, Serialize)]
 pub(crate) enum Error {
-    TimeError,
-    #[from]
-    Database(database::Error),
+    Creation,
+    DatabaseConnection,
+    Find,
 }
 
 // region:    --- Error Boilerplate
@@ -23,10 +17,4 @@ impl core::fmt::Display for Error {
 }
 
 impl std::error::Error for Error {}
-
-impl IntoResponse for Error {
-    fn into_response(self) -> Response {
-        (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()).into_response()
-    }
-}
 // endregion: --- Error Boilerplate
