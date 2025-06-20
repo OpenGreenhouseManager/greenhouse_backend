@@ -1,4 +1,7 @@
-use greenhouse_core::device_service_dto::{endpoints, get_device::DeviceResponseDto, post_device::PostDeviceDtoRequest, put_device::PutDeviceDtoRequest};
+use greenhouse_core::device_service_dto::{
+    endpoints, get_device::DeviceResponseDto, post_device::PostDeviceDtoRequest,
+    put_device::PutDeviceDtoRequest,
+};
 use uuid::Uuid;
 
 use crate::device::{Error, Result};
@@ -95,11 +98,16 @@ pub(crate) async fn get_device(base_ulr: &str, id: Uuid) -> Result<DeviceRespons
     })
 }
 
-pub(crate) async fn get_device_config(
-    base_ulr: &str, id: Uuid
-) -> Result<String> {
+pub(crate) async fn get_device_config(base_ulr: &str, id: Uuid) -> Result<String> {
     let resp = reqwest::Client::new()
-        .get(base_ulr.to_string() + endpoints::DEVICE + "/" + &id.to_string()+ "/" +endpoints::STATUS)
+        .get(
+            base_ulr.to_string()
+                + endpoints::DEVICE
+                + "/"
+                + &id.to_string()
+                + "/"
+                + endpoints::STATUS,
+        )
         .send()
         .await
         .map_err(|e| {
@@ -121,12 +129,16 @@ pub(crate) async fn get_device_config(
     })
 }
 
-
-pub(crate) async fn get_device_status(
-    base_ulr: &str, id: Uuid
-) -> Result<String> {
+pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String> {
     let resp = reqwest::Client::new()
-        .get(base_ulr.to_string() + endpoints::DEVICE + "/" + &id.to_string() + "/" +endpoints::STATUS)
+        .get(
+            base_ulr.to_string()
+                + endpoints::DEVICE
+                + "/"
+                + &id.to_string()
+                + "/"
+                + endpoints::STATUS,
+        )
         .send()
         .await
         .map_err(|e| {
@@ -148,10 +160,7 @@ pub(crate) async fn get_device_status(
     })
 }
 
-
-pub(crate) async fn get_devices(
-    base_ulr: &str
-) -> Result<Vec<DeviceResponseDto>> {
+pub(crate) async fn get_devices(base_ulr: &str) -> Result<Vec<DeviceResponseDto>> {
     let resp = reqwest::Client::new()
         .get(base_ulr.to_string() + endpoints::DEVICE)
         .send()

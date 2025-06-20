@@ -11,8 +11,8 @@ use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 pub(crate) mod alert;
 pub(crate) mod auth;
-pub(crate) mod diary;
 pub(crate) mod device;
+pub(crate) mod diary;
 pub(crate) mod helper;
 pub(crate) mod settings;
 pub(crate) mod test;
