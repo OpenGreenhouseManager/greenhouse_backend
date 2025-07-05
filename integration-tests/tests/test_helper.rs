@@ -12,8 +12,10 @@ pub const AUTH_SECRET: &str = "testpassword";
 pub struct TestContext {
     auth_postgres_container: Option<ContainerAsync<Postgres>>,
     data_storage_postgres_container: Option<ContainerAsync<Postgres>>,
+    device_postgres_container: Option<ContainerAsync<Postgres>>,
     auth_service: Option<JoinHandle<Result<(), std::io::Error>>>,
     data_storage_service: Option<JoinHandle<Result<(), std::io::Error>>>,
+    device_service: Option<JoinHandle<Result<(), std::io::Error>>>,
     web_api: Option<JoinHandle<Result<(), std::io::Error>>>,
 }
 
@@ -22,8 +24,10 @@ impl TestContext {
         Self {
             auth_postgres_container: None,
             data_storage_postgres_container: None,
+            device_postgres_container: None,
             auth_service: None,
             data_storage_service: None,
+            device_service: None,
             web_api: None,
         }
     }
@@ -34,6 +38,17 @@ impl TestContext {
         }
         let data_port = self
             .data_storage_postgres_container
+            .as_ref()
+            .unwrap()
+            .get_host_port_ipv4(5432)
+            .await
+            .unwrap();
+
+        if self.device_postgres_container.is_none() {
+            self.device_postgres_container = Some(start_device_postgres().await);
+        }
+        let data_port = self
+            .device_postgres_container
             .as_ref()
             .unwrap()
             .get_host_port_ipv4(5432)
@@ -59,6 +74,15 @@ impl TestContext {
                 .await,
             );
         }
+
+        if self.device_service.is_none() {
+            self.device_service = Some(
+                start_device_service(format!(
+                    "postgres://postgres:postgres@localhost:{auth_port}/device"
+                ))
+                .await,
+            );
+        }
         if self.data_storage_service.is_none() {
             self.data_storage_service = Some(
                 start_data_storage_service(format!(
@@ -79,11 +103,17 @@ impl TestContext {
         if let Some(container) = &self.data_storage_postgres_container {
             container.stop().await.unwrap();
         }
+        if let Some(container) = &self.device_postgres_container {
+            container.stop().await.unwrap();
+        }
         if let Some(auth_service) = &self.auth_service {
             auth_service.abort();
         }
         if let Some(data_storage_service) = &self.data_storage_service {
             data_storage_service.abort();
+        }
+        if let Some(device_service) = &self.device_service {
+            device_service.abort();
         }
         if let Some(web_api) = &self.web_api {
             web_api.abort();
@@ -115,6 +145,15 @@ async fn start_data_storage_postgres() -> ContainerAsync<Postgres> {
         .unwrap()
 }
 
+async fn start_device_postgres() -> ContainerAsync<Postgres> {
+    postgres::Postgres::default()
+        .with_db_name("device")
+        .with_tag("latest")
+        .start()
+        .await
+        .unwrap()
+}
+
 async fn start_auth_service(db_url: String) -> tokio::task::JoinHandle<Result<(), std::io::Error>> {
     let auth_service_config = auth_service::Config {
         database_url: db_url,
@@ -134,6 +173,26 @@ async fn start_auth_service(db_url: String) -> tokio::task::JoinHandle<Result<()
     let url = format!("0.0.0.0:{}", auth_service_config.service_port);
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
     tokio::spawn(async move { axum::serve(listener, auth_service_app).await })
+}
+
+async fn start_device_service(db_url: String) -> tokio::task::JoinHandle<Result<(), std::io::Error>> {
+    let device_service_config = device_service::Config {
+        database_url: db_url,
+        service_port: 3001,
+        sentry_url: String::new(),
+    };
+
+    let device_pool = device_service::Pool::builder()
+        .build(AsyncDieselConnectionManager::new(
+            device_service_config.database_url.clone(),
+        ))
+        .await
+        .unwrap();
+    let device_service_app = device_service::app(device_service_config.clone(), device_pool.clone());
+
+    let url = format!("0.0.0.0:{}", device_service_config.service_port);
+    let listener = tokio::net::TcpListener::bind(url).await.unwrap();
+    tokio::spawn(async move { axum::serve(listener, device_service_app).await })
 }
 
 async fn start_data_storage_service(
@@ -176,13 +235,6 @@ async fn start_web_api() -> tokio::task::JoinHandle<Result<(), std::io::Error>> 
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
     tokio::spawn(async move { axum::serve(listener, api_app).await })
 }
-
-//pub fn generate_one_time_token(user_name: &str, secret: &str) -> u64 {
-//    let mut hasher = DefaultHasher::new();
-//    let str = String::from(user_name) + secret;
-//    str.hash(&mut hasher);
-//    hasher.finish()
-//}
 
 pub async fn admin_login() -> String {
     register_admin().await;
