@@ -1,22 +1,37 @@
-run-services:
-    tmux new-session -d -s rust_services \; \
-        send-keys 'cargo run --package auth_service' C-m \; \
-        split-window -v \; send-keys 'cargo run --package data_storage_service' C-m \; \
-        split-window -v \; send-keys 'cargo run --package device_service' C-m \; \
-        select-layout tiled \; \
-        attach-session -t rust_services
+set shell := ["bash", "-cu"]
 
-run-apis:
-    tmux new-session -d -s rust_apis \; \
-        send-keys 'cargo run --package web_api' C-m \; \
-        split-window -v \; send-keys 'cargo run --package script_api' C-m \; \
-        select-layout tiled \; \
-        attach-session -t rust_apis
+# Run all services combined in one terminal/log
+run-services: kill-services
+    trap "echo Killing services...; kill 0" SIGINT
+    mkdir -p logs
+    echo "" > logs/services.log
+    stdbuf -oL cargo run --package auth_service         | tee -a logs/services.log &
+    stdbuf -oL cargo run --package data_storage_service | tee -a logs/services.log &
+    stdbuf -oL cargo run --package device_service       | tee -a logs/services.log &
+    wait
 
-run-all:
-    just run-services
-    just run-apis
+# Run all APIs combined in one terminal/log
+run-apis: kill-apis
+    trap "echo Killing APIs...; kill 0" SIGINT
+    mkdir -p logs
+    echo "" > logs/apis.log
+    stdbuf -oL cargo run --package web_api         | tee -a logs/apis.log &
+    stdbuf -oL cargo run --package script_api      | tee -a logs/apis.log &
+    wait
 
-stop-all:
-    tmux kill-session -t rust_services || true
-    tmux kill-session -t rust_apis || true
+# Run all (services + APIs) combined separately but together
+start-all:
+    just run-services &  # runs services in background combined output
+    just run-apis &      # runs apis in background combined output
+    wait
+
+kill-services:
+    killall auth_service || true
+    killall data_storage_service || true
+    killall device_service || true
+
+kill-apis:
+    killall web_api || true
+    killall script_api || true
+
+stop-all: kill-services kill-apis
