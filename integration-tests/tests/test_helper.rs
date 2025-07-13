@@ -47,7 +47,7 @@ impl TestContext {
         if self.device_postgres_container.is_none() {
             self.device_postgres_container = Some(start_device_postgres().await);
         }
-        let data_port = self
+        let device_port = self
             .device_postgres_container
             .as_ref()
             .unwrap()
@@ -78,7 +78,7 @@ impl TestContext {
         if self.device_service.is_none() {
             self.device_service = Some(
                 start_device_service(format!(
-                    "postgres://postgres:postgres@localhost:{auth_port}/device"
+                    "postgres://postgres:postgres@localhost:{device_port}/device"
                 ))
                 .await,
             );
@@ -175,7 +175,9 @@ async fn start_auth_service(db_url: String) -> tokio::task::JoinHandle<Result<()
     tokio::spawn(async move { axum::serve(listener, auth_service_app).await })
 }
 
-async fn start_device_service(db_url: String) -> tokio::task::JoinHandle<Result<(), std::io::Error>> {
+async fn start_device_service(
+    db_url: String,
+) -> tokio::task::JoinHandle<Result<(), std::io::Error>> {
     let device_service_config = device_service::Config {
         database_url: db_url,
         service_port: 3001,
@@ -188,7 +190,8 @@ async fn start_device_service(db_url: String) -> tokio::task::JoinHandle<Result<
         ))
         .await
         .unwrap();
-    let device_service_app = device_service::app(device_service_config.clone(), device_pool.clone());
+    let device_service_app =
+        device_service::app(device_service_config.clone(), device_pool.clone());
 
     let url = format!("0.0.0.0:{}", device_service_config.service_port);
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
