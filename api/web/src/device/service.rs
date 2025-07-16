@@ -12,7 +12,7 @@ pub(crate) async fn update_device(
     entry: PutDeviceDtoRequest,
 ) -> Result<DeviceResponseDto> {
     let resp = reqwest::Client::new()
-        .put(base_ulr.to_string() + endpoints::DEVICE + "/" + &id.to_string())
+        .put(base_ulr.to_string()  + "/" + &id.to_string())
         .json(&entry)
         .send()
         .await
@@ -47,7 +47,7 @@ pub(crate) async fn create_device(
     update: PostDeviceDtoRequest,
 ) -> Result<DeviceResponseDto> {
     let resp = reqwest::Client::new()
-        .post(base_ulr.to_string() + endpoints::DEVICE)
+        .post(base_ulr.to_string() )
         .json(&update)
         .send()
         .await
@@ -74,7 +74,7 @@ pub(crate) async fn create_device(
 
 pub(crate) async fn get_device(base_ulr: &str, id: Uuid) -> Result<DeviceResponseDto> {
     let resp = reqwest::Client::new()
-        .get(base_ulr.to_string() + endpoints::DEVICE + "/" + &id.to_string())
+        .get(base_ulr.to_string()  + "/" + &id.to_string())
         .send()
         .await
         .map_err(|e| {
@@ -102,7 +102,7 @@ pub(crate) async fn get_device_config(base_ulr: &str, id: Uuid) -> Result<String
     let resp = reqwest::Client::new()
         .get(
             base_ulr.to_string()
-                + endpoints::DEVICE
+                
                 + "/"
                 + &id.to_string()
                 + "/"
@@ -133,7 +133,7 @@ pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String
     let resp = reqwest::Client::new()
         .get(
             base_ulr.to_string()
-                + endpoints::DEVICE
+                
                 + "/"
                 + &id.to_string()
                 + "/"
@@ -162,7 +162,7 @@ pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String
 
 pub(crate) async fn get_devices(base_ulr: &str) -> Result<Vec<DeviceResponseDto>> {
     let resp = reqwest::Client::new()
-        .get(base_ulr.to_string() + endpoints::DEVICE)
+        .get(base_ulr.to_string())
         .send()
         .await
         .map_err(|e| {
@@ -176,6 +176,7 @@ pub(crate) async fn get_devices(base_ulr: &str) -> Result<Vec<DeviceResponseDto>
 
             Error::InternalError
         })?;
+
     resp.json().await.map_err(|e| {
         sentry::capture_error(&e);
         tracing::error!("Error in get all json to service: {:?}", e,);

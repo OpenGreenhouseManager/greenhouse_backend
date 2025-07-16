@@ -32,7 +32,7 @@ pub(crate) async fn create_device(
     Json(entry): Json<PostDeviceDtoRequest>,
 ) -> Result<impl IntoResponse> {
     let device =
-        service::create_device(&config.service_addresses.data_storage_service, entry).await?;
+        service::create_device(&config.service_addresses.device_service, entry).await?;
     Ok(Json(device))
 }
 
@@ -40,7 +40,7 @@ pub(crate) async fn create_device(
 pub(crate) async fn get_devices(
     State(AppState { config }): State<AppState>,
 ) -> Result<impl IntoResponse> {
-    let devices = service::get_devices(&config.service_addresses.data_storage_service).await?;
+    let devices = service::get_devices(&config.service_addresses.device_service).await?;
     Ok(Json(devices))
 }
 
@@ -51,7 +51,7 @@ pub(crate) async fn update_device(
     Json(update): Json<PutDeviceDtoRequest>,
 ) -> Result<impl IntoResponse> {
     let device =
-        service::update_device(&config.service_addresses.data_storage_service, id, update).await?;
+        service::update_device(&config.service_addresses.device_service, id, update).await?;
     Ok(Json(device))
 }
 
@@ -60,7 +60,7 @@ pub(crate) async fn get_device(
     State(AppState { config }): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse> {
-    let device = service::get_device(&config.service_addresses.data_storage_service, id).await?;
+    let device = service::get_device(&config.service_addresses.device_service, id).await?;
     Ok(Json(device))
 }
 
@@ -70,7 +70,7 @@ pub(crate) async fn get_device_config(
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse> {
     let response =
-        service::get_device_config(&config.service_addresses.data_storage_service, id).await?;
+        service::get_device_config(&config.service_addresses.device_service, id).await?;
     Ok((
         StatusCode::OK,
         [(
@@ -87,7 +87,7 @@ pub(crate) async fn get_device_status(
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse> {
     let response =
-        service::get_device_status(&config.service_addresses.data_storage_service, id).await?;
+        service::get_device_status(&config.service_addresses.device_service, id).await?;
     Ok((
         StatusCode::OK,
         [(

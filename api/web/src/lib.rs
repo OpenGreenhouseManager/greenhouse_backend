@@ -21,6 +21,8 @@ pub(crate) mod test;
 pub struct ServiceAddresses {
     #[serde(rename = "AUTH_SERVICE")]
     pub auth_service: String,
+    #[serde(rename = "DEVICE_SERVICE")]
+    pub device_service: String,
     #[serde(rename = "DATA_STORAGE_SERVICE")]
     pub data_storage_service: String,
 }

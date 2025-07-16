@@ -66,6 +66,7 @@ async fn test_create_and_get_device_entry() {
         .send()
         .await
         .unwrap();
+
     assert!(
         response.status().is_success(),
         "Failed to create device entry"
