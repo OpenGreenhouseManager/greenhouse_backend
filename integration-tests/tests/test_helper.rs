@@ -180,7 +180,7 @@ async fn start_device_service(
 ) -> tokio::task::JoinHandle<Result<(), std::io::Error>> {
     let device_service_config = device_service::Config {
         database_url: db_url,
-        service_port: 3001,
+        service_port: 3002,
         sentry_url: String::new(),
     };
 
