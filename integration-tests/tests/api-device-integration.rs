@@ -186,7 +186,6 @@ async fn test_status_for_not_existing_device_entry() {
         .await
         .unwrap();
 
-    // Should return 404 or similar error status
     assert!(
         response.status().is_client_error(),
         "Should return client error for non-existent device"

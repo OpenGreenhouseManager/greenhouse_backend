@@ -2,6 +2,7 @@ use greenhouse_core::device_service_dto::{
     endpoints, get_device::DeviceResponseDto, post_device::PostDeviceDtoRequest,
     put_device::PutDeviceDtoRequest,
 };
+use reqwest::StatusCode;
 use uuid::Uuid;
 
 use crate::device::{Error, Result};
@@ -153,11 +154,24 @@ pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String
 
             Error::InternalError
         })?;
-    resp.json().await.map_err(|e| {
-        sentry::capture_error(&e);
-        tracing::error!("Error in get to service: {:?}", e,);
-        Error::InternalError
+
+    match resp.status() {
+        StatusCode::OK => {
+            
+            return resp.json().await.map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e,);
+                Error::InternalError
     })
+        }
+        StatusCode::NOT_FOUND => {
+            return Err(Error::NotFound);
+        }
+        _ => {
+            return Err(Error::InternalError);
+        }
+    }
+
 }
 
 pub(crate) async fn get_devices(base_ulr: &str) -> Result<Vec<DeviceResponseDto>> {

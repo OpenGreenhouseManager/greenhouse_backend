@@ -10,6 +10,7 @@ pub(crate) type Result<T> = core::result::Result<T, Error>;
 #[derive(Debug, Serialize, From)]
 pub(crate) enum Error {
     InternalError,
+    NotFound,
 }
 
 // region:    --- Error Boilerplate
@@ -23,7 +24,14 @@ impl std::error::Error for Error {}
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()).into_response()
+        match self {
+            Error::InternalError => {
+                (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()).into_response()
+            }
+            Error::NotFound => {
+                (StatusCode::NOT_FOUND, self.to_string()).into_response()
+            }
+        }
     }
 }
 // endregion: --- Error Boilerplate
