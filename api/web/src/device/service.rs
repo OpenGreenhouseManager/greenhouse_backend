@@ -106,7 +106,7 @@ pub(crate) async fn get_device_config(base_ulr: &str, id: Uuid) -> Result<String
                 + "/"
                 + &id.to_string()
                 + "/"
-                + endpoints::STATUS,
+                + endpoints::CONFIG,
         )
         .send()
         .await
