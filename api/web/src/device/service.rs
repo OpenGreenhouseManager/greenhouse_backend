@@ -12,7 +12,7 @@ pub(crate) async fn update_device(
     entry: PutDeviceDtoRequest,
 ) -> Result<DeviceResponseDto> {
     let resp = reqwest::Client::new()
-        .put(base_ulr.to_string() + endpoints::DEVICE + &id.to_string())
+        .put(base_ulr.to_string() + endpoints::DEVICE + "/" + &id.to_string())
         .json(&entry)
         .send()
         .await
