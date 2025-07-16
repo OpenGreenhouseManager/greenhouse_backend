@@ -142,19 +142,13 @@ pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String
         })?;
 
     match resp.status() {
-        StatusCode::OK => {
-            resp.json().await.map_err(|e| {
-                sentry::capture_error(&e);
-                tracing::error!("Error in get to service: {:?}", e,);
-                Error::InternalError
-            })
-        }
-        StatusCode::NOT_FOUND => {
-            Err(Error::NotFound)
-        }
-        _ => {
-            Err(Error::InternalError)
-        }
+        StatusCode::OK => resp.json().await.map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!("Error in get to service: {:?}", e,);
+            Error::InternalError
+        }),
+        StatusCode::NOT_FOUND => Err(Error::NotFound),
+        _ => Err(Error::InternalError),
     }
 }
 
