@@ -27,7 +27,23 @@ impl std::error::Error for Error {}
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()).into_response()
+        match self {
+            Error::SmartDeviceNotReachable => {
+                (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()).into_response()
+            }
+            Error::SmartDeviceResponse => {
+                (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()).into_response()
+            }
+            Error::Database(e) => match e {
+                database::Error::Creation => {
+                    (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
+                }
+                database::Error::DatabaseConnection => {
+                    (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
+                }
+                database::Error::Find => (StatusCode::NOT_FOUND, e.to_string()).into_response(),
+            },
+        }
     }
 }
 // endregion: --- Error Boilerplate

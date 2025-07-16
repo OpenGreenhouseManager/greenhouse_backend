@@ -40,6 +40,7 @@ pub(crate) async fn update_device(
     entry.name = update.name.clone();
     entry.description = update.description.clone();
     entry.address = update.address.clone();
+    entry.canscript = update.can_script;
     entry.flush(&pool).await?;
 
     let response: DeviceResponseDto = entry.into();
