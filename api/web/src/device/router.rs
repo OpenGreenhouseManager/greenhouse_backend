@@ -31,8 +31,7 @@ pub(crate) async fn create_device(
     State(AppState { config }): State<AppState>,
     Json(entry): Json<PostDeviceDtoRequest>,
 ) -> Result<impl IntoResponse> {
-    let device =
-        service::create_device(&config.service_addresses.device_service, entry).await?;
+    let device = service::create_device(&config.service_addresses.device_service, entry).await?;
     Ok(Json(device))
 }
 
@@ -69,8 +68,7 @@ pub(crate) async fn get_device_config(
     State(AppState { config }): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse> {
-    let response =
-        service::get_device_config(&config.service_addresses.device_service, id).await?;
+    let response = service::get_device_config(&config.service_addresses.device_service, id).await?;
     Ok((
         StatusCode::OK,
         [(
@@ -86,8 +84,7 @@ pub(crate) async fn get_device_status(
     State(AppState { config }): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse> {
-    let response =
-        service::get_device_status(&config.service_addresses.device_service, id).await?;
+    let response = service::get_device_status(&config.service_addresses.device_service, id).await?;
     Ok((
         StatusCode::OK,
         [(

@@ -34,19 +34,15 @@ impl IntoResponse for Error {
             Error::SmartDeviceResponse => {
                 (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()).into_response()
             }
-            Error::Database(e) => {
-                match e {
-                    database::Error::Creation => {
-                        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
-                    }
-                    database::Error::DatabaseConnection => {
-                        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
-                    }
-                    database::Error::Find => {
-                        (StatusCode::NOT_FOUND, e.to_string()).into_response()
-                    }
+            Error::Database(e) => match e {
+                database::Error::Creation => {
+                    (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
                 }
-            }
+                database::Error::DatabaseConnection => {
+                    (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
+                }
+                database::Error::Find => (StatusCode::NOT_FOUND, e.to_string()).into_response(),
+            },
         }
     }
 }

@@ -28,9 +28,7 @@ impl IntoResponse for Error {
             Error::InternalError => {
                 (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()).into_response()
             }
-            Error::NotFound => {
-                (StatusCode::NOT_FOUND, self.to_string()).into_response()
-            }
+            Error::NotFound => (StatusCode::NOT_FOUND, self.to_string()).into_response(),
         }
     }
 }

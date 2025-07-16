@@ -13,7 +13,7 @@ pub(crate) async fn update_device(
     entry: PutDeviceDtoRequest,
 ) -> Result<DeviceResponseDto> {
     let resp = reqwest::Client::new()
-        .put(base_ulr.to_string()  + "/" + &id.to_string())
+        .put(base_ulr.to_string() + "/" + &id.to_string())
         .json(&entry)
         .send()
         .await
@@ -48,7 +48,7 @@ pub(crate) async fn create_device(
     update: PostDeviceDtoRequest,
 ) -> Result<DeviceResponseDto> {
     let resp = reqwest::Client::new()
-        .post(base_ulr.to_string() )
+        .post(base_ulr.to_string())
         .json(&update)
         .send()
         .await
@@ -75,7 +75,7 @@ pub(crate) async fn create_device(
 
 pub(crate) async fn get_device(base_ulr: &str, id: Uuid) -> Result<DeviceResponseDto> {
     let resp = reqwest::Client::new()
-        .get(base_ulr.to_string()  + "/" + &id.to_string())
+        .get(base_ulr.to_string() + "/" + &id.to_string())
         .send()
         .await
         .map_err(|e| {
@@ -101,14 +101,7 @@ pub(crate) async fn get_device(base_ulr: &str, id: Uuid) -> Result<DeviceRespons
 
 pub(crate) async fn get_device_config(base_ulr: &str, id: Uuid) -> Result<String> {
     let resp = reqwest::Client::new()
-        .get(
-            base_ulr.to_string()
-                
-                + "/"
-                + &id.to_string()
-                + "/"
-                + endpoints::CONFIG,
-        )
+        .get(base_ulr.to_string() + "/" + &id.to_string() + "/" + endpoints::CONFIG)
         .send()
         .await
         .map_err(|e| {
@@ -132,14 +125,7 @@ pub(crate) async fn get_device_config(base_ulr: &str, id: Uuid) -> Result<String
 
 pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String> {
     let resp = reqwest::Client::new()
-        .get(
-            base_ulr.to_string()
-                
-                + "/"
-                + &id.to_string()
-                + "/"
-                + endpoints::STATUS,
-        )
+        .get(base_ulr.to_string() + "/" + &id.to_string() + "/" + endpoints::STATUS)
         .send()
         .await
         .map_err(|e| {
@@ -157,21 +143,19 @@ pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String
 
     match resp.status() {
         StatusCode::OK => {
-            
-            return resp.json().await.map_err(|e| {
+            resp.json().await.map_err(|e| {
                 sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e,);
                 Error::InternalError
-    })
+            })
         }
         StatusCode::NOT_FOUND => {
-            return Err(Error::NotFound);
+            Err(Error::NotFound)
         }
         _ => {
-            return Err(Error::InternalError);
+            Err(Error::InternalError)
         }
     }
-
 }
 
 pub(crate) async fn get_devices(base_ulr: &str) -> Result<Vec<DeviceResponseDto>> {
