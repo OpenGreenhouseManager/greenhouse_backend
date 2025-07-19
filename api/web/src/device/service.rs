@@ -1,177 +1,109 @@
+use crate::device::error::{Error, Result};
 use greenhouse_core::device_service_dto::{
-    endpoints, get_device::DeviceResponseDto, post_device::PostDeviceDtoRequest,
-    put_device::PutDeviceDtoRequest,
+    device_router::{DeviceResponseDto, PostDeviceDtoRequest, PutDeviceDtoRequest},
+    endpoints,
 };
 use reqwest::StatusCode;
 use uuid::Uuid;
 
-use crate::device::{Error, Result};
-
-pub(crate) async fn update_device(
-    base_ulr: &str,
-    id: Uuid,
-    entry: PutDeviceDtoRequest,
-) -> Result<DeviceResponseDto> {
-    let resp = reqwest::Client::new()
-        .put(base_ulr.to_string() + "/" + &id.to_string())
-        .json(&entry)
-        .send()
-        .await
-        .map_err(|e| {
-            sentry::capture_error(&e);
-
-            tracing::error!(
-                "Error in update device: {:?} with entry: {:?} for url {}",
-                e,
-                entry,
-                base_ulr
-            );
-
-            Error::InternalError
-        })?;
-    resp.json().await.map_err(|e| {
-        sentry::capture_error(&e);
-
-        tracing::error!(
-            "Error parsing json for update device: {:?} with entry: {:?} for url {}",
-            e,
-            entry,
-            base_ulr
-        );
-
-        Error::InternalError
-    })
-}
-
 pub(crate) async fn create_device(
-    base_ulr: &str,
-    update: PostDeviceDtoRequest,
+    base_url: &str,
+    device: PostDeviceDtoRequest,
 ) -> Result<DeviceResponseDto> {
     let resp = reqwest::Client::new()
-        .post(base_ulr.to_string())
-        .json(&update)
+        .post(base_url)
+        .json(&device)
         .send()
-        .await
-        .map_err(|e| {
-            sentry::capture_error(&e);
+        .await?;
 
-            tracing::error!(
-                "Error in post to device service: {:?} with entry: {:?} for url {}",
-                e,
-                update,
-                base_ulr
-            );
-
-            Error::InternalError
-        })?;
-    resp.json().await.map_err(|e| {
-        sentry::capture_error(&e);
-
-        tracing::error!("Error in json to device service: {:?} with", e);
-
-        Error::InternalError
-    })
-}
-
-pub(crate) async fn get_device(base_ulr: &str, id: Uuid) -> Result<DeviceResponseDto> {
-    let resp = reqwest::Client::new()
-        .get(base_ulr.to_string() + "/" + &id.to_string())
-        .send()
-        .await
-        .map_err(|e| {
-            sentry::capture_error(&e);
-
-            tracing::error!(
-                "Error in get to service: {:?} with id: {:?} for url {}",
-                e,
-                id,
-                base_ulr
-            );
-
-            Error::InternalError
-        })?;
-    resp.json().await.map_err(|e| {
-        sentry::capture_error(&e);
-
-        tracing::error!("Error in get to service: {:?} with id: {:?}", e, id);
-
-        Error::InternalError
-    })
-}
-
-pub(crate) async fn get_device_config(base_ulr: &str, id: Uuid) -> Result<String> {
-    let resp = reqwest::Client::new()
-        .get(base_ulr.to_string() + "/" + &id.to_string() + "/" + endpoints::CONFIG)
-        .send()
-        .await
-        .map_err(|e| {
-            sentry::capture_error(&e);
-
-            tracing::error!(
-                "Error in get to device service: {:?} with id: {:?} for url {}",
-                e,
-                id,
-                base_ulr
-            );
-
-            Error::InternalError
-        })?;
-    resp.json().await.map_err(|e| {
-        sentry::capture_error(&e);
-        tracing::error!("Error in get to device service: {:?}", e,);
-        Error::InternalError
-    })
-}
-
-pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String> {
-    let resp = reqwest::Client::new()
-        .get(base_ulr.to_string() + "/" + &id.to_string() + "/" + endpoints::STATUS)
-        .send()
-        .await
-        .map_err(|e| {
-            sentry::capture_error(&e);
-
-            tracing::error!(
-                "Error in get to service: {:?} with id: {:?} for url {}",
-                e,
-                id,
-                base_ulr
-            );
-
-            Error::InternalError
-        })?;
-
-    match resp.status() {
-        StatusCode::OK => resp.json().await.map_err(|e| {
-            sentry::capture_error(&e);
-            tracing::error!("Error in get to service: {:?}", e,);
-            Error::InternalError
-        }),
-        StatusCode::NOT_FOUND => Err(Error::NotFound),
-        _ => Err(Error::InternalError),
+    if resp.status() == StatusCode::OK {
+        resp.json().await.map_err(Error::RequestError)
+    } else {
+        Err(Error::ServiceUnavailable)
     }
 }
 
-pub(crate) async fn get_devices(base_ulr: &str) -> Result<Vec<DeviceResponseDto>> {
+pub(crate) async fn update_device(
+    base_url: &str,
+    id: Uuid,
+    device: PutDeviceDtoRequest,
+) -> Result<DeviceResponseDto> {
     let resp = reqwest::Client::new()
-        .get(base_ulr.to_string())
+        .put(format!("{}/{}", base_url, id))
+        .json(&device)
         .send()
-        .await
-        .map_err(|e| {
-            sentry::capture_error(&e);
+        .await?;
 
-            tracing::error!(
-                "Error in get all to device service: {:?} for url {}",
-                e,
-                base_ulr
-            );
+    match resp.status() {
+        StatusCode::OK => resp.json().await.map_err(Error::RequestError),
+        StatusCode::NOT_FOUND => Err(Error::NotFound),
+        _ => Err(Error::ServiceUnavailable),
+    }
+}
 
-            Error::InternalError
-        })?;
+pub(crate) async fn get_device(base_url: &str, id: Uuid) -> Result<DeviceResponseDto> {
+    let resp = reqwest::Client::new()
+        .get(format!("{}/{}", base_url, id))
+        .send()
+        .await?;
 
-    resp.json().await.map_err(|e| {
-        sentry::capture_error(&e);
-        tracing::error!("Error in get all json to service: {:?}", e,);
-        Error::InternalError
-    })
+    match resp.status() {
+        StatusCode::OK => resp.json().await.map_err(Error::RequestError),
+        StatusCode::NOT_FOUND => Err(Error::NotFound),
+        _ => Err(Error::ServiceUnavailable),
+    }
+}
+
+pub(crate) async fn delete_device(base_url: &str, id: Uuid) -> Result<()> {
+    let resp = reqwest::Client::new()
+        .delete(format!("{}/{}", base_url, id))
+        .send()
+        .await?;
+
+    match resp.status() {
+        StatusCode::OK => Ok(()),
+        StatusCode::NOT_FOUND => Err(Error::NotFound),
+        _ => Err(Error::ServiceUnavailable),
+    }
+}
+
+pub(crate) async fn device_call(base_url: &str, id: Uuid, json_data: String) -> Result<String> {
+    let resp = reqwest::Client::new()
+        .put(format!("{}/{}/{}", base_url, id, endpoints::CALL))
+        .header("Content-Type", "application/json")
+        .body(json_data)
+        .send()
+        .await?;
+
+    match resp.status() {
+        StatusCode::OK => resp.text().await.map_err(Error::RequestError),
+        StatusCode::NOT_FOUND => Err(Error::NotFound),
+        _ => Err(Error::ServiceUnavailable),
+    }
+}
+
+pub(crate) async fn get_device_status(base_url: &str, id: Uuid) -> Result<String> {
+    let resp = reqwest::Client::new()
+        .get(format!("{}/{}/{}", base_url, id, endpoints::STATUS))
+        .send()
+        .await?;
+
+    match resp.status() {
+        StatusCode::OK => resp.json().await.map_err(Error::RequestError),
+        StatusCode::NOT_FOUND => Err(Error::NotFound),
+        _ => Err(Error::ServiceUnavailable),
+    }
+}
+
+pub(crate) async fn get_devices(base_url: &str) -> Result<Vec<DeviceResponseDto>> {
+    let resp = reqwest::Client::new()
+        .get(base_url)
+        .send()
+        .await?;
+
+    if resp.status() == StatusCode::OK {
+        resp.json().await.map_err(Error::RequestError)
+    } else {
+        Err(Error::ServiceUnavailable)
+    }
 }

@@ -8,3 +8,6 @@ pub mod device_service_dto;
 pub mod smart_device_dto;
 #[cfg(feature = "smart_device_interface")]
 pub mod smart_device_interface;
+
+// Error handling module for standardized API error responses
+pub mod error;
