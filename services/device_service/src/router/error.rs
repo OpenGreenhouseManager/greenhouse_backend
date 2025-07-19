@@ -5,6 +5,7 @@ use axum::{
 };
 use derive_more::From;
 use serde::Serialize;
+use greenhouse_core::error::{ApiErrorResponse, IntoApiError, errors};
 
 pub(crate) type Result<T> = core::result::Result<T, Error>;
 
@@ -12,8 +13,40 @@ pub(crate) type Result<T> = core::result::Result<T, Error>;
 pub(crate) enum Error {
     SmartDeviceNotReachable,
     SmartDeviceResponse,
+    InvalidDeviceData,
     #[from]
     Database(database::Error),
+}
+
+impl IntoApiError for Error {
+    fn into_api_error(self) -> ApiErrorResponse {
+        match self {
+            Error::SmartDeviceNotReachable => {
+                tracing::warn!("Smart device not reachable: {:?}", self);
+                errors::service_unavailable("Device")
+            }
+            Error::SmartDeviceResponse => {
+                tracing::warn!("Invalid smart device response: {:?}", self);
+                errors::service_unavailable("Device")
+            }
+            Error::InvalidDeviceData => {
+                errors::invalid_input("Invalid device data provided")
+            }
+            Error::Database(database::Error::Creation) => {
+                tracing::error!("Database creation error: {:?}", self);
+                sentry::capture_error(&self as &dyn std::error::Error);
+                errors::internal_error()
+            }
+            Error::Database(database::Error::DatabaseConnection) => {
+                tracing::error!("Database connection error: {:?}", self);
+                sentry::capture_error(&self as &dyn std::error::Error);
+                errors::internal_error()
+            }
+            Error::Database(database::Error::Find) => {
+                errors::not_found("Device")
+            }
+        }
+    }
 }
 
 // region:    --- Error Boilerplate
@@ -27,23 +60,7 @@ impl std::error::Error for Error {}
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        match self {
-            Error::SmartDeviceNotReachable => {
-                (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()).into_response()
-            }
-            Error::SmartDeviceResponse => {
-                (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()).into_response()
-            }
-            Error::Database(e) => match e {
-                database::Error::Creation => {
-                    (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
-                }
-                database::Error::DatabaseConnection => {
-                    (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
-                }
-                database::Error::Find => (StatusCode::NOT_FOUND, e.to_string()).into_response(),
-            },
-        }
+        self.into_api_error().into_response()
     }
 }
 // endregion: --- Error Boilerplate

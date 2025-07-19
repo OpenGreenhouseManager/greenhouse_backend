@@ -5,14 +5,44 @@ use axum::{
 };
 use derive_more::From;
 use serde::Serialize;
+use greenhouse_core::error::{ApiErrorResponse, IntoApiError, errors};
 
 pub(crate) type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, Serialize, From)]
 pub(crate) enum Error {
     TimeError,
+    InvalidDataFormat,
     #[from]
     Database(database::Error),
+}
+
+impl IntoApiError for Error {
+    fn into_api_error(self) -> ApiErrorResponse {
+        match self {
+            Error::TimeError => {
+                tracing::error!("Time processing error: {:?}", self);
+                sentry::capture_error(&self as &dyn std::error::Error);
+                errors::internal_error()
+            }
+            Error::InvalidDataFormat => {
+                errors::invalid_input("Invalid data format provided")
+            }
+            Error::Database(database::Error::Creation) => {
+                tracing::error!("Database creation error: {:?}", self);
+                sentry::capture_error(&self as &dyn std::error::Error);
+                errors::internal_error()
+            }
+            Error::Database(database::Error::DatabaseConnection) => {
+                tracing::error!("Database connection error: {:?}", self);
+                sentry::capture_error(&self as &dyn std::error::Error);
+                errors::internal_error()
+            }
+            Error::Database(database::Error::Find) => {
+                errors::not_found("Resource")
+            }
+        }
+    }
 }
 
 // region:    --- Error Boilerplate
@@ -26,7 +56,7 @@ impl std::error::Error for Error {}
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()).into_response()
+        self.into_api_error().into_response()
     }
 }
 // endregion: --- Error Boilerplate
