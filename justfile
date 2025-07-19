@@ -25,6 +25,42 @@ start-all:
     just run-apis &      # runs apis in background combined output
     wait
 
+# Run all services and APIs except the specified ones
+start-all-except *services: kill-services kill-apis
+    #!/bin/bash
+    trap "echo Killing services...; kill 0" SIGINT
+    mkdir -p logs
+    echo "" > logs/services.log
+    echo "" > logs/apis.log
+    echo "Excluding services: {{ services }}"
+    excluded_services="{{ services }}"
+    if [[ ! "$excluded_services" =~ "auth_service" ]]; then
+        stdbuf -oL cargo run --package auth_service | tee -a logs/services.log &
+    else
+        echo "Skipping auth_service"
+    fi
+    if [[ ! "$excluded_services" =~ "data_storage_service" ]]; then
+        stdbuf -oL cargo run --package data_storage_service | tee -a logs/services.log &
+    else
+        echo "Skipping data_storage_service"
+    fi
+    if [[ ! "$excluded_services" =~ "device_service" ]]; then
+        stdbuf -oL cargo run --package device_service | tee -a logs/services.log &
+    else
+        echo "Skipping device_service"
+    fi
+    if [[ ! "$excluded_services" =~ "web_api" ]]; then
+        stdbuf -oL cargo run --package web_api | tee -a logs/apis.log &
+    else
+        echo "Skipping web_api"
+    fi
+    if [[ ! "$excluded_services" =~ "script_api" ]]; then
+        stdbuf -oL cargo run --package script_api | tee -a logs/apis.log &
+    else
+        echo "Skipping script_api"
+    fi
+    wait
+
 kill-services:
     killall auth_service || true
     killall data_storage_service || true
