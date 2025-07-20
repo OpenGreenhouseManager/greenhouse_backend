@@ -14,7 +14,7 @@ chrono = { workspace = true }
 derive_more = { workspace = true }
 diesel =  { workspace = true, features = [ "uuid", "postgres" ] }
 diesel-async =  { workspace = true }
-greenhouse_core = { workspace = true, features = ["auth_service_dto"] }
+greenhouse_core = { workspace = true, features = ["auth_service_dto", "error_handling"] }
 jsonwebtoken = { workspace = true }
 rand = { workspace = true }
 serde = { workspace = true }

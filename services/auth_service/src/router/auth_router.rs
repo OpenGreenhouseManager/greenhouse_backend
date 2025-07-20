@@ -38,7 +38,7 @@ pub(crate) async fn register(
             .parse::<u64>()
             .map_err(|_| Error::OneTimeToken)?,
         &config.jwt_secret,
-    )?;
+    ).map_err(|e| Error::Token(e))?;
     let token = register_user(&user.username, &user.password, role, &config, &pool).await?;
     Ok(Json(RegisterResponseDto {
         token,
@@ -92,8 +92,8 @@ pub(crate) async fn register_user(
         Error::DatabaseConnection
     })?;
 
-    let mut new_user = User::new(name, password, role)?;
-    let token = new_user.refresh_token(&config.jwt_secret)?;
+    let mut new_user = User::new(name, password, role).map_err(|e| Error::User(e))?;
+    let token = new_user.refresh_token(&config.jwt_secret).map_err(|e| Error::User(e))?;
     let _ = diesel::insert_into(database::schema::users::table)
         .values(new_user)
         .execute(&mut conn)
@@ -151,11 +151,11 @@ pub(crate) async fn login(
             Error::DatabaseConnection
         })?;
 
-    if !user.check_login(&login.password).await? {
+    if !user.check_login(&login.password).await.map_err(|e| Error::User(e))? {
         return Ok(StatusCode::UNAUTHORIZED.into_response());
     }
 
-    let token = user.refresh_token(&config.jwt_secret)?;
+    let token = user.refresh_token(&config.jwt_secret).map_err(|e| Error::User(e))?;
 
     diesel::update(users)
         .filter(id.eq(user.id))
@@ -200,7 +200,7 @@ pub(crate) async fn check_token(
         Error::DatabaseConnection
     })?;
 
-    let claims = token::user_token::get_claims(&token.token, &config.jwt_secret)?;
+    let claims = token::user_token::get_claims(&token.token, &config.jwt_secret).map_err(|e| Error::Token(e))?;
 
     let user = users
         .filter(username.eq(&claims.user_name))
