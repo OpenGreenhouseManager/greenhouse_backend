@@ -1,23 +1,23 @@
 //! HTTP Error Mapping System
-//! 
-//! This module provides a centralized way to map errors to HTTP status codes and 
+//!
+//! This module provides a centralized way to map errors to HTTP status codes and
 //! create consistent HTTP responses across the greenhouse backend services.
-//! 
+//!
 //! # Usage
-//! 
+//!
 //! Implement the `HttpErrorMapping` trait on your error enums:
-//! 
+//!
 //! ```rust
-//! use greenhouse_core::http_error::{HttpErrorMapping, HttpErrorResponse};
+//! use greenhouse_core::http_error::{HttpErrorMapping, HttpErrorResponse, HttpResult};
 //! use axum::http::StatusCode;
-//! 
+//!
 //! #[derive(Debug)]
 //! enum MyError {
 //!     NotFound,
 //!     InvalidInput,
 //!     DatabaseError,
 //! }
-//! 
+//!
 //! impl HttpErrorMapping for MyError {
 //!     fn to_status_code(&self) -> StatusCode {
 //!         match self {
@@ -27,24 +27,30 @@
 //!         }
 //!     }
 //! }
-//! 
-//! // In your handlers, wrap errors with HttpErrorResponse
-//! async fn my_handler() -> Result<Json<Data>, HttpErrorResponse<MyError>> {
+//!
+//! // Use HttpResult for cleaner handler signatures
+//! async fn my_handler() -> HttpResult<Json<Data>, MyError> {
 //!     let data = get_data().map_err(HttpErrorResponse::new)?;
 //!     Ok(Json(data))
+//! }
+//!
+//! // Or use it with any success type
+//! fn process_data() -> HttpResult<i32, MyError> {
+//!     // ... processing logic
+//!     Ok(42)
 //! }
 //! ```
 
 use axum::{
+    Json,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::Serialize;
 use std::fmt;
 
 /// Trait for mapping errors to HTTP status codes
-/// 
+///
 /// Implement this trait on your error enums to define how they should be
 /// converted to HTTP status codes.
 pub trait HttpErrorMapping: fmt::Display {
@@ -52,14 +58,14 @@ pub trait HttpErrorMapping: fmt::Display {
     fn to_status_code(&self) -> StatusCode;
 
     /// Optional: Provide a custom error message for the HTTP response
-    /// 
+    ///
     /// If not overridden, uses the error's Display implementation
     fn to_error_message(&self) -> String {
         self.to_string()
     }
 
     /// Optional: Provide additional context or metadata for the error response
-    /// 
+    ///
     /// This can be used to include error codes, additional details, etc.
     fn to_error_context(&self) -> Option<serde_json::Value> {
         None
@@ -67,7 +73,7 @@ pub trait HttpErrorMapping: fmt::Display {
 }
 
 /// A wrapper type that implements IntoResponse for errors that implement HttpErrorMapping
-/// 
+///
 /// This provides a consistent way to convert errors into HTTP responses across
 /// all services in the greenhouse backend.
 #[derive(Debug)]
@@ -87,6 +93,46 @@ impl<E> From<E> for HttpErrorResponse<E> {
         Self::new(error)
     }
 }
+
+/// Type alias for Result with HttpErrorResponse as the error type
+///
+/// This provides a convenient way to return HTTP-compatible results from handlers
+/// and other functions that can fail with HTTP errors.
+///
+/// # Usage
+///
+/// ```rust
+/// use greenhouse_core::http_error::{HttpResult, HttpErrorMapping, HttpErrorResponse};
+/// use axum::Json;
+///
+/// #[derive(Debug)]
+/// enum MyError {
+///     NotFound,
+///     InvalidInput,
+/// }
+///
+/// impl HttpErrorMapping for MyError {
+///     fn to_status_code(&self) -> axum::http::StatusCode {
+///         match self {
+///             MyError::NotFound => axum::http::StatusCode::NOT_FOUND,
+///             MyError::InvalidInput => axum::http::StatusCode::BAD_REQUEST,
+///         }
+///     }
+/// }
+///
+/// // Use HttpResult for cleaner handler signatures
+/// async fn my_handler() -> HttpResult<Json<Data>, MyError> {
+///     let data = get_data().map_err(HttpErrorResponse::new)?;
+///     Ok(Json(data))
+/// }
+///
+/// // Or use it with any success type
+/// fn process_data() -> HttpResult<i32, MyError> {
+///     // ... processing logic
+///     Ok(42)
+/// }
+/// ```
+pub type HttpResult<T, E> = Result<T, HttpErrorResponse<E>>;
 
 /// The JSON structure for error responses
 #[derive(Serialize)]
@@ -122,71 +168,23 @@ where
     }
 }
 
-/// Common HTTP error mappings for typical error patterns
-/// 
-/// These can be used as defaults or mixed in with custom mappings
-pub mod common {
-    use super::*;
-
-    /// Maps common database operation errors to appropriate HTTP status codes
-    pub fn map_database_error(error_type: &str) -> StatusCode {
-        match error_type {
-            "NotFound" | "Find" => StatusCode::NOT_FOUND,
-            "Creation" | "Update" | "Delete" => StatusCode::INTERNAL_SERVER_ERROR,
-            "DatabaseConnection" => StatusCode::SERVICE_UNAVAILABLE,
-            "UniqueConstraint" | "Conflict" => StatusCode::CONFLICT,
-            _ => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    /// Maps common authentication/authorization errors
-    pub fn map_auth_error(error_type: &str) -> StatusCode {
-        match error_type {
-            "Unauthorized" | "InvalidToken" | "TokenExpired" => StatusCode::UNAUTHORIZED,
-            "Forbidden" | "InsufficientPermissions" => StatusCode::FORBIDDEN,
-            "InvalidCredentials" => StatusCode::UNAUTHORIZED,
-            _ => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-
-    /// Maps common validation errors
-    pub fn map_validation_error(error_type: &str) -> StatusCode {
-        match error_type {
-            "InvalidInput" | "ValidationFailed" | "MissingField" => StatusCode::BAD_REQUEST,
-            "InvalidFormat" | "ParseError" => StatusCode::BAD_REQUEST,
-            "OutOfRange" | "TooLarge" | "TooSmall" => StatusCode::BAD_REQUEST,
-            _ => StatusCode::BAD_REQUEST,
-        }
-    }
-
-    /// Maps common external service errors
-    pub fn map_external_service_error(error_type: &str) -> StatusCode {
-        match error_type {
-            "ServiceUnavailable" | "Timeout" => StatusCode::SERVICE_UNAVAILABLE,
-            "NotReachable" | "ConnectionFailed" => StatusCode::BAD_GATEWAY,
-            "RateLimited" => StatusCode::TOO_MANY_REQUESTS,
-            _ => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-}
-
 /// Macro to implement HttpErrorMapping with common patterns
-/// 
+///
 /// This macro helps reduce boilerplate when implementing HttpErrorMapping
 /// for error enums that follow common patterns.
-/// 
+///
 /// # Example
-/// 
+///
 /// ```rust
 /// use greenhouse_core::impl_http_error_mapping;
-/// 
+///
 /// #[derive(Debug)]
 /// enum DatabaseError {
 ///     NotFound,
 ///     Creation,
 ///     DatabaseConnection,
 /// }
-/// 
+///
 /// impl_http_error_mapping!(DatabaseError {
 ///     NotFound => NOT_FOUND,
 ///     Creation => INTERNAL_SERVER_ERROR,
@@ -209,22 +207,22 @@ macro_rules! impl_http_error_mapping {
 }
 
 /// Macro to implement HttpErrorMapping using common error mappers
-/// 
+///
 /// This macro allows you to use the predefined common error mappers
 /// for standard error patterns.
-/// 
+///
 /// # Example
-/// 
+///
 /// ```rust
 /// use greenhouse_core::impl_http_error_mapping_with_common;
-/// 
+///
 /// #[derive(Debug)]
 /// enum MyError {
 ///     DatabaseError(String),
 ///     AuthError(String),
 ///     CustomError,
 /// }
-/// 
+///
 /// impl_http_error_mapping_with_common!(MyError {
 ///     DatabaseError(ref e) => database(e),
 ///     AuthError(ref e) => auth(e),
@@ -260,7 +258,7 @@ macro_rules! impl_http_error_mapping_with_common {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[derive(Debug)]
     enum TestError {
         NotFound,
@@ -291,15 +289,13 @@ mod tests {
     #[test]
     fn test_error_status_mapping() {
         assert_eq!(TestError::NotFound.to_status_code(), StatusCode::NOT_FOUND);
-        assert_eq!(TestError::InvalidInput.to_status_code(), StatusCode::BAD_REQUEST);
-        assert_eq!(TestError::DatabaseError.to_status_code(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(
+            TestError::InvalidInput.to_status_code(),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(
+            TestError::DatabaseError.to_status_code(),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
     }
-
-    #[test]
-    fn test_common_mappers() {
-        assert_eq!(common::map_database_error("NotFound"), StatusCode::NOT_FOUND);
-        assert_eq!(common::map_database_error("Creation"), StatusCode::INTERNAL_SERVER_ERROR);
-        assert_eq!(common::map_auth_error("Unauthorized"), StatusCode::UNAUTHORIZED);
-        assert_eq!(common::map_validation_error("InvalidInput"), StatusCode::BAD_REQUEST);
-    }
-} 
+}
