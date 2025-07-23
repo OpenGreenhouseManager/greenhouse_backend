@@ -71,3 +71,14 @@ kill-apis:
     killall script_api || true
 
 stop-all: kill-services kill-apis
+
+lint:
+    cargo clippy --all-targets --all-features --workspace  -- -D warnings
+
+test:
+    cargo test --release --workspace --all-features -- --test-threads=1
+
+fmt:
+    cargo fmt --all -- --color always
+
+ci: lint test fmt

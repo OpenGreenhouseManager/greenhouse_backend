@@ -8,12 +8,12 @@ use uuid::Uuid;
 use crate::device::{Error, Result};
 
 pub(crate) async fn update_device(
-    base_ulr: &str,
+    base_url: &str,
     id: Uuid,
     entry: PutDeviceDtoRequest,
 ) -> Result<DeviceResponseDto> {
     let resp = reqwest::Client::new()
-        .put(base_ulr.to_string() + "/" + &id.to_string())
+        .put(base_url.to_string() + "/" + &id.to_string())
         .json(&entry)
         .send()
         .await
@@ -24,7 +24,7 @@ pub(crate) async fn update_device(
                 "Error in update device: {:?} with entry: {:?} for url {}",
                 e,
                 entry,
-                base_ulr
+                base_url
             );
 
             Error::InternalError
@@ -36,7 +36,7 @@ pub(crate) async fn update_device(
             "Error parsing json for update device: {:?} with entry: {:?} for url {}",
             e,
             entry,
-            base_ulr
+            base_url
         );
 
         Error::InternalError
@@ -44,11 +44,11 @@ pub(crate) async fn update_device(
 }
 
 pub(crate) async fn create_device(
-    base_ulr: &str,
+    base_url: &str,
     update: PostDeviceDtoRequest,
 ) -> Result<DeviceResponseDto> {
     let resp = reqwest::Client::new()
-        .post(base_ulr.to_string())
+        .post(base_url.to_string())
         .json(&update)
         .send()
         .await
@@ -59,7 +59,7 @@ pub(crate) async fn create_device(
                 "Error in post to device service: {:?} with entry: {:?} for url {}",
                 e,
                 update,
-                base_ulr
+                base_url
             );
 
             Error::InternalError
@@ -73,9 +73,9 @@ pub(crate) async fn create_device(
     })
 }
 
-pub(crate) async fn get_device(base_ulr: &str, id: Uuid) -> Result<DeviceResponseDto> {
+pub(crate) async fn get_device(base_url: &str, id: Uuid) -> Result<DeviceResponseDto> {
     let resp = reqwest::Client::new()
-        .get(base_ulr.to_string() + "/" + &id.to_string())
+        .get(base_url.to_string() + "/" + &id.to_string())
         .send()
         .await
         .map_err(|e| {
@@ -85,7 +85,7 @@ pub(crate) async fn get_device(base_ulr: &str, id: Uuid) -> Result<DeviceRespons
                 "Error in get to service: {:?} with id: {:?} for url {}",
                 e,
                 id,
-                base_ulr
+                base_url
             );
 
             Error::InternalError
@@ -152,9 +152,9 @@ pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String
     }
 }
 
-pub(crate) async fn get_devices(base_ulr: &str) -> Result<Vec<DeviceResponseDto>> {
+pub(crate) async fn get_devices(base_url: &str) -> Result<Vec<DeviceResponseDto>> {
     let resp = reqwest::Client::new()
-        .get(base_ulr.to_string())
+        .get(base_url.to_string())
         .send()
         .await
         .map_err(|e| {
@@ -163,7 +163,7 @@ pub(crate) async fn get_devices(base_ulr: &str) -> Result<Vec<DeviceResponseDto>
             tracing::error!(
                 "Error in get all to device service: {:?} for url {}",
                 e,
-                base_ulr
+                base_url
             );
 
             Error::InternalError
