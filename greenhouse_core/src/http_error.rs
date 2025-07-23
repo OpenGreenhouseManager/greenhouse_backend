@@ -94,6 +94,40 @@ impl<E> From<E> for HttpErrorResponse<E> {
     }
 }
 
+/// Macro to implement From for HttpErrorResponse for common error types
+/// 
+/// This macro helps reduce boilerplate when implementing From for
+/// HttpErrorResponse when you have From implementations to your main error type.
+/// 
+/// # Example
+/// 
+/// ```rust
+/// use greenhouse_core::impl_http_error_from;
+/// 
+/// #[derive(Debug)]
+/// enum MyError {
+///     DatabaseError(database::Error),
+///     TokenError(token::Error),
+/// }
+/// 
+/// impl_http_error_from!(MyError {
+///     database::Error,
+///     token::Error,
+/// });
+/// ```
+#[macro_export]
+macro_rules! impl_http_error_from {
+    ($error_type:ty { $($source_type:ty),+ $(,)? }) => {
+        $(
+            impl From<$source_type> for $crate::http_error::HttpErrorResponse<$error_type> {
+                fn from(error: $source_type) -> Self {
+                    $crate::http_error::HttpErrorResponse::new(<$error_type>::from(error))
+                }
+            }
+        )+
+    };
+}
+
 /// The JSON structure for error responses
 #[derive(Serialize)]
 struct ErrorResponseBody {

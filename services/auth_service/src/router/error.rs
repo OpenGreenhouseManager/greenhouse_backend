@@ -4,10 +4,10 @@ use axum::{
 };
 use derive_more::From;
 use greenhouse_core::http_error::{HttpErrorMapping, HttpErrorResponse};
+use greenhouse_core::impl_http_error_from;
 use serde::Serialize;
 
 pub(crate) type HttpResult<T> = core::result::Result<T, HttpErrorResponse<Error>>;
-pub(crate) type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, Serialize, From)]
 pub(crate) enum Error {
@@ -29,6 +29,12 @@ impl core::fmt::Display for Error {
 }
 
 impl std::error::Error for Error {}
+
+// Use the macro to implement From for HttpErrorResponse
+impl_http_error_from!(Error {
+    crate::database::Error,
+    crate::token::Error,
+});
 
 impl HttpErrorMapping for Error {
     fn to_status_code(&self) -> StatusCode {
