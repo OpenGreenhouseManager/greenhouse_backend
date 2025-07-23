@@ -8,7 +8,6 @@ use serde::Serialize;
 pub(crate) type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, Serialize, From)]
-
 pub(crate) enum Error {
     DatabaseConnection,
     UsernameTaken,
