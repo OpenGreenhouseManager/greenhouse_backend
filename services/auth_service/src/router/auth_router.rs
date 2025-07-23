@@ -93,8 +93,7 @@ pub(crate) async fn register_user(
     })?;
 
     let mut new_user = User::new(name, password, role)?;
-    let token = new_user
-        .refresh_token(&config.jwt_secret)?;
+    let token = new_user.refresh_token(&config.jwt_secret)?;
     let _ = diesel::insert_into(database::schema::users::table)
         .values(new_user)
         .execute(&mut conn)
@@ -152,15 +151,11 @@ pub(crate) async fn login(
             Error::DatabaseConnection
         })?;
 
-    if !user
-        .check_login(&login.password)
-        .await?
-    {
+    if !user.check_login(&login.password).await? {
         return Ok(StatusCode::UNAUTHORIZED.into_response());
     }
 
-    let token = user
-        .refresh_token(&config.jwt_secret)?;
+    let token = user.refresh_token(&config.jwt_secret)?;
 
     diesel::update(users)
         .filter(id.eq(user.id))
