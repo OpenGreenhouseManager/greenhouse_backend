@@ -11,6 +11,7 @@ use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 pub(crate) mod alert;
 pub(crate) mod auth;
+pub(crate) mod device;
 pub(crate) mod diary;
 pub(crate) mod helper;
 pub(crate) mod settings;
@@ -20,6 +21,8 @@ pub(crate) mod test;
 pub struct ServiceAddresses {
     #[serde(rename = "AUTH_SERVICE")]
     pub auth_service: String,
+    #[serde(rename = "DEVICE_SERVICE")]
+    pub device_service: String,
     #[serde(rename = "DATA_STORAGE_SERVICE")]
     pub data_storage_service: String,
 }
@@ -56,6 +59,7 @@ pub fn app(config: Config) -> Router {
         .nest("/api/settings", settings::router::routes(state.clone()))
         .nest("/api/diary", diary::router::routes(state.clone()))
         .nest("/api/alert", alert::router::routes(state.clone()))
+        .nest("/api/device", device::router::routes(state.clone()))
         .layer(middleware::from_fn_with_state(state.clone(), check_token))
         .merge(auth::router::routes(state))
         .layer(CookieManagerLayer::new())
