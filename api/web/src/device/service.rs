@@ -99,7 +99,6 @@ pub(crate) async fn get_device(base_url: &str, id: Uuid) -> Result<DeviceRespons
     })
 }
 
-
 pub(crate) async fn get_device_config(base_ulr: &str, id: Uuid) -> Result<String> {
     let resp = reqwest::Client::new()
         .get(base_ulr.to_string() + "/" + &id.to_string() + "/" + endpoints::CONFIG)
