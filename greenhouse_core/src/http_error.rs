@@ -94,46 +94,6 @@ impl<E> From<E> for HttpErrorResponse<E> {
     }
 }
 
-/// Type alias for Result with HttpErrorResponse as the error type
-///
-/// This provides a convenient way to return HTTP-compatible results from handlers
-/// and other functions that can fail with HTTP errors.
-///
-/// # Usage
-///
-/// ```rust
-/// use greenhouse_core::http_error::{HttpResult, HttpErrorMapping, HttpErrorResponse};
-/// use axum::Json;
-///
-/// #[derive(Debug)]
-/// enum MyError {
-///     NotFound,
-///     InvalidInput,
-/// }
-///
-/// impl HttpErrorMapping for MyError {
-///     fn to_status_code(&self) -> axum::http::StatusCode {
-///         match self {
-///             MyError::NotFound => axum::http::StatusCode::NOT_FOUND,
-///             MyError::InvalidInput => axum::http::StatusCode::BAD_REQUEST,
-///         }
-///     }
-/// }
-///
-/// // Use HttpResult for cleaner handler signatures
-/// async fn my_handler() -> HttpResult<Json<Data>, MyError> {
-///     let data = get_data().map_err(HttpErrorResponse::new)?;
-///     Ok(Json(data))
-/// }
-///
-/// // Or use it with any success type
-/// fn process_data() -> HttpResult<i32, MyError> {
-///     // ... processing logic
-///     Ok(42)
-/// }
-/// ```
-pub type HttpResult<T, E> = Result<T, HttpErrorResponse<E>>;
-
 /// The JSON structure for error responses
 #[derive(Serialize)]
 struct ErrorResponseBody {
