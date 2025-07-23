@@ -1,7 +1,5 @@
 use crate::{database, token};
-use axum::{
-    http::StatusCode,
-};
+use axum::http::StatusCode;
 use derive_more::From;
 use greenhouse_core::http_error::{HttpErrorMapping, HttpErrorResponse};
 use greenhouse_core::impl_http_error_from;
@@ -57,6 +55,30 @@ impl HttpErrorMapping for Error {
                 token::Error::JwtDecode => StatusCode::BAD_REQUEST,
                 token::Error::JwtEncode => StatusCode::BAD_REQUEST,
                 token::Error::RegisterToken => StatusCode::BAD_REQUEST,
+            },
+        }
+    }
+
+    fn to_error_message(&self) -> String {
+        match self {
+            Error::DatabaseConnection => String::from("Database connection error"),
+            Error::UsernameTaken => String::from("Username already taken"),
+            Error::UserNotFound => String::from("User not found"),
+            Error::OneTimeToken => String::from("One-time token error"),
+            Error::User(e) => match e {
+                database::Error::InvalidHash => String::from("Invalid hash"),
+                database::Error::Token(e) => match e {
+                    token::Error::InvalidTime => String::from("Invalid time"),
+                    token::Error::JwtDecode => String::from("JWT decode error"),
+                    token::Error::JwtEncode => String::from("JWT encode error"),
+                    token::Error::RegisterToken => String::from("Register token error"),
+                },
+            },
+            Error::Token(e) => match e {
+                token::Error::InvalidTime => String::from("Invalid time"),
+                token::Error::JwtDecode => String::from("JWT decode error"),
+                token::Error::JwtEncode => String::from("JWT encode error"),
+                token::Error::RegisterToken => String::from("Register token error"),
             },
         }
     }

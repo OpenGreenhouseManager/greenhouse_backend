@@ -8,12 +8,7 @@ use crate::{
     Config, Pool, database::schema::users::dsl::users, token::one_time_token::check_one_time_token,
 };
 use axum::response::IntoResponse;
-use axum::{
-    Json,
-    extract::State,
-    http::StatusCode,
-    response::Response,
-};
+use axum::{Json, extract::State, http::StatusCode, response::Response};
 use database::schema::users::{id, login_session, username};
 use diesel::{ExpressionMethods, query_dsl::methods::FilterDsl};
 use diesel_async::RunQueryDsl;
@@ -149,7 +144,10 @@ pub(crate) async fn login(
                 scope.set_context("user_long", sentry::protocol::Context::Other(map));
             });
             sentry::capture_error(&e);
-            Error::DatabaseConnection
+            match e {
+                diesel::result::Error::NotFound => Error::UserNotFound,
+                _ => Error::DatabaseConnection,
+            }
         })?;
 
     if !user.check_login(&login.password).await? {
