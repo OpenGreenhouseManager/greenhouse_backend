@@ -99,9 +99,10 @@ pub(crate) async fn get_device(base_url: &str, id: Uuid) -> Result<DeviceRespons
     })
 }
 
-pub(crate) async fn get_device_config(base_url: &str, id: Uuid) -> Result<String> {
+
+pub(crate) async fn get_device_config(base_ulr: &str, id: Uuid) -> Result<String> {
     let resp = reqwest::Client::new()
-        .get(base_url.to_string() + "/" + &id.to_string() + "/" + endpoints::CONFIG)
+        .get(base_ulr.to_string() + "/" + &id.to_string() + "/" + endpoints::CONFIG)
         .send()
         .await
         .map_err(|e| {
@@ -111,21 +112,21 @@ pub(crate) async fn get_device_config(base_url: &str, id: Uuid) -> Result<String
                 "Error in get to device service: {:?} with id: {:?} for url {}",
                 e,
                 id,
-                base_url
+                base_ulr
             );
 
             Error::InternalError
         })?;
-    resp.text().await.map_err(|e| {
+    resp.json().await.map_err(|e| {
         sentry::capture_error(&e);
         tracing::error!("Error in get to device service: {:?}", e,);
         Error::InternalError
     })
 }
 
-pub(crate) async fn get_device_status(base_url: &str, id: Uuid) -> Result<String> {
+pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String> {
     let resp = reqwest::Client::new()
-        .get(base_url.to_string() + "/" + &id.to_string() + "/" + endpoints::STATUS)
+        .get(base_ulr.to_string() + "/" + &id.to_string() + "/" + endpoints::STATUS)
         .send()
         .await
         .map_err(|e| {
@@ -135,14 +136,14 @@ pub(crate) async fn get_device_status(base_url: &str, id: Uuid) -> Result<String
                 "Error in get to service: {:?} with id: {:?} for url {}",
                 e,
                 id,
-                base_url
+                base_ulr
             );
 
             Error::InternalError
         })?;
 
     match resp.status() {
-        StatusCode::OK => resp.text().await.map_err(|e| {
+        StatusCode::OK => resp.json().await.map_err(|e| {
             sentry::capture_error(&e);
             tracing::error!("Error in get to service: {:?}", e,);
             Error::InternalError
