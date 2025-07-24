@@ -6,7 +6,10 @@ use greenhouse_core::data_storage_service_dto::alert_dto::{
     query::{AlertQuery, IntervalQuery},
 };
 
-use crate::alert::{Error, Result};
+use crate::{
+    alert::{Error, Result},
+    helper::error::ApiError,
+};
 
 pub(crate) async fn get_filtered_alert(base_ulr: &str, query: AlertQuery) -> Result<Vec<AlertDto>> {
     let resp = reqwest::Client::new()
@@ -24,15 +27,21 @@ pub(crate) async fn get_filtered_alert(base_ulr: &str, query: AlertQuery) -> Res
                 base_ulr
             );
 
-            Error::InternalError
+            Error::Request(e)
         })?;
-    resp.json().await.map_err(|e| {
-        sentry::capture_error(&e);
+    if resp.status().is_success() {
+        return resp.json().await.map_err(|e| {
+            sentry::capture_error(&e);
 
-        tracing::error!("Error in get to service: {:?} with id: {:?}", e, query);
+            tracing::error!("Error in get to service: {:?} with id: {:?}", e, query);
 
-        Error::InternalError
-    })
+            Error::Json(e)
+        });
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp.text().await.unwrap_or_default(),
+    }))
 }
 
 pub(crate) async fn get_alert_subset(
@@ -54,15 +63,21 @@ pub(crate) async fn get_alert_subset(
                 base_ulr
             );
 
-            Error::InternalError
+            Error::Request(e)
         })?;
-    resp.json().await.map_err(|e| {
-        sentry::capture_error(&e);
+    if resp.status().is_success() {
+        return resp.json().await.map_err(|e| {
+            sentry::capture_error(&e);
 
-        tracing::error!("Error in get to service: {:?} with id: {:?}", e, query);
+            tracing::error!("Error in get to service: {:?} with id: {:?}", e, query);
 
-        Error::InternalError
-    })
+            Error::Json(e)
+        });
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp.text().await.unwrap_or_default(),
+    }))
 }
 
 pub(crate) async fn create_alert(base_ulr: &str, alert: CreateAlertDto) -> Result<AlertDto> {
@@ -76,13 +91,19 @@ pub(crate) async fn create_alert(base_ulr: &str, alert: CreateAlertDto) -> Resul
 
             tracing::error!("Error in post to service: {:?} for url {}", e, base_ulr);
 
-            Error::InternalError
+            Error::Request(e)
         })?;
-    resp.json().await.map_err(|e| {
-        sentry::capture_error(&e);
+    if resp.status().is_success() {
+        return resp.json().await.map_err(|e| {
+            sentry::capture_error(&e);
 
-        tracing::error!("Error in post to service: {:?} for url {}", e, base_ulr);
+            tracing::error!("Error in post to service: {:?} for url {}", e, base_ulr);
 
-        Error::InternalError
-    })
+            Error::Json(e)
+        });
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp.text().await.unwrap_or_default(),
+    }))
 }

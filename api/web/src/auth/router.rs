@@ -1,4 +1,4 @@
-use crate::{AppState, auth::error::HttpResult};
+use crate::{AppState, helper::error::HttpResult};
 use axum::{
     Json, Router,
     extract::State,

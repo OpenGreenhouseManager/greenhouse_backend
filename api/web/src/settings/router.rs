@@ -1,6 +1,5 @@
 use crate::helper;
-use crate::settings::Error;
-use crate::settings::error::HttpResult;
+use crate::helper::error::{Error, HttpResult};
 use crate::{AppState, auth::AUTH_TOKEN, settings::service};
 use axum::routing::post;
 use axum::{

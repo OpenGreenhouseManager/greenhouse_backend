@@ -1,6 +1,6 @@
 use crate::AppState;
-use crate::alert::error::HttpResult;
 use crate::alert::service;
+use crate::helper::error::HttpResult;
 use axum::extract::{Query, State};
 use axum::response::IntoResponse;
 use axum::routing::{get, post};

@@ -1,4 +1,7 @@
-use crate::settings::{Error, Result};
+use crate::{
+    helper::error::ApiError,
+    settings::{Error, Result},
+};
 
 use greenhouse_core::auth_service_dto::{
     endpoints,
@@ -23,7 +26,7 @@ pub(crate) async fn generate_one_time_token(base_ulr: &str, username: &str) -> R
                 base_ulr
             );
 
-            Error::RegisterToken
+            Error::Request(e)
         })?;
     if resp.status().is_success() {
         return Ok(resp
@@ -34,7 +37,7 @@ pub(crate) async fn generate_one_time_token(base_ulr: &str, username: &str) -> R
 
                 tracing::error!("Error in response json: {:?}", e,);
 
-                Error::RegisterToken
+                Error::Json(e)
             })?
             .token);
     }
@@ -48,5 +51,8 @@ pub(crate) async fn generate_one_time_token(base_ulr: &str, username: &str) -> R
         sentry::Level::Error,
     );
 
-    Err(Error::RegisterToken)
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp.text().await.unwrap_or_default(),
+    }))
 }

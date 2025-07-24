@@ -1,7 +1,4 @@
-use crate::{
-    AppState,
-    device::{error::HttpResult, service},
-};
+use crate::{AppState, device::service, helper::error::HttpResult};
 use axum::{
     Json, Router,
     extract::{Path, State},
