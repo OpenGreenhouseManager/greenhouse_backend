@@ -1,14 +1,14 @@
-//! HTTP Error Mapping System
+//! # HTTP Error Mapping System
 //!
 //! This module provides a centralized way to map errors to HTTP status codes and
 //! create consistent HTTP responses across the greenhouse backend services.
 //!
-//! # Usage
+//! ## Usage
 //!
-//! Implement the `HttpErrorMapping` trait on your error enums:
+//! 1. Implement the `HttpErrorMapping` trait for your error enum:
 //!
 //! ```rust
-//! use greenhouse_core::http_error::{HttpErrorMapping, HttpErrorResponse, HttpResult};
+//! use greenhouse_core::http_error::{HttpErrorMapping, HttpErrorResponse};
 //! use axum::http::StatusCode;
 //!
 //! #[derive(Debug)]
@@ -27,8 +27,14 @@
 //!         }
 //!     }
 //! }
+//! ```
 //!
-//! // Use HttpResult for cleaner handler signatures
+//! 2. Use `HttpErrorResponse` in your handler for consistent error responses:
+//!
+//! ```rust
+//! use axum::Json;
+//! use greenhouse_core::http_error::{HttpErrorResponse, HttpResult};
+//!
 //! async fn my_handler() -> HttpResult<Json<Data>, MyError> {
 //!     let data = get_data().map_err(HttpErrorResponse::new)?;
 //!     Ok(Json(data))
@@ -94,27 +100,6 @@ impl<E> From<E> for HttpErrorResponse<E> {
     }
 }
 
-/// Macro to implement From for HttpErrorResponse for common error types
-///
-/// This macro helps reduce boilerplate when implementing From for
-/// HttpErrorResponse when you have From implementations to your main error type.
-///
-/// # Example
-///
-/// ```rust
-/// use greenhouse_core::impl_http_error_from;
-///
-/// #[derive(Debug)]
-/// enum MyError {
-///     DatabaseError(database::Error),
-///     TokenError(token::Error),
-/// }
-///
-/// impl_http_error_from!(MyError {
-///     database::Error,
-///     token::Error,
-/// });
-/// ```
 #[macro_export]
 macro_rules! impl_http_error_from {
     ($error_type:ty { $($source_type:ty),+ $(,)? }) => {
