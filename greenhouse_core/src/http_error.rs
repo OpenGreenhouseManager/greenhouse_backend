@@ -46,7 +46,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
 /// Trait for mapping errors to HTTP status codes
@@ -129,9 +129,9 @@ macro_rules! impl_http_error_from {
 }
 
 /// The JSON structure for error responses
-#[derive(Serialize)]
-struct ErrorResponseBody {
-    error: String,
+#[derive(Serialize, Deserialize)]
+pub struct ErrorResponseBody {
+    pub error: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     context: Option<serde_json::Value>,
 }

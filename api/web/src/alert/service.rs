@@ -1,9 +1,12 @@
-use greenhouse_core::data_storage_service_dto::alert_dto::{
-    alert::AlertDto,
-    endpoints,
-    get_aggrigated_alert::AlertAggrigatedDto,
-    post_create_alert::CreateAlertDto,
-    query::{AlertQuery, IntervalQuery},
+use greenhouse_core::{
+    data_storage_service_dto::alert_dto::{
+        alert::AlertDto,
+        endpoints,
+        get_aggrigated_alert::AlertAggrigatedDto,
+        post_create_alert::CreateAlertDto,
+        query::{AlertQuery, IntervalQuery},
+    },
+    http_error::ErrorResponseBody,
 };
 
 use crate::{
@@ -38,9 +41,18 @@ pub(crate) async fn get_filtered_alert(base_ulr: &str, query: AlertQuery) -> Res
             Error::Json(e)
         });
     }
+
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp.text().await.unwrap_or_default(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }
 
@@ -76,7 +88,15 @@ pub(crate) async fn get_alert_subset(
     }
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp.text().await.unwrap_or_default(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }
 
@@ -104,6 +124,14 @@ pub(crate) async fn create_alert(base_ulr: &str, alert: CreateAlertDto) -> Resul
     }
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp.text().await.unwrap_or_default(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }

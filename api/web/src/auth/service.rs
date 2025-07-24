@@ -3,11 +3,14 @@ use crate::{
     helper::error::ApiError,
 };
 
-use greenhouse_core::auth_service_dto::{
-    endpoints,
-    login::{LoginRequestDto, LoginResponseDto},
-    register::{RegisterRequestDto, RegisterResponseDto},
-    token::TokenRequestDto,
+use greenhouse_core::{
+    auth_service_dto::{
+        endpoints,
+        login::{LoginRequestDto, LoginResponseDto},
+        register::{RegisterRequestDto, RegisterResponseDto},
+        token::TokenRequestDto,
+    },
+    http_error::ErrorResponseBody,
 };
 
 pub(crate) async fn register(
@@ -57,7 +60,15 @@ pub(crate) async fn register(
     }
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp.text().await.unwrap_or_default(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }
 
@@ -105,7 +116,15 @@ pub(crate) async fn login(
     }
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp.text().await.unwrap_or_default(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }
 
@@ -135,6 +154,14 @@ pub(crate) async fn check_token(base_ulr: &str, token: &str) -> Result<()> {
     }
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp.text().await.unwrap_or_default(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }

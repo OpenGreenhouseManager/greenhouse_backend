@@ -3,9 +3,14 @@ use crate::{
     settings::{Error, Result},
 };
 
-use greenhouse_core::auth_service_dto::{
-    endpoints,
-    generate_one_time_token::{GenerateOneTimeTokenRequestDto, GenerateOneTimeTokenResponseDto},
+use greenhouse_core::{
+    auth_service_dto::{
+        endpoints,
+        generate_one_time_token::{
+            GenerateOneTimeTokenRequestDto, GenerateOneTimeTokenResponseDto,
+        },
+    },
+    http_error::ErrorResponseBody,
 };
 
 pub(crate) async fn generate_one_time_token(base_ulr: &str, username: &str) -> Result<String> {
@@ -53,6 +58,14 @@ pub(crate) async fn generate_one_time_token(base_ulr: &str, username: &str) -> R
 
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp.text().await.unwrap_or_default(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }

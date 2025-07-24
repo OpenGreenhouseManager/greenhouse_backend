@@ -151,7 +151,7 @@ pub(crate) async fn login(
         })?;
 
     if !user.check_login(&login.password).await? {
-        return Ok(StatusCode::UNAUTHORIZED.into_response());
+        return Err(Error::PasswordIncorrect.into());
     }
 
     let token = user.refresh_token(&config.jwt_secret)?;
@@ -221,7 +221,7 @@ pub(crate) async fn check_token(
         })?;
 
     if token.token != user.login_session {
-        return Ok(StatusCode::UNAUTHORIZED.into_response());
+        return Err(Error::TokenInvalid.into());
     }
 
     Ok(StatusCode::OK.into_response())

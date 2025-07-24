@@ -1,6 +1,9 @@
-use greenhouse_core::device_service_dto::{
-    endpoints, get_device::DeviceResponseDto, post_device::PostDeviceDtoRequest,
-    put_device::PutDeviceDtoRequest,
+use greenhouse_core::{
+    device_service_dto::{
+        endpoints, get_device::DeviceResponseDto, post_device::PostDeviceDtoRequest,
+        put_device::PutDeviceDtoRequest,
+    },
+    http_error::ErrorResponseBody,
 };
 use uuid::Uuid;
 
@@ -47,7 +50,15 @@ pub(crate) async fn update_device(
     }
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp.text().await.unwrap_or_default(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }
 
@@ -83,7 +94,15 @@ pub(crate) async fn create_device(
     }
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp.text().await.unwrap_or_default(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }
 
@@ -115,7 +134,15 @@ pub(crate) async fn get_device(base_url: &str, id: Uuid) -> Result<DeviceRespons
     }
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp.text().await.unwrap_or_default(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }
 
@@ -145,7 +172,15 @@ pub(crate) async fn get_device_config(base_ulr: &str, id: Uuid) -> Result<String
     }
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp.text().await.unwrap_or_default(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }
 
@@ -175,7 +210,15 @@ pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String
     }
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp.text().await.unwrap_or_default(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }
 
@@ -205,6 +248,14 @@ pub(crate) async fn get_devices(base_url: &str) -> Result<Vec<DeviceResponseDto>
     }
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp.text().await.unwrap_or_default(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }

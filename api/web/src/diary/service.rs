@@ -1,6 +1,9 @@
-use greenhouse_core::data_storage_service_dto::diary_dtos::{
-    endpoints, get_diary::GetDiaryResponseDto, get_diary_entry::DiaryEntryResponseDto,
-    post_diary_entry::PostDiaryEntryDtoRequest, put_diary_entry::PutDiaryEntryDtoRequest,
+use greenhouse_core::{
+    data_storage_service_dto::diary_dtos::{
+        endpoints, get_diary::GetDiaryResponseDto, get_diary_entry::DiaryEntryResponseDto,
+        post_diary_entry::PostDiaryEntryDtoRequest, put_diary_entry::PutDiaryEntryDtoRequest,
+    },
+    http_error::ErrorResponseBody,
 };
 use uuid::Uuid;
 
@@ -35,7 +38,15 @@ pub(crate) async fn create_diary_entry(
     }
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp.text().await.unwrap_or_default(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }
 
@@ -66,7 +77,15 @@ pub(crate) async fn update_diary_entry(
     }
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp.text().await.unwrap_or_default(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }
 
@@ -96,7 +115,15 @@ pub(crate) async fn get_diary_entry(base_ulr: &str, id: Uuid) -> Result<DiaryEnt
     }
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp.text().await.unwrap_or_default(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }
 
@@ -131,6 +158,14 @@ pub(crate) async fn get_diary(
     }
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp.text().await.unwrap_or_default(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }
