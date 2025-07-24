@@ -1,5 +1,6 @@
 use crate::helper;
-use crate::settings::{Error, Result};
+use crate::settings::Error;
+use crate::settings::error::HttpResult;
 use crate::{AppState, auth::AUTH_TOKEN, settings::service};
 use axum::routing::post;
 use axum::{
@@ -21,7 +22,7 @@ pub(crate) async fn generate_one_time_token(
     State(AppState { config }): State<AppState>,
     cookies: Cookies,
     Json(register_request): Json<GenerateOneTimeTokenRequestDto>,
-) -> Result<Response> {
+) -> HttpResult<Response> {
     if let Ok(token) = cookies
         .get(AUTH_TOKEN)
         .map(|c| c.value().to_string())
@@ -29,7 +30,7 @@ pub(crate) async fn generate_one_time_token(
     {
         let claims = helper::token::get_claims(token)?;
         if claims.role != "admin" {
-            return Err(Error::AdminRoute);
+            return Err(Error::AdminRoute.into());
         }
     }
     let token = service::generate_one_time_token(

@@ -1,4 +1,3 @@
-use super::error::Result;
 use axum::{
     Json, Router,
     extract::{Path, State},
@@ -13,7 +12,11 @@ use greenhouse_core::data_storage_service_dto::diary_dtos::{
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::{AppState, database::diary_models::DiaryEntry, router::error::Error};
+use crate::{
+    AppState,
+    database::diary_models::DiaryEntry,
+    router::error::{Error, HttpResult},
+};
 
 #[derive(Deserialize)]
 pub(crate) struct Params {
@@ -35,7 +38,7 @@ pub(crate) async fn update_diary_entry(
     State(AppState { config: _, pool }): State<AppState>,
     Path(id): Path<Uuid>,
     Json(update): Json<PutDiaryEntryDtoRequest>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let mut entry = DiaryEntry::find_by_id(id, &pool).await?;
     entry.title = update.title.clone();
     entry.entry_date = update.date.parse::<DateTime<Utc>>().map_err(|e| {
@@ -60,7 +63,7 @@ pub(crate) async fn update_diary_entry(
 pub(crate) async fn create_diary_entry(
     State(AppState { config: _, pool }): State<AppState>,
     Json(entry): Json<PostDiaryEntryDtoRequest>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let mut entry = DiaryEntry::new(
         entry.date.parse::<DateTime<Utc>>().map_err(|e| {
             sentry::configure_scope(|scope| {
@@ -85,7 +88,7 @@ pub(crate) async fn create_diary_entry(
 pub(crate) async fn get_diary_entry(
     State(AppState { config: _, pool }): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let entry = DiaryEntry::find_by_id(id, &pool).await?;
     let response: DiaryEntryResponseDto = entry.into();
     Ok(Json(response))
@@ -95,7 +98,7 @@ pub(crate) async fn get_diary_entry(
 pub(crate) async fn get_diary(
     State(AppState { config: _, pool }): State<AppState>,
     Path(Params { start, end }): Path<Params>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let start = start.parse::<DateTime<Utc>>().map_err(|e| {
         sentry::configure_scope(|scope| {
             let mut map = std::collections::BTreeMap::new();

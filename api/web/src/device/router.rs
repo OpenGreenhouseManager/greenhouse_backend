@@ -1,5 +1,7 @@
-use super::error::Result;
-use crate::{AppState, device::service};
+use crate::{
+    AppState,
+    device::{error::HttpResult, service},
+};
 use axum::{
     Json, Router,
     extract::{Path, State},
@@ -30,7 +32,7 @@ pub(crate) fn routes(state: AppState) -> Router {
 pub(crate) async fn create_device(
     State(AppState { config }): State<AppState>,
     Json(entry): Json<PostDeviceDtoRequest>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let device = service::create_device(&config.service_addresses.device_service, entry).await?;
     Ok(Json(device))
 }
@@ -38,7 +40,7 @@ pub(crate) async fn create_device(
 #[axum::debug_handler]
 pub(crate) async fn get_devices(
     State(AppState { config }): State<AppState>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let devices = service::get_devices(&config.service_addresses.device_service).await?;
     Ok(Json(devices))
 }
@@ -48,7 +50,7 @@ pub(crate) async fn update_device(
     State(AppState { config }): State<AppState>,
     Path(id): Path<Uuid>,
     Json(update): Json<PutDeviceDtoRequest>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let device =
         service::update_device(&config.service_addresses.device_service, id, update).await?;
     Ok(Json(device))
@@ -58,7 +60,7 @@ pub(crate) async fn update_device(
 pub(crate) async fn get_device(
     State(AppState { config }): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let device = service::get_device(&config.service_addresses.device_service, id).await?;
     Ok(Json(device))
 }
@@ -67,7 +69,7 @@ pub(crate) async fn get_device(
 pub(crate) async fn get_device_config(
     State(AppState { config }): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let response = service::get_device_config(&config.service_addresses.device_service, id).await?;
     Ok((
         StatusCode::OK,
@@ -83,7 +85,7 @@ pub(crate) async fn get_device_config(
 pub(crate) async fn get_device_status(
     State(AppState { config }): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let response = service::get_device_status(&config.service_addresses.device_service, id).await?;
     Ok((
         StatusCode::OK,
