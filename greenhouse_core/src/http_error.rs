@@ -1,52 +1,3 @@
-//! # HTTP Error Mapping System
-//!
-//! This module provides a centralized way to map errors to HTTP status codes and
-//! create consistent HTTP responses across the greenhouse backend services.
-//!
-//! ## Usage
-//!
-//! 1. Implement the `HttpErrorMapping` trait for your error enum:
-//!
-//! ```rust
-//! use greenhouse_core::http_error::{HttpErrorMapping, HttpErrorResponse};
-//! use axum::http::StatusCode;
-//!
-//! #[derive(Debug)]
-//! enum MyError {
-//!     NotFound,
-//!     InvalidInput,
-//!     DatabaseError,
-//! }
-//!
-//! impl HttpErrorMapping for MyError {
-//!     fn to_status_code(&self) -> StatusCode {
-//!         match self {
-//!             MyError::NotFound => StatusCode::NOT_FOUND,
-//!             MyError::InvalidInput => StatusCode::BAD_REQUEST,
-//!             MyError::DatabaseError => StatusCode::INTERNAL_SERVER_ERROR,
-//!         }
-//!     }
-//! }
-//! ```
-//!
-//! 2. Use `HttpErrorResponse` in your handler for consistent error responses:
-//!
-//! ```rust
-//! use axum::Json;
-//! use greenhouse_core::http_error::{HttpErrorResponse, HttpResult};
-//!
-//! async fn my_handler() -> HttpResult<Json<Data>, MyError> {
-//!     let data = get_data().map_err(HttpErrorResponse::new)?;
-//!     Ok(Json(data))
-//! }
-//!
-//! // Or use it with any success type
-//! fn process_data() -> HttpResult<i32, MyError> {
-//!     // ... processing logic
-//!     Ok(42)
-//! }
-//! ```
-
 use axum::{
     Json,
     http::StatusCode,
@@ -55,33 +6,19 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-/// Trait for mapping errors to HTTP status codes
-///
-/// Implement this trait on your error enums to define how they should be
-/// converted to HTTP status codes.
 pub trait HttpErrorMapping: fmt::Display {
     /// Maps this error to an appropriate HTTP status code
     fn to_status_code(&self) -> StatusCode;
 
-    /// Optional: Provide a custom error message for the HTTP response
-    ///
-    /// If not overridden, uses the error's Display implementation
     fn to_error_message(&self) -> String {
         self.to_string()
     }
 
-    /// Optional: Provide additional context or metadata for the error response
-    ///
-    /// This can be used to include error codes, additional details, etc.
     fn to_error_context(&self) -> Option<serde_json::Value> {
         None
     }
 }
 
-/// A wrapper type that implements IntoResponse for errors that implement HttpErrorMapping
-///
-/// This provides a consistent way to convert errors into HTTP responses across
-/// all services in the greenhouse backend.
 #[derive(Debug)]
 pub struct HttpErrorResponse<E> {
     pub error: E,
