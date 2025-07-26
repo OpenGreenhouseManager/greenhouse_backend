@@ -4,20 +4,10 @@ package.edition = "2024"
 [dependencies]
 time = "0.1.25"
 chrono = { version = "0.4", features = ["serde"] }
-greenhouse_core = "0.0.8"
-greenhouse_core = "0.0.8"
+greenhouse_core = "0.0.9"
 rand = "0.9.1"
 reqwest = {version = "0.12.15", features = ["json"]}
 tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread"] }
-futures = "0.3" 
-uuid = { version ="1.16.0", features = [
-    "v4",                
-    "fast-rng",          
-    "macro-diagnostics", 
-    "serde"
-] }
----
-// cargo +nightly -Zscript scripts/generate_data.rs http://localhost:5001 < --diary > < --alert >
 futures = "0.3" 
 uuid = { version ="1.16.0", features = [
     "v4",                
@@ -56,6 +46,10 @@ async fn main() {
     if args.contains(&"--alerts".into()) {
         generate_alerts(url.clone()).await;
         println!("Alert entries generated successfully.");
+    }
+    if args.contains(&"--devices".into()) {
+        generate_devices(url.clone()).await;
+        println!("Device entries generated successfully.");
     }
 
 }
@@ -130,6 +124,42 @@ async fn generate_alerts(url: String) {
         let future = reqwest::Client::new()
             .post(url.to_string() + "/alert")
             .json(&alert)
+            .send();
+        futures.push(future);
+    }
+
+    let res = join_all(futures).await;
+
+    for response in res {
+        match response {
+            Ok(res) => {
+                println!("Response: {:?}", res);
+            }
+            Err(err) => {
+                println!("Error: {:?}", err);
+            }
+        }
+    }
+}
+
+async fn generate_devices(url: String) {
+    let mut rng = rand::thread_rng();
+    let mut requests = Vec::new();
+
+    for i in 0..50 {
+        let device = PostDeviceDtoRequest {
+            name: format!("Device number {}", i),
+            description: format!("Device description {}", i),
+        };
+
+        requests.push(device);
+    }
+    let mut futures = Vec::new();
+
+    for device in requests {
+        let future = reqwest::Client::new()
+            .post(url.to_string() + "/device")
+            .json(&device)
             .send();
         futures.push(future);
     }
