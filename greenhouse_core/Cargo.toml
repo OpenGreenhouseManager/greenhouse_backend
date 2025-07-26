@@ -1,6 +1,6 @@
 [package]
 name = "greenhouse_core"
-version = "0.0.8"
+version = "0.0.9"
 edition = "2024"
 description = "greenhouse_core"
 license = "GPL-3.0"
@@ -18,16 +18,18 @@ uuid = { workspace = true, features = [
     "macro-diagnostics", 
     "serde"
 ] }
+tracing = { workspace = true, optional = true }
 
 [features]
-default = ["api_web_dto", "api_script_dto", "auth_service_dto", "smart_device_dto", "smart_device_interface", "data_storage_service_dto", "device_service_dto"]
+default = ["api_web_dto", "api_script_dto", "auth_service_dto", "smart_device_dto", "smart_device_interface", "data_storage_service_dto", "device_service_dto", "error_handling"]
 api_web_dto = []
 api_script_dto = []
 auth_service_dto = []
 smart_device_dto = []
-smart_device_interface = ["smart_device_dto", "dep:axum"]
+smart_device_interface = ["smart_device_dto", "dep:axum", "dep:tracing"]
 data_storage_service_dto = []
 device_service_dto =[]
+error_handling = ["dep:axum", "dep:tracing"]
 
 [dev-dependencies]
 httpc-test = "0.1.9"

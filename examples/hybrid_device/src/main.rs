@@ -7,7 +7,7 @@ use greenhouse_core::{
         status::{DeviceStatusDto, DeviceStatusResponseDto},
     },
     smart_device_interface::{
-        config::{Config, read_config_file, update_config_file},
+        config::{Config, Mode, Type, read_config_file, update_config_file},
         device_service::DeviceService,
         hybrid_device::init_hybrid_router,
     },
@@ -29,7 +29,20 @@ async fn main() {
     let config = match read_config_file() {
         Ok(config) => config,
         Err(_) => {
-            let default_config = Config::<ExampleDeviceConfig>::default();
+            let default_config = Config {
+                mode: Mode::InputOutput,
+                port: 6001,
+                input_type: Some(Type::Number),
+                output_type: Some(Type::Number),
+                additional_config: ExampleDeviceConfig { min: 0, max: 100 },
+            };
+            // check if config file exists
+            if !std::path::Path::new("./config/config.json").exists() {
+                // create config directory
+                std::fs::create_dir_all("./config").unwrap();
+                // create config file
+                std::fs::write("./config/config.json", "{}").unwrap();
+            }
             update_config_file(&default_config).unwrap();
             default_config
         }

@@ -15,7 +15,6 @@ pub(crate) mod device;
 pub(crate) mod diary;
 pub(crate) mod helper;
 pub(crate) mod settings;
-pub(crate) mod test;
 
 #[derive(Clone, Deserialize)]
 pub struct ServiceAddresses {
@@ -55,7 +54,6 @@ pub fn app(config: Config) -> Router {
             "https://localhost:5001".parse().unwrap(),
         ]);
     Router::new()
-        .nest("/api", test::router::routes(state.clone()))
         .nest("/api/settings", settings::router::routes(state.clone()))
         .nest("/api/diary", diary::router::routes(state.clone()))
         .nest("/api/alert", alert::router::routes(state.clone()))

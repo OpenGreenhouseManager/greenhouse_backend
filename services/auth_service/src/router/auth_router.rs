@@ -1,4 +1,4 @@
-use super::{Error, Result};
+use super::{Error, HttpResult};
 use crate::token;
 use crate::{
     AppState,
@@ -7,12 +7,8 @@ use crate::{
 use crate::{
     Config, Pool, database::schema::users::dsl::users, token::one_time_token::check_one_time_token,
 };
-use axum::{
-    Json,
-    extract::State,
-    http::StatusCode,
-    response::{IntoResponse, Response},
-};
+use axum::response::IntoResponse;
+use axum::{Json, extract::State, http::StatusCode, response::Response};
 use database::schema::users::{id, login_session, username};
 use diesel::{ExpressionMethods, query_dsl::methods::FilterDsl};
 use diesel_async::RunQueryDsl;
@@ -30,7 +26,7 @@ use greenhouse_core::auth_service_dto::{
 pub(crate) async fn register(
     State(AppState { config, pool }): State<AppState>,
     Json(user): Json<RegisterRequestDto>,
-) -> Result<Response> {
+) -> HttpResult<Response> {
     let role = "user";
     check_one_time_token(
         &user.username,
@@ -51,7 +47,7 @@ pub(crate) async fn register(
 pub(crate) async fn register_admin(
     State(AppState { config, pool }): State<AppState>,
     Json(user): Json<RegisterAdminRequestDto>,
-) -> Result<Response> {
+) -> HttpResult<Response> {
     let role = "admin";
     let token = register_user(&user.username, &user.password, role, &config, &pool).await?;
     Ok(Json(RegisterAdminResponseDto {
@@ -65,7 +61,7 @@ pub(crate) async fn register_admin(
 pub(crate) async fn generate_one_time_token(
     State(AppState { config, pool: _ }): State<AppState>,
     Json(user): Json<GenerateOneTimeTokenRequestDto>,
-) -> Result<Response> {
+) -> HttpResult<Response> {
     let token =
         crate::token::one_time_token::generate_one_time_token(&user.username, &config.jwt_secret);
     Ok(Json(GenerateOneTimeTokenResponseDto {
@@ -80,7 +76,7 @@ pub(crate) async fn register_user(
     role: &str,
     config: &Config,
     pool: &Pool,
-) -> Result<String> {
+) -> HttpResult<String> {
     let mut conn = pool.get().await.map_err(|e| {
         sentry::configure_scope(|scope| {
             let mut map = std::collections::BTreeMap::new();
@@ -120,7 +116,7 @@ pub(crate) async fn register_user(
 pub(crate) async fn login(
     State(AppState { config, pool }): State<AppState>,
     Json(login): Json<LoginRequestDto>,
-) -> Result<Response> {
+) -> HttpResult<Response> {
     let mut conn = pool.get().await.map_err(|e| {
         sentry::configure_scope(|scope| {
             let mut map = std::collections::BTreeMap::new();
@@ -148,11 +144,14 @@ pub(crate) async fn login(
                 scope.set_context("user_long", sentry::protocol::Context::Other(map));
             });
             sentry::capture_error(&e);
-            Error::DatabaseConnection
+            match e {
+                diesel::result::Error::NotFound => Error::UserNotFound,
+                _ => Error::DatabaseConnection,
+            }
         })?;
 
     if !user.check_login(&login.password).await? {
-        return Ok(StatusCode::UNAUTHORIZED.into_response());
+        return Err(Error::PasswordIncorrect.into());
     }
 
     let token = user.refresh_token(&config.jwt_secret)?;
@@ -188,7 +187,7 @@ pub(crate) async fn login(
 pub(crate) async fn check_token(
     State(AppState { config, pool }): State<AppState>,
     Json(token): Json<TokenRequestDto>,
-) -> Result<Response> {
+) -> HttpResult<Response> {
     let mut conn = pool.get().await.map_err(|e| {
         sentry::configure_scope(|scope| {
             let mut map = std::collections::BTreeMap::new();
@@ -222,7 +221,7 @@ pub(crate) async fn check_token(
         })?;
 
     if token.token != user.login_session {
-        return Ok(StatusCode::UNAUTHORIZED.into_response());
+        return Err(Error::TokenInvalid.into());
     }
 
     Ok(StatusCode::OK.into_response())

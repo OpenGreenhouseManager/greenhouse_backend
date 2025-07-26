@@ -1,5 +1,6 @@
 use crate::AppState;
-use crate::alert::{Result, service};
+use crate::alert::service;
+use crate::helper::error::HttpResult;
 use axum::extract::{Query, State};
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
@@ -18,7 +19,7 @@ pub(crate) fn routes(state: AppState) -> Router {
 async fn filter(
     State(AppState { config }): State<AppState>,
     Query(query): Query<AlertQuery>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let entry =
         service::get_filtered_alert(&config.service_addresses.data_storage_service, query).await?;
     Ok(Json(entry))
@@ -27,7 +28,7 @@ async fn filter(
 async fn alert_subset(
     State(AppState { config }): State<AppState>,
     Query(query): Query<IntervalQuery>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let entry =
         service::get_alert_subset(&config.service_addresses.data_storage_service, query).await?;
     Ok(Json(entry))
@@ -36,7 +37,7 @@ async fn alert_subset(
 async fn create_alert(
     State(AppState { config }): State<AppState>,
     Json(alert): Json<CreateAlertDto>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     service::create_alert(&config.service_addresses.data_storage_service, alert).await?;
     Ok(())
 }

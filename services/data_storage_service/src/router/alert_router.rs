@@ -1,4 +1,4 @@
-use super::error::Result;
+use super::error::HttpResult;
 use axum::{
     Json, Router,
     extract::{Query, State},
@@ -25,7 +25,7 @@ pub(crate) fn routes(state: AppState) -> Router {
 async fn filter(
     State(AppState { config: _, pool }): State<AppState>,
     Query(query): Query<AlertQuery>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let a: Vec<AlertDto> = Alert::query(query, &pool)
         .await?
         .into_iter()
@@ -37,7 +37,7 @@ async fn filter(
 async fn alert_subset(
     State(AppState { config: _, pool }): State<AppState>,
     Query(query): Query<IntervalQuery>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let a: Vec<AlertAggrigatedDto> = Alert::aggrigate(query, &pool)
         .await?
         .into_iter()
@@ -49,7 +49,7 @@ async fn alert_subset(
 async fn create_alert(
     State(AppState { config: _, pool }): State<AppState>,
     Json(alert): Json<CreateAlertDto>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let alert: AlertDto = Alert::create(alert, &pool).await?.into();
     Ok(Json(alert))
 }

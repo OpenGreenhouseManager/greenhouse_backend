@@ -1,8 +1,10 @@
-use super::error::Result;
 use crate::{
     AppState,
     database::device::Device,
-    router::service::{request_device_config, request_device_status},
+    router::{
+        error::HttpResult,
+        service::{request_device_config, request_device_status},
+    },
 };
 use axum::{
     Json, Router,
@@ -35,7 +37,7 @@ pub(crate) async fn update_device(
     State(AppState { config: _, pool }): State<AppState>,
     Path(id): Path<Uuid>,
     Json(update): Json<PutDeviceDtoRequest>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let mut entry = Device::find_by_id(id, &pool).await?;
     entry.name = update.name.clone();
     entry.description = update.description.clone();
@@ -51,7 +53,7 @@ pub(crate) async fn update_device(
 pub(crate) async fn create_device(
     State(AppState { config: _, pool }): State<AppState>,
     Json(entry): Json<PostDeviceDtoRequest>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let mut entry = Device::new(
         &entry.name,
         &entry.description,
@@ -68,7 +70,7 @@ pub(crate) async fn create_device(
 pub(crate) async fn get_device(
     State(AppState { config: _, pool }): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let entry = Device::find_by_id(id, &pool).await?;
     let response: DeviceResponseDto = entry.into();
     Ok(Json(response))
@@ -78,7 +80,7 @@ pub(crate) async fn get_device(
 pub(crate) async fn get_device_config(
     State(AppState { config: _, pool }): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let device = Device::find_by_id(id, &pool).await?;
     let response = request_device_config(&device.address).await?;
     Ok((
@@ -95,7 +97,7 @@ pub(crate) async fn get_device_config(
 pub(crate) async fn get_device_status(
     State(AppState { config: _, pool }): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let device = Device::find_by_id(id, &pool).await?;
     let response = request_device_status(&device.address).await?;
     Ok((
@@ -111,7 +113,7 @@ pub(crate) async fn get_device_status(
 #[axum::debug_handler]
 pub(crate) async fn get_devices(
     State(AppState { config: _, pool }): State<AppState>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let entries = Device::all(&pool).await?;
     let response: Vec<DeviceResponseDto> = entries.into_iter().map(|entry| entry.into()).collect();
     Ok(Json(response))
