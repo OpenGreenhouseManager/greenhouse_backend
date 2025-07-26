@@ -7,7 +7,7 @@ use greenhouse_core::{
         status::{DeviceStatusDto, DeviceStatusResponseDto},
     },
     smart_device_interface::{
-        config::{read_config_file, update_config_file, Config, Mode, Type},
+        config::{Config, Mode, Type, read_config_file, update_config_file},
         device_service::DeviceService,
         hybrid_device::init_hybrid_router,
     },
