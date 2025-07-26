@@ -1,5 +1,4 @@
-mod error;
-pub(crate) use self::error::Error;
+pub(crate) mod error;
 
 pub(crate) mod token {
     pub(crate) use super::error::{Error, Result};

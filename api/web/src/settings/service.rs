@@ -1,8 +1,16 @@
-use crate::settings::{Error, Result};
+use crate::{
+    helper::error::ApiError,
+    settings::{Error, Result},
+};
 
-use greenhouse_core::auth_service_dto::{
-    endpoints,
-    generate_one_time_token::{GenerateOneTimeTokenRequestDto, GenerateOneTimeTokenResponseDto},
+use greenhouse_core::{
+    auth_service_dto::{
+        endpoints,
+        generate_one_time_token::{
+            GenerateOneTimeTokenRequestDto, GenerateOneTimeTokenResponseDto,
+        },
+    },
+    http_error::ErrorResponseBody,
 };
 
 pub(crate) async fn generate_one_time_token(base_ulr: &str, username: &str) -> Result<String> {
@@ -23,7 +31,7 @@ pub(crate) async fn generate_one_time_token(base_ulr: &str, username: &str) -> R
                 base_ulr
             );
 
-            Error::RegisterToken
+            Error::Request(e)
         })?;
     if resp.status().is_success() {
         return Ok(resp
@@ -34,7 +42,7 @@ pub(crate) async fn generate_one_time_token(base_ulr: &str, username: &str) -> R
 
                 tracing::error!("Error in response json: {:?}", e,);
 
-                Error::RegisterToken
+                Error::Json(e)
             })?
             .token);
     }
@@ -48,5 +56,16 @@ pub(crate) async fn generate_one_time_token(base_ulr: &str, username: &str) -> R
         sentry::Level::Error,
     );
 
-    Err(Error::RegisterToken)
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
+    }))
 }

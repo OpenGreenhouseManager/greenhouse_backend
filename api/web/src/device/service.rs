@@ -1,11 +1,16 @@
-use greenhouse_core::device_service_dto::{
-    endpoints, get_device::DeviceResponseDto, post_device::PostDeviceDtoRequest,
-    put_device::PutDeviceDtoRequest,
+use greenhouse_core::{
+    device_service_dto::{
+        endpoints, get_device::DeviceResponseDto, post_device::PostDeviceDtoRequest,
+        put_device::PutDeviceDtoRequest,
+    },
+    http_error::ErrorResponseBody,
 };
-use reqwest::StatusCode;
 use uuid::Uuid;
 
-use crate::device::{Error, Result};
+use crate::{
+    device::{Error, Result},
+    helper::error::ApiError,
+};
 
 pub(crate) async fn update_device(
     base_url: &str,
@@ -27,20 +32,34 @@ pub(crate) async fn update_device(
                 base_url
             );
 
-            Error::InternalError
+            Error::Request(e)
         })?;
-    resp.json().await.map_err(|e| {
-        sentry::capture_error(&e);
+    if resp.status().is_success() {
+        return resp.json().await.map_err(|e| {
+            sentry::capture_error(&e);
 
-        tracing::error!(
-            "Error parsing json for update device: {:?} with entry: {:?} for url {}",
-            e,
-            entry,
-            base_url
-        );
+            tracing::error!(
+                "Error parsing json for update device: {:?} with entry: {:?} for url {}",
+                e,
+                entry,
+                base_url
+            );
 
-        Error::InternalError
-    })
+            Error::Json(e)
+        });
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
+    }))
 }
 
 pub(crate) async fn create_device(
@@ -62,15 +81,29 @@ pub(crate) async fn create_device(
                 base_url
             );
 
-            Error::InternalError
+            Error::Request(e)
         })?;
-    resp.json().await.map_err(|e| {
-        sentry::capture_error(&e);
+    if resp.status().is_success() {
+        return resp.json().await.map_err(|e| {
+            sentry::capture_error(&e);
 
-        tracing::error!("Error in json to device service: {:?} with", e);
+            tracing::error!("Error in json to device service: {:?} with", e);
 
-        Error::InternalError
-    })
+            Error::Json(e)
+        });
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
+    }))
 }
 
 pub(crate) async fn get_device(base_url: &str, id: Uuid) -> Result<DeviceResponseDto> {
@@ -88,15 +121,29 @@ pub(crate) async fn get_device(base_url: &str, id: Uuid) -> Result<DeviceRespons
                 base_url
             );
 
-            Error::InternalError
+            Error::Request(e)
         })?;
-    resp.json().await.map_err(|e| {
-        sentry::capture_error(&e);
+    if resp.status().is_success() {
+        return resp.json().await.map_err(|e| {
+            sentry::capture_error(&e);
 
-        tracing::error!("Error in get to service: {:?} with id: {:?}", e, id);
+            tracing::error!("Error in get to service: {:?} with id: {:?}", e, id);
 
-        Error::InternalError
-    })
+            Error::Json(e)
+        });
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
+    }))
 }
 
 pub(crate) async fn get_device_config(base_ulr: &str, id: Uuid) -> Result<String> {
@@ -114,13 +161,27 @@ pub(crate) async fn get_device_config(base_ulr: &str, id: Uuid) -> Result<String
                 base_ulr
             );
 
-            Error::InternalError
+            Error::Request(e)
         })?;
-    resp.json().await.map_err(|e| {
-        sentry::capture_error(&e);
-        tracing::error!("Error in get to device service: {:?}", e,);
-        Error::InternalError
-    })
+    if resp.status().is_success() {
+        return resp.json().await.map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!("Error in get to device service: {:?}", e,);
+            Error::Json(e)
+        });
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
+    }))
 }
 
 pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String> {
@@ -138,18 +199,27 @@ pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String
                 base_ulr
             );
 
-            Error::InternalError
+            Error::Request(e)
         })?;
-
-    match resp.status() {
-        StatusCode::OK => resp.json().await.map_err(|e| {
+    if resp.status().is_success() {
+        return resp.text().await.map_err(|e| {
             sentry::capture_error(&e);
             tracing::error!("Error in get to service: {:?}", e,);
-            Error::InternalError
-        }),
-        StatusCode::NOT_FOUND => Err(Error::NotFound),
-        _ => Err(Error::InternalError),
+            Error::Json(e)
+        });
     }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
+    }))
 }
 
 pub(crate) async fn get_devices(base_url: &str) -> Result<Vec<DeviceResponseDto>> {
@@ -166,12 +236,26 @@ pub(crate) async fn get_devices(base_url: &str) -> Result<Vec<DeviceResponseDto>
                 base_url
             );
 
-            Error::InternalError
+            Error::Request(e)
         })?;
 
-    resp.json().await.map_err(|e| {
-        sentry::capture_error(&e);
-        tracing::error!("Error in get all json to service: {:?}", e,);
-        Error::InternalError
-    })
+    if resp.status().is_success() {
+        return resp.json().await.map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!("Error in get all json to service: {:?}", e,);
+            Error::Json(e)
+        });
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
+    }))
 }

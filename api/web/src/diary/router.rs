@@ -1,5 +1,6 @@
 use crate::AppState;
-use crate::diary::{Result, service};
+use crate::diary::service;
+use crate::helper::error::HttpResult;
 use axum::extract::{Path, State};
 use axum::response::IntoResponse;
 use axum::routing::{get, post, put};
@@ -21,7 +22,7 @@ pub(crate) fn routes(state: AppState) -> Router {
 pub(crate) async fn create_diary_entry(
     State(AppState { config }): State<AppState>,
     Json(entry): Json<PostDiaryEntryDtoRequest>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     service::create_diary_entry(&config.service_addresses.data_storage_service, entry).await?;
     Ok(())
 }
@@ -31,7 +32,7 @@ pub(crate) async fn update_diary_entry(
     State(AppState { config }): State<AppState>,
     Path(id): Path<Uuid>,
     Json(update): Json<PutDiaryEntryDtoRequest>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     service::update_diary_entry(&config.service_addresses.data_storage_service, id, update).await?;
     Ok(())
 }
@@ -40,7 +41,7 @@ pub(crate) async fn update_diary_entry(
 pub(crate) async fn get_diary_entry(
     State(AppState { config }): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let entry =
         service::get_diary_entry(&config.service_addresses.data_storage_service, id).await?;
     Ok(Json(entry))
@@ -50,7 +51,7 @@ pub(crate) async fn get_diary_entry(
 pub(crate) async fn get_diary(
     State(AppState { config }): State<AppState>,
     Path((start, end)): Path<(String, String)>,
-) -> Result<impl IntoResponse> {
+) -> HttpResult<impl IntoResponse> {
     let diary =
         service::get_diary(&config.service_addresses.data_storage_service, start, end).await?;
     Ok(Json(diary))

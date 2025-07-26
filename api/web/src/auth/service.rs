@@ -1,10 +1,16 @@
-use crate::auth::{Error, Result};
+use crate::{
+    auth::{Error, Result},
+    helper::error::ApiError,
+};
 
-use greenhouse_core::auth_service_dto::{
-    endpoints,
-    login::{LoginRequestDto, LoginResponseDto},
-    register::{RegisterRequestDto, RegisterResponseDto},
-    token::TokenRequestDto,
+use greenhouse_core::{
+    auth_service_dto::{
+        endpoints,
+        login::{LoginRequestDto, LoginResponseDto},
+        register::{RegisterRequestDto, RegisterResponseDto},
+        token::TokenRequestDto,
+    },
+    http_error::ErrorResponseBody,
 };
 
 pub(crate) async fn register(
@@ -35,21 +41,35 @@ pub(crate) async fn register(
             );
 
             sentry::capture_error(&e);
-            Error::Internal
+            Error::Request(e)
         })?;
-    resp.json().await.map_err(|e| {
-        sentry::configure_scope(|scope| {
-            let mut map = std::collections::BTreeMap::new();
-            map.insert(String::from("username"), register_request.username.into());
+    if resp.status().is_success() {
+        return resp.json().await.map_err(|e| {
+            sentry::configure_scope(|scope| {
+                let mut map = std::collections::BTreeMap::new();
+                map.insert(String::from("username"), register_request.username.into());
 
-            scope.set_context("username", sentry::protocol::Context::Other(map));
+                scope.set_context("username", sentry::protocol::Context::Other(map));
+            });
+            sentry::capture_error(&e);
+
+            tracing::error!("Error in response json: {:?}", e,);
+
+            Error::Json(e)
         });
-        sentry::capture_error(&e);
-
-        tracing::error!("Error in response json: {:?}", e,);
-
-        Error::Internal
-    })
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
+    }))
 }
 
 pub(crate) async fn login(
@@ -80,18 +100,32 @@ pub(crate) async fn login(
                 base_ulr
             );
 
-            Error::Internal
+            Error::Request(e)
         })?;
-    resp.json().await.map_err(|e| {
-        sentry::configure_scope(|scope| {
-            scope.set_extra("username", login_request.username.into());
+    if resp.status().is_success() {
+        return resp.json().await.map_err(|e| {
+            sentry::configure_scope(|scope| {
+                scope.set_extra("username", login_request.username.into());
+            });
+            sentry::capture_error(&e);
+
+            tracing::error!("Error in response json: {:?}", e,);
+
+            Error::Json(e)
         });
-        sentry::capture_error(&e);
-
-        tracing::error!("Error in response json: {:?}", e,);
-
-        Error::Internal
-    })
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
+    }))
 }
 
 pub(crate) async fn check_token(base_ulr: &str, token: &str) -> Result<()> {
@@ -113,10 +147,21 @@ pub(crate) async fn check_token(base_ulr: &str, token: &str) -> Result<()> {
                 base_ulr
             );
 
-            Error::Internal
+            Error::Request(e)
         })?;
     if resp.status().is_success() {
         return Ok(());
     }
-    Err(Error::Unauthorized)
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
+    }))
 }
