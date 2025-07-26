@@ -202,7 +202,7 @@ pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String
             Error::Request(e)
         })?;
     if resp.status().is_success() {
-        return resp.json().await.map_err(|e| {
+        return resp.text().await.map_err(|e| {
             sentry::capture_error(&e);
             tracing::error!("Error in get to service: {:?}", e,);
             Error::Json(e)

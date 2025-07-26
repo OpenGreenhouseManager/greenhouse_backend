@@ -34,7 +34,7 @@ impl_http_error_from!(Error {
 impl HttpErrorMapping for Error {
     fn to_status_code(&self) -> StatusCode {
         match self {
-            Error::SmartDeviceNotReachable => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::SmartDeviceNotReachable => StatusCode::SERVICE_UNAVAILABLE,
             Error::SmartDeviceResponse => StatusCode::INTERNAL_SERVER_ERROR,
             Error::Database(e) => match e {
                 database::Error::Creation => StatusCode::INTERNAL_SERVER_ERROR,
