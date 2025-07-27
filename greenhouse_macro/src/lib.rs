@@ -34,7 +34,7 @@ pub fn authenticate(args: TokenStream, input: TokenStream) -> TokenStream {
             use tower_cookies::Cookies;
             use crate::helper::error::{Error};
             use crate::{ auth::AUTH_TOKEN};
-            use crate::helper::token;
+            use crate::helper;
             
             if let Ok(token) = cookies
                 .get(AUTH_TOKEN)
