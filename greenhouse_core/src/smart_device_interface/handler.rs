@@ -12,7 +12,7 @@ use crate::smart_device_dto::{
 };
 
 use super::{
-    config::{read_config_file, update_config_file},
+    config::{read_config_file_with_path, update_config_file_with_path},
     device_service::DeviceService,
 };
 
@@ -56,7 +56,7 @@ pub(crate) async fn get_config_handler<T>(
 where
     T: DeserializeOwned + Clone + Default,
 {
-    match read_config_file() {
+    match read_config_file_with_path(&device_service.config_path) {
         Ok(config) => {
             device_service.config = Arc::new(config.clone());
             Json(Some(ConfigResponseDto::from(config)))
@@ -64,6 +64,7 @@ where
         Err(_) => Json(None),
     }
 }
+
 pub(crate) async fn status_device_handler<T>(
     State(device_service): State<DeviceService<T>>,
 ) -> Json<DeviceStatusResponseDto>
@@ -84,7 +85,7 @@ where
 {
     let config = (device_service.config_interceptor_handler)(config, device_service.config);
 
-    match update_config_file(&config) {
+    match update_config_file_with_path(&config, &device_service.config_path) {
         Ok(_) => StatusCode::OK,
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
     }

@@ -2,21 +2,36 @@ use super::{Error, Result};
 use crate::smart_device_dto::{self, config::ConfigResponseDto};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
-const CONFIG_FILE_NAME: &str = "./config/config.json";
+// Default config file path for backward compatibility
+const DEFAULT_CONFIG_FILE_NAME: &str = "./config/config.json";
 
 pub fn update_config_file<T>(config: &Config<T>) -> Result<()>
 where
     T: Serialize + Clone + Default,
 {
-    let json_string = serde_json::to_string(&config).map_err(|_| Error::IllFormattedConfig)?;
-    std::fs::write(CONFIG_FILE_NAME, json_string).map_err(|_| Error::MissingConfig)
+    update_config_file_with_path(config, DEFAULT_CONFIG_FILE_NAME)
 }
 
 pub fn read_config_file<T>() -> Result<Config<T>>
 where
     T: DeserializeOwned + Clone + Default,
 {
-    let data = std::fs::read_to_string(CONFIG_FILE_NAME).map_err(|_| Error::MissingConfig)?;
+    read_config_file_with_path(DEFAULT_CONFIG_FILE_NAME)
+}
+
+pub fn update_config_file_with_path<T>(config: &Config<T>, config_path: &str) -> Result<()>
+where
+    T: Serialize + Clone + Default,
+{
+    let json_string = serde_json::to_string(&config).map_err(|_| Error::IllFormattedConfig)?;
+    std::fs::write(config_path, json_string).map_err(|_| Error::MissingConfig)
+}
+
+pub fn read_config_file_with_path<T>(config_path: &str) -> Result<Config<T>>
+where
+    T: DeserializeOwned + Clone + Default,
+{
+    let data = std::fs::read_to_string(config_path).map_err(|_| Error::MissingConfig)?;
     serde_json::from_str(&data).map_err(|_| Error::IllFormattedConfig)
 }
 

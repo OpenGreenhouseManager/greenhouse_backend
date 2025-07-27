@@ -1,5 +1,5 @@
 use super::Result;
-use super::config::{Config, read_config_file, update_config_file};
+use super::config::{Config, read_config_file, update_config_file, read_config_file_with_path, update_config_file_with_path};
 use crate::smart_device_dto::{config::ConfigRequestDto, status::DeviceStatusResponseDto};
 use axum::http::StatusCode;
 use serde::{Serialize, de::DeserializeOwned};
@@ -21,6 +21,7 @@ where
     pub status_handler: StatusHandler<T>,
     pub config_interceptor_handler: ConfigInterceptorHandler<T>,
     pub config: Arc<Config<T>>,
+    pub config_path: String,
 }
 
 impl<T> DeviceService<T>
@@ -36,7 +37,26 @@ where
         + Sync
         + 'static,
     ) -> Result<Self> {
-        let config = read_config_file()?;
+        Self::new_hybrid_device_with_config_path(
+            read_handler,
+            write_handler,
+            status_handler,
+            config_interceptor_handler,
+            "./config/config.json",
+        )
+    }
+
+    pub fn new_hybrid_device_with_config_path(
+        read_handler: impl (Fn(Arc<Config<T>>) -> String) + Send + Sync + 'static,
+        write_handler: impl (Fn(String, Arc<Config<T>>) -> StatusCode) + Send + Sync + 'static,
+        status_handler: impl (Fn(Arc<Config<T>>) -> DeviceStatusResponseDto) + Send + Sync + 'static,
+        config_interceptor_handler: impl (Fn(ConfigRequestDto<T>, Arc<Config<T>>) -> Config<T>)
+        + Send
+        + Sync
+        + 'static,
+        config_path: &str,
+    ) -> Result<Self> {
+        let config = read_config_file_with_path(config_path)?;
 
         Ok(DeviceService {
             read_handler: Some(Arc::new(read_handler)),
@@ -44,6 +64,7 @@ where
             status_handler: Arc::new(status_handler),
             config_interceptor_handler: Arc::new(config_interceptor_handler),
             config: Arc::new(config),
+            config_path: config_path.to_string(),
         })
     }
 
@@ -55,11 +76,28 @@ where
         + Sync
         + 'static,
     ) -> Result<Self> {
-        let config = match read_config_file() {
+        Self::new_output_device_with_config_path(
+            read_handler,
+            status_handler,
+            config_interceptor_handler,
+            "./config/config.json",
+        )
+    }
+
+    pub fn new_output_device_with_config_path(
+        read_handler: impl (Fn(Arc<Config<T>>) -> String) + Send + Sync + 'static,
+        status_handler: impl (Fn(Arc<Config<T>>) -> DeviceStatusResponseDto) + Send + Sync + 'static,
+        config_interceptor_handler: impl (Fn(ConfigRequestDto<T>, Arc<Config<T>>) -> Config<T>)
+        + Send
+        + Sync
+        + 'static,
+        config_path: &str,
+    ) -> Result<Self> {
+        let config = match read_config_file_with_path(config_path) {
             Ok(config) => config,
             Err(_) => {
                 let default_config = Config::default();
-                update_config_file(&default_config)?;
+                update_config_file_with_path(&default_config, config_path)?;
                 default_config
             }
         };
@@ -69,6 +107,7 @@ where
             status_handler: Arc::new(status_handler),
             config_interceptor_handler: Arc::new(config_interceptor_handler),
             config: Arc::new(config),
+            config_path: config_path.to_string(),
         })
     }
 
@@ -80,11 +119,28 @@ where
         + Sync
         + 'static,
     ) -> Result<Self> {
-        let config = match read_config_file() {
+        Self::new_input_device_with_config_path(
+            write_handler,
+            status_handler,
+            config_interceptor_handler,
+            "./config/config.json",
+        )
+    }
+
+    pub fn new_input_device_with_config_path(
+        write_handler: impl (Fn(String, Arc<Config<T>>) -> StatusCode) + Send + Sync + 'static,
+        status_handler: impl (Fn(Arc<Config<T>>) -> DeviceStatusResponseDto) + Send + Sync + 'static,
+        config_interceptor_handler: impl (Fn(ConfigRequestDto<T>, Arc<Config<T>>) -> Config<T>)
+        + Send
+        + Sync
+        + 'static,
+        config_path: &str,
+    ) -> Result<Self> {
+        let config = match read_config_file_with_path(config_path) {
             Ok(config) => config,
             Err(_) => {
                 let default_config = Config::default();
-                update_config_file(&default_config)?;
+                update_config_file_with_path(&default_config, config_path)?;
                 default_config
             }
         };
@@ -94,6 +150,7 @@ where
             status_handler: Arc::new(status_handler),
             config_interceptor_handler: Arc::new(config_interceptor_handler),
             config: Arc::new(config),
+            config_path: config_path.to_string(),
         })
     }
 }
