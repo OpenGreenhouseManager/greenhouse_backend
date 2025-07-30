@@ -7,7 +7,7 @@ use greenhouse_core::{
         status::{DeviceStatusDto, DeviceStatusResponseDto},
     },
     smart_device_interface::{
-        config::{Config, Mode, Type, read_config_file, update_config_file},
+        config::{Config, Mode, Type, read_config_file_with_path, update_config_file_with_path},
         device_service::DeviceService,
         hybrid_device::init_hybrid_router,
     },
@@ -26,7 +26,12 @@ struct ExampleDeviceConfig {
 #[allow(clippy::needless_return)]
 #[tokio::main]
 async fn main() {
-    let config = match read_config_file() {
+    // Get config path from command line arguments, default to "./config/config.json"
+    let config_path = std::env::args()
+        .nth(1)
+        .unwrap_or_else(|| "./config/config.json".to_string());
+
+    let config = match read_config_file_with_path(&config_path) {
         Ok(config) => config,
         Err(_) => {
             let default_config = Config {
@@ -36,23 +41,30 @@ async fn main() {
                 output_type: Some(Type::Number),
                 additional_config: ExampleDeviceConfig { min: 0, max: 100 },
             };
-            // check if config file exists
-            if !std::path::Path::new("./config/config.json").exists() {
-                // create config directory
-                std::fs::create_dir_all("./config").unwrap();
-                // create config file
-                std::fs::write("./config/config.json", "{}").unwrap();
+
+            // Create config directory if it doesn't exist
+            if let Some(parent) = std::path::Path::new(&config_path).parent()
+                && !parent.exists()
+            {
+                std::fs::create_dir_all(parent).unwrap();
             }
-            update_config_file(&default_config).unwrap();
+
+            // Create empty config file if it doesn't exist
+            if !std::path::Path::new(&config_path).exists() {
+                std::fs::write(&config_path, "{}").unwrap();
+            }
+
+            update_config_file_with_path(&default_config, &config_path).unwrap();
             default_config
         }
     };
 
-    let device_service = DeviceService::new_hybrid_device(
+    let device_service = DeviceService::new_hybrid_device_with_config_path(
         read_handler,
         write_handler,
         status_handler,
         config_interceptor_handler,
+        &config_path,
     )
     .unwrap();
     let router = init_hybrid_router(device_service);
@@ -61,6 +73,7 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
     println!("listening on {}", listener.local_addr().unwrap());
+    println!("using config file: {config_path}");
     axum::serve(listener, router).await.unwrap();
 }
 
