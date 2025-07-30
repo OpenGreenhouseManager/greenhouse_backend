@@ -1,5 +1,5 @@
 use super::Result;
-use super::config::{Config, read_config_file, update_config_file, read_config_file_with_path, update_config_file_with_path};
+use super::config::{Config, read_config_file, update_config_file, read_config_file_with_path, update_config_file_with_path, DEFAULT_CONFIG_FILE_NAME};
 use crate::smart_device_dto::{config::ConfigRequestDto, status::DeviceStatusResponseDto};
 use axum::http::StatusCode;
 use serde::{Serialize, de::DeserializeOwned};
@@ -42,7 +42,7 @@ where
             write_handler,
             status_handler,
             config_interceptor_handler,
-            "./config/config.json",
+            DEFAULT_CONFIG_FILE_NAME,
         )
     }
 
@@ -80,7 +80,7 @@ where
             read_handler,
             status_handler,
             config_interceptor_handler,
-            "./config/config.json",
+            DEFAULT_CONFIG_FILE_NAME,
         )
     }
 
@@ -123,7 +123,7 @@ where
             write_handler,
             status_handler,
             config_interceptor_handler,
-            "./config/config.json",
+            DEFAULT_CONFIG_FILE_NAME,
         )
     }
 
