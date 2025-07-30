@@ -4,7 +4,7 @@ use axum::{
 };
 use serde::{Serialize, de::DeserializeOwned};
 
-use crate::smart_device_dto::endpoints::{CONFIG, READ, STATUS, WRITE};
+use crate::{smart_device_dto::endpoints::{ACTIVATE, CONFIG, READ, STATUS, WRITE}, smart_device_interface::handler::activate_device};
 
 use super::{
     device_service::DeviceService,
@@ -24,5 +24,6 @@ where
         .route(CONFIG, post(config_update_handler))
         .route(CONFIG, get(get_config_handler))
         .route(STATUS, get(status_device_handler))
+        .route(ACTIVATE, post(activate_device))
         .with_state(device_service)
 }

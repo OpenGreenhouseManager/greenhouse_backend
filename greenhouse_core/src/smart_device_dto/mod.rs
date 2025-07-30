@@ -4,6 +4,8 @@ pub mod endpoints;
 pub mod read;
 pub mod status;
 pub mod write;
+pub mod activation;
+
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub enum Type {
     Number,

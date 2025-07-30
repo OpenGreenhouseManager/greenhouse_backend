@@ -35,6 +35,7 @@ async fn main() {
                 input_type: Some(Type::Number),
                 output_type: Some(Type::Number),
                 additional_config: ExampleDeviceConfig { min: 0, max: 100 },
+                scripting_api: None,
             };
             // check if config file exists
             if !std::path::Path::new("./config/config.json").exists() {
@@ -103,5 +104,6 @@ fn config_interceptor_handler(
                 max: config.additional_config.max,
             }
         },
+        scripting_api: old_config.scripting_api.clone(),
     }
 }

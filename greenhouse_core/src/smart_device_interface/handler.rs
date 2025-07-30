@@ -3,13 +3,9 @@ use std::sync::Arc;
 use axum::{Json, extract::State, http::StatusCode};
 use serde::{Serialize, de::DeserializeOwned};
 
-use crate::smart_device_dto::{
-    self,
-    config::{ConfigRequestDto, ConfigResponseDto},
-    read::ReadResponseDto,
-    status::DeviceStatusResponseDto,
-    write::WriteRequestDto,
-};
+use crate::{smart_device_dto::{
+    self, activation::ActivateRequestDto, config::{ConfigRequestDto, ConfigResponseDto}, read::ReadResponseDto, status::DeviceStatusResponseDto, write::WriteRequestDto
+}, smart_device_interface::config::{Config, ScriptingApi}};
 
 use super::{
     config::{read_config_file, update_config_file},
@@ -85,6 +81,31 @@ where
     let config = (device_service.config_interceptor_handler)(config, device_service.config);
 
     match update_config_file(&config) {
+        Ok(_) => StatusCode::OK,
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+    }
+}
+
+pub(crate) async fn activate_device<T>(
+    State(device_service): State<DeviceService<T>>,
+    Json(config): Json<ActivateRequestDto>,
+) -> StatusCode
+where
+    T: Clone + Default + Serialize,
+{
+    let config_update = Config {
+        scripting_api: Some(ScriptingApi {
+            url: config.url,
+            token: config.token,
+        }),
+        mode: device_service.config.mode.clone(),
+        port: device_service.config.port,
+        input_type: device_service.config.input_type,
+        output_type: device_service.config.output_type,
+        additional_config: device_service.config.additional_config.clone(),
+    };
+
+    match update_config_file(&config_update) {
         Ok(_) => StatusCode::OK,
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
     }

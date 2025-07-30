@@ -183,6 +183,10 @@ async fn generate_devices(config: &Config) {
             description: format!("Device description {}", i),
             address: format!("192.168.1.{}", i),
             can_script: rng.gen_bool(0.5),
+            scripting_api: ActivateRequestDto {
+                url: format!("http://localhost:3000/api/device/{}", i),
+                token: format!("testToken{}", i),
+            },
         };
 
         requests.push(device);

@@ -59,6 +59,13 @@ where
     pub input_type: Option<Type>,
     pub output_type: Option<Type>,
     pub additional_config: T,
+    pub scripting_api: Option<ScriptingApi>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct ScriptingApi {
+    pub url: String,
+    pub token: String,
 }
 
 impl<T> From<Config<T>> for ConfigResponseDto<T>

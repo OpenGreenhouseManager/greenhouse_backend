@@ -21,7 +21,7 @@ uuid = { workspace = true, features = [
 tracing = { workspace = true, optional = true }
 
 [features]
-default = ["api_web_dto", "api_script_dto", "auth_service_dto", "smart_device_dto", "smart_device_interface", "data_storage_service_dto", "device_service_dto", "error_handling"]
+default = ["api_web_dto", "api_script_dto", "auth_service_dto", "smart_device_dto", "smart_device_interface", "data_storage_service_dto", "device_service_dto", "error_handling", "scripting_dto"]
 api_web_dto = []
 api_script_dto = []
 auth_service_dto = []
@@ -30,6 +30,7 @@ smart_device_interface = ["smart_device_dto", "dep:axum", "dep:tracing"]
 data_storage_service_dto = []
 device_service_dto =[]
 error_handling = ["dep:axum", "dep:tracing"]
+scripting_dto = []
 
 [dev-dependencies]
 httpc-test = "0.1.9"
