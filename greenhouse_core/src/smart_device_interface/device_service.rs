@@ -1,5 +1,7 @@
 use super::Result;
-use super::config::{Config, read_config_file_with_path, update_config_file_with_path, DEFAULT_CONFIG_FILE_NAME};
+use super::config::{
+    Config, DEFAULT_CONFIG_FILE_NAME, read_config_file_with_path, update_config_file_with_path,
+};
 use crate::smart_device_dto::{config::ConfigRequestDto, status::DeviceStatusResponseDto};
 use axum::http::StatusCode;
 use serde::{Serialize, de::DeserializeOwned};

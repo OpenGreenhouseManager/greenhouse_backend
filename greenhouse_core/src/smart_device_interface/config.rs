@@ -3,7 +3,7 @@ use crate::smart_device_dto::{self, config::ConfigResponseDto};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 // Default config file path for backward compatibility
-pub (crate) const DEFAULT_CONFIG_FILE_NAME: &str = "./config/config.json";
+pub(crate) const DEFAULT_CONFIG_FILE_NAME: &str = "./config/config.json";
 
 pub fn update_config_file<T>(config: &Config<T>) -> Result<()>
 where

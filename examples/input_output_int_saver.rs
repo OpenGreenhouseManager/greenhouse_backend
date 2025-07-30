@@ -41,19 +41,19 @@ async fn main() {
                 output_type: Some(Type::Number),
                 additional_config: ExampleDeviceConfig { min: 0, max: 100 },
             };
-            
+
             // Create config directory if it doesn't exist
-            if let Some(parent) = std::path::Path::new(&config_path).parent() {
-                if !parent.exists() {
-                    std::fs::create_dir_all(parent).unwrap();
-                }
+            if let Some(parent) = std::path::Path::new(&config_path).parent()
+                && !parent.exists()
+            {
+                std::fs::create_dir_all(parent).unwrap();
             }
-            
+
             // Create empty config file if it doesn't exist
             if !std::path::Path::new(&config_path).exists() {
                 std::fs::write(&config_path, "{}").unwrap();
             }
-            
+
             update_config_file_with_path(&default_config, &config_path).unwrap();
             default_config
         }
@@ -73,7 +73,7 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
     println!("listening on {}", listener.local_addr().unwrap());
-    println!("using config file: {}", config_path);
+    println!("using config file: {config_path}");
     axum::serve(listener, router).await.unwrap();
 }
 
