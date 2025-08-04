@@ -68,14 +68,14 @@ pub(crate) async fn create_device(
     );
     device.flush(&pool).await?;
 
-    request_device_activate(
+    let _ = request_device_activate(
         &entry.address,
         ActivateRequestDto {
             url: config.scripting_service.clone(),
             token: request_device_token(&config.scripting_service).await?,
         },
     )
-    .await?;
+    .await;
 
     let response: DeviceResponseDto = device.into();
     Ok(Json(response))
