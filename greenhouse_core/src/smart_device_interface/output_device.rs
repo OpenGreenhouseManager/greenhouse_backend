@@ -4,7 +4,10 @@ use axum::{
 };
 use serde::{Serialize, de::DeserializeOwned};
 
-use crate::{smart_device_dto::endpoints::{ACTIVATE, CONFIG, READ, STATUS}, smart_device_interface::handler::activate_device};
+use crate::{
+    smart_device_dto::endpoints::{ACTIVATE, CONFIG, READ, STATUS},
+    smart_device_interface::handler::activate_device,
+};
 
 use super::{
     device_service::DeviceService,

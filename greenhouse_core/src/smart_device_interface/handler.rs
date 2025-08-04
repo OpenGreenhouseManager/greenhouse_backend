@@ -3,9 +3,17 @@ use std::sync::Arc;
 use axum::{Json, extract::State, http::StatusCode};
 use serde::{Serialize, de::DeserializeOwned};
 
-use crate::{smart_device_dto::{
-    self, activation::ActivateRequestDto, config::{ConfigRequestDto, ConfigResponseDto}, read::ReadResponseDto, status::DeviceStatusResponseDto, write::WriteRequestDto
-}, smart_device_interface::config::{Config, ScriptingApi}};
+use crate::{
+    smart_device_dto::{
+        self,
+        activation::ActivateRequestDto,
+        config::{ConfigRequestDto, ConfigResponseDto},
+        read::ReadResponseDto,
+        status::DeviceStatusResponseDto,
+        write::WriteRequestDto,
+    },
+    smart_device_interface::config::{Config, ScriptingApi, update_config_file},
+};
 
 use super::{
     config::{read_config_file_with_path, update_config_file_with_path},

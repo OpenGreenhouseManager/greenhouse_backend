@@ -15,6 +15,7 @@ pub struct TestContext {
     device_postgres_container: Option<ContainerAsync<Postgres>>,
     auth_service: Option<JoinHandle<Result<(), std::io::Error>>>,
     data_storage_service: Option<JoinHandle<Result<(), std::io::Error>>>,
+    scripting_service: Option<JoinHandle<Result<(), std::io::Error>>>,
     device_service: Option<JoinHandle<Result<(), std::io::Error>>>,
     web_api: Option<JoinHandle<Result<(), std::io::Error>>>,
 }
@@ -27,6 +28,7 @@ impl TestContext {
             device_postgres_container: None,
             auth_service: None,
             data_storage_service: None,
+            scripting_service: None,
             device_service: None,
             web_api: None,
         }
@@ -90,6 +92,9 @@ impl TestContext {
                 ))
                 .await,
             );
+        }
+        if self.scripting_service.is_none() {
+            self.scripting_service = None;
         }
         if self.web_api.is_none() {
             self.web_api = Some(start_web_api().await);
@@ -182,6 +187,7 @@ async fn start_device_service(
         database_url: db_url,
         service_port: 3003,
         sentry_url: String::new(),
+        scripting_service: String::from("http://localhost:3004"),
     };
 
     let device_pool = device_service::Pool::builder()

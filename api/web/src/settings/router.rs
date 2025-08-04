@@ -1,4 +1,4 @@
-use crate::helper::error::{ HttpResult};
+use crate::helper::error::HttpResult;
 use crate::{AppState, settings::service};
 use axum::routing::post;
 use axum::{

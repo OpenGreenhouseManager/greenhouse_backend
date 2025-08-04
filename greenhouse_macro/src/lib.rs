@@ -3,7 +3,6 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, AttributeArgs, ItemFn, Lit, NestedMeta};
 
-
 #[proc_macro_attribute]
 pub fn authenticate(args: TokenStream, input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(args as AttributeArgs);
@@ -35,7 +34,7 @@ pub fn authenticate(args: TokenStream, input: TokenStream) -> TokenStream {
             use crate::helper::error::{Error};
             use crate::{ auth::AUTH_TOKEN};
             use crate::helper;
-            
+
             if let Ok(token) = cookies
                 .get(AUTH_TOKEN)
                 .map(|c| c.value().to_string())

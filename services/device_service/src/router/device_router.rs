@@ -1,8 +1,13 @@
 use crate::{
-    database::device::Device, router::{
+    AppState,
+    database::device::Device,
+    router::{
         error::HttpResult,
-        service::{request_device_activate, request_device_config, request_device_status, request_device_token},
-    }, AppState
+        service::{
+            request_device_activate, request_device_config, request_device_status,
+            request_device_token,
+        },
+    },
 };
 use axum::{
     Json, Router,
@@ -11,12 +16,15 @@ use axum::{
     response::IntoResponse,
     routing::{get, post, put},
 };
-use greenhouse_core::{device_service_dto::{
-    endpoints::{CONFIG, STATUS},
-    get_device::DeviceResponseDto,
-    post_device::PostDeviceDtoRequest,
-    put_device::PutDeviceDtoRequest,
-}, smart_device_dto::activation::ActivateRequestDto};
+use greenhouse_core::{
+    device_service_dto::{
+        endpoints::{CONFIG, STATUS},
+        get_device::DeviceResponseDto,
+        post_device::PostDeviceDtoRequest,
+        put_device::PutDeviceDtoRequest,
+    },
+    smart_device_dto::activation::ActivateRequestDto,
+};
 use uuid::Uuid;
 
 pub(crate) fn routes(state: AppState) -> Router {
@@ -60,10 +68,14 @@ pub(crate) async fn create_device(
     );
     device.flush(&pool).await?;
 
-    request_device_activate(&entry.address, ActivateRequestDto {
-        url: config.scripting_service.clone(),
-        token: request_device_token(&config.scripting_service).await?,
-    }).await?;
+    request_device_activate(
+        &entry.address,
+        ActivateRequestDto {
+            url: config.scripting_service.clone(),
+            token: request_device_token(&config.scripting_service).await?,
+        },
+    )
+    .await?;
 
     let response: DeviceResponseDto = device.into();
     Ok(Json(response))
