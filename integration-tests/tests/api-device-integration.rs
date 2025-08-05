@@ -30,7 +30,7 @@ async fn test_create_device_entry() {
     assert!(
         response.status().is_success(),
         "Failed to create device entry with error: {}",
-        response.text().await.unwrap()  
+        response.text().await.unwrap()
     );
 
     let device: DeviceResponseDto = response.json().await.unwrap();
@@ -71,7 +71,7 @@ async fn test_create_and_get_device_entry() {
     assert!(
         response.status().is_success(),
         "Failed to create device entry with error: {}",
-        response.text().await.unwrap()  
+        response.text().await.unwrap()
     );
 
     let created_device: DeviceResponseDto = response.json().await.unwrap();
@@ -128,7 +128,7 @@ async fn test_create_and_update_device_entry() {
     assert!(
         response.status().is_success(),
         "Failed to create device entry with error: {}",
-        response.text().await.unwrap()  
+        response.text().await.unwrap()
     );
 
     let created_device: DeviceResponseDto = response.json().await.unwrap();
@@ -224,7 +224,7 @@ async fn test_status_for_offline_device_entry() {
     assert!(
         response.status().is_success(),
         "Failed to create device entry with error: {}",
-        response.text().await.unwrap()  
+        response.text().await.unwrap()
     );
 
     let created_device: DeviceResponseDto = response.json().await.unwrap();
@@ -245,7 +245,7 @@ async fn test_status_for_offline_device_entry() {
     assert!(
         response.status().is_server_error() || response.status().is_client_error(),
         "Should return error status for offline device with error: {}",
-        response.text().await.unwrap()  
+        response.text().await.unwrap()
     );
 
     context.stop().await;
@@ -284,9 +284,11 @@ async fn test_get_all_devices() {
             .send()
             .await
             .unwrap();
-        assert!(response.status().is_success(), "Failed to create device with error: {}",
-        response.text().await.unwrap()  
-    );
+        assert!(
+            response.status().is_success(),
+            "Failed to create device with error: {}",
+            response.text().await.unwrap()
+        );
     }
 
     // Get all devices
@@ -297,8 +299,10 @@ async fn test_get_all_devices() {
         .send()
         .await
         .unwrap();
-    assert!(response.status().is_success(), "Failed to get all devices with error: {}",
-        response.text().await.unwrap()  
+    assert!(
+        response.status().is_success(),
+        "Failed to get all devices with error: {}",
+        response.text().await.unwrap()
     );
 
     let devices: Vec<DeviceResponseDto> = response.json().await.unwrap();
@@ -361,7 +365,7 @@ async fn test_get_device_config() {
     assert!(
         response.status().is_server_error() || response.status().is_client_error(),
         "Should return error status for unreachable device config request with error: {}",
-        response.text().await.unwrap()  
+        response.text().await.unwrap()
     );
 
     context.stop().await;
