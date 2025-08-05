@@ -1,3 +1,3 @@
+pub mod check_token;
 pub mod endpoints;
 pub mod get_token;
-pub mod check_token;

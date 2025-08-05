@@ -1,8 +1,6 @@
 use axum::http::StatusCode;
 use derive_more::From;
-use greenhouse_core::{
-    http_error::{HttpErrorMapping, HttpErrorResponse},
-};
+use greenhouse_core::http_error::{HttpErrorMapping, HttpErrorResponse};
 use serde::Serialize;
 
 pub(crate) type HttpResult<T> = core::result::Result<T, HttpErrorResponse<Error>>;
