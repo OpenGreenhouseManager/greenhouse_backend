@@ -109,6 +109,10 @@ where
                 Some(Type::Unknown) => Some(crate::smart_device_dto::Type::Unknown),
                 None => None,
             },
+            scripting_api: config.scripting_api.map(|s| crate::smart_device_dto::config::ScriptingApi {
+                url: s.url,
+                token: s.token,
+            }),
             additional_config: config.additional_config,
         }
     }
