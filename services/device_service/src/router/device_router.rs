@@ -18,7 +18,7 @@ use axum::{
 };
 use greenhouse_core::{
     device_service_dto::{
-        endpoints::{CONFIG, STATUS, ACTIVATE},
+        endpoints::{ACTIVATE, CONFIG, STATUS},
         get_device::DeviceResponseDto,
         post_device::PostDeviceDtoRequest,
         put_device::PutDeviceDtoRequest,
@@ -141,9 +141,13 @@ pub(crate) async fn activate_device(
     Path(id): Path<Uuid>,
 ) -> HttpResult<impl IntoResponse> {
     let device = Device::find_by_id(id, &pool).await?;
-    let _ = request_device_activate(&device.address, ActivateRequestDto {
-        url: config.scripting_service.clone(),
-        token: request_device_token(&config.scripting_service).await?.token,
-    }).await?;
+    let _ = request_device_activate(
+        &device.address,
+        ActivateRequestDto {
+            url: config.scripting_service.clone(),
+            token: request_device_token(&config.scripting_service).await?.token,
+        },
+    )
+    .await?;
     Ok(StatusCode::OK.into_response())
 }

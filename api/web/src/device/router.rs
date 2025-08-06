@@ -7,7 +7,7 @@ use axum::{
     routing::{get, post, put},
 };
 use greenhouse_core::device_service_dto::{
-    endpoints::{CONFIG, STATUS, ACTIVATE},
+    endpoints::{ACTIVATE, CONFIG, STATUS},
     post_device::PostDeviceDtoRequest,
     put_device::PutDeviceDtoRequest,
 };
@@ -100,6 +100,6 @@ pub(crate) async fn activate_device(
     State(AppState { config }): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> HttpResult<impl IntoResponse> {
-    let _ = service::activate_device(&config.service_addresses.device_service, id).await?;
+    service::activate_device(&config.service_addresses.device_service, id).await?;
     Ok(StatusCode::OK.into_response())
 }
