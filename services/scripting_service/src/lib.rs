@@ -5,6 +5,7 @@ use diesel::{Connection, PgConnection};
 use diesel_async::AsyncPgConnection;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
+use greenhouse_core::scripting_dto;
 use serde::Deserialize;
 use tower_http::trace::TraceLayer;
 
@@ -17,8 +18,8 @@ const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 pub struct Config {
     #[serde(rename = "SERVICE_PORT")]
     pub service_port: u32,
-    #[serde(rename = "SCRIPTING_SERVICE")]
-    pub scripting_service: String,
+    #[serde(rename = "SCRIPTING_API")]
+    pub scripting_api: String,
     #[serde(rename = "DATABASE_URL")]
     pub database_url: String,
     #[serde(rename = "SENTRY_URL")]
@@ -39,7 +40,10 @@ pub fn app(config: Config, pool: Pool) -> Router {
     let state = AppState { config, pool };
 
     Router::new()
-        .merge(router::scripting_router::routes(state.clone()))
+        .nest(
+            scripting_dto::endpoints::TOKEN,
+            router::scripting_router::routes(state.clone()),
+        )
         .layer(TraceLayer::new_for_http())
 }
 

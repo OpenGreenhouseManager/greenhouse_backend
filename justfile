@@ -8,6 +8,7 @@ run-services: kill-services
     stdbuf -oL cargo run --package auth_service         | tee -a logs/services.log &
     stdbuf -oL cargo run --package data_storage_service | tee -a logs/services.log &
     stdbuf -oL cargo run --package device_service       | tee -a logs/services.log &
+    stdbuf -oL cargo run --package scripting_service    | tee -a logs/services.log &
     wait
 
 # Run all APIs combined in one terminal/log
@@ -59,12 +60,18 @@ start-all-except *services: kill-services kill-apis
     else
         echo "Skipping script_api"
     fi
+    if [[ ! "$excluded_services" =~ "scripting_service" ]]; then
+        stdbuf -oL cargo run --package scripting_service | tee -a logs/services.log &
+    else
+        echo "Skipping scripting_service"
+    fi
     wait
 
 kill-services:
     killall auth_service || true
     killall data_storage_service || true
     killall device_service || true
+    killall scripting_service || true
 
 kill-apis:
     killall web_api || true

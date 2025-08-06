@@ -1,6 +1,6 @@
 use super::error::{Error, Result};
 use greenhouse_core::{
-    scripting_dto,
+    scripting_dto::{self, token::TokenDto},
     smart_device_dto::{activation::ActivateRequestDto, endpoints},
 };
 
@@ -79,9 +79,9 @@ pub(crate) async fn request_device_activate(
     })
 }
 
-pub(crate) async fn request_device_token(scripting_api_address: &str) -> Result<String> {
+pub(crate) async fn request_device_token(scripting_api_address: &str) -> Result<TokenDto> {
     let resp = reqwest::Client::new()
-        .get(scripting_api_address.to_string() + scripting_dto::endpoints::TOKEN)
+        .post(scripting_api_address.to_string() + scripting_dto::endpoints::TOKEN)
         .send()
         .await
         .map_err(|e| {
@@ -91,7 +91,7 @@ pub(crate) async fn request_device_token(scripting_api_address: &str) -> Result<
 
             Error::ScriptingApiNotReachable
         })?;
-    resp.text().await.map_err(|e| {
+    resp.json::<TokenDto>().await.map_err(|e| {
         sentry::capture_error(&e);
 
         tracing::error!("Error in response from scripting api: {:?}", e);

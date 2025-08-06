@@ -1,1 +1,1 @@
-pub const TOKEN: &str = "token";
+pub const TOKEN: &str = "/token";

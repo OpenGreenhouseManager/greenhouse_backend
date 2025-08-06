@@ -13,6 +13,7 @@ pub struct TestContext {
     auth_postgres_container: Option<ContainerAsync<Postgres>>,
     data_storage_postgres_container: Option<ContainerAsync<Postgres>>,
     device_postgres_container: Option<ContainerAsync<Postgres>>,
+    scripting_postgres_container: Option<ContainerAsync<Postgres>>,
     auth_service: Option<JoinHandle<Result<(), std::io::Error>>>,
     data_storage_service: Option<JoinHandle<Result<(), std::io::Error>>>,
     scripting_service: Option<JoinHandle<Result<(), std::io::Error>>>,
@@ -26,6 +27,7 @@ impl TestContext {
             auth_postgres_container: None,
             data_storage_postgres_container: None,
             device_postgres_container: None,
+            scripting_postgres_container: None,
             auth_service: None,
             data_storage_service: None,
             scripting_service: None,
@@ -57,6 +59,17 @@ impl TestContext {
             .await
             .unwrap();
 
+        if self.scripting_postgres_container.is_none() {
+            self.scripting_postgres_container = Some(start_scripting_postgres().await);
+        }
+        let scripting_port = self
+            .scripting_postgres_container
+            .as_ref()
+            .unwrap()
+            .get_host_port_ipv4(5432)
+            .await
+            .unwrap();
+
         if self.auth_postgres_container.is_none() {
             self.auth_postgres_container = Some(start_auth_postgres().await);
         }
@@ -81,6 +94,14 @@ impl TestContext {
             self.device_service = Some(
                 start_device_service(format!(
                     "postgres://postgres:postgres@localhost:{device_port}/device"
+                ))
+                .await,
+            );
+        }
+        if self.scripting_service.is_none() {
+            self.scripting_service = Some(
+                start_scripting_service(format!(
+                    "postgres://postgres:postgres@localhost:{scripting_port}/scripting"
                 ))
                 .await,
             );
@@ -159,6 +180,15 @@ async fn start_device_postgres() -> ContainerAsync<Postgres> {
         .unwrap()
 }
 
+async fn start_scripting_postgres() -> ContainerAsync<Postgres> {
+    postgres::Postgres::default()
+        .with_db_name("scripting")
+        .with_tag("latest")
+        .start()
+        .await
+        .unwrap()
+}
+
 async fn start_auth_service(db_url: String) -> tokio::task::JoinHandle<Result<(), std::io::Error>> {
     let auth_service_config = auth_service::Config {
         database_url: db_url,
@@ -229,6 +259,29 @@ async fn start_data_storage_service(
     tokio::spawn(async move { axum::serve(listener, data_storage_service_app).await })
 }
 
+async fn start_scripting_service(
+    db_url: String,
+) -> tokio::task::JoinHandle<Result<(), std::io::Error>> {
+    let scripting_service_config = scripting_service::Config {
+        database_url: db_url,
+        service_port: 3004,
+        sentry_url: String::new(),
+        scripting_api: String::from("http://localhost:3100"),
+    };
+
+    let scripting_pool = scripting_service::Pool::builder()
+        .build(AsyncDieselConnectionManager::new(
+            scripting_service_config.database_url.clone(),
+        ))
+        .await
+        .unwrap();
+    let scripting_service_app =
+        scripting_service::app(scripting_service_config.clone(), scripting_pool.clone());
+
+    let url = format!("0.0.0.0:{}", scripting_service_config.service_port);
+    let listener = tokio::net::TcpListener::bind(url).await.unwrap();
+    tokio::spawn(async move { axum::serve(listener, scripting_service_app).await })
+}
 async fn start_web_api() -> tokio::task::JoinHandle<Result<(), std::io::Error>> {
     let web_api_config = web_api::Config {
         api_port: 3000,
