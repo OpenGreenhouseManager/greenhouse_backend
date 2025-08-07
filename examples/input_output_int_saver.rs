@@ -8,7 +8,7 @@ use greenhouse_core::{
     },
     smart_device_interface::{
         config::{Config, Mode, Type, read_config_file_with_path, update_config_file_with_path},
-        device_service::DeviceService,
+        device_builder::DeviceBuilder,
         hybrid_device::init_hybrid_router,
     },
 };
@@ -37,6 +37,7 @@ async fn main() {
             let default_config = Config {
                 mode: Mode::InputOutput,
                 port: 6001,
+                datasource_id: DATASOURCE_ID.to_string(),
                 input_type: Some(Type::Number),
                 output_type: Some(Type::Number),
                 additional_config: ExampleDeviceConfig { min: 0, max: 100 },
@@ -60,7 +61,7 @@ async fn main() {
         }
     };
 
-    let device_service = DeviceService::new_hybrid_device_with_config_path(
+    let device_service = DeviceBuilder::new_hybrid_device_with_config_path(
         read_handler,
         write_handler,
         status_handler,
@@ -93,11 +94,11 @@ fn write_handler(json: String, config: Arc<Config<ExampleDeviceConfig>>) -> Stat
     StatusCode::OK
 }
 
-fn status_handler(_: Arc<Config<ExampleDeviceConfig>>) -> DeviceStatusResponseDto {
+fn status_handler(config: Arc<Config<ExampleDeviceConfig>>) -> DeviceStatusResponseDto {
     // Implement your status handler here
     DeviceStatusResponseDto {
         status: DeviceStatusDto::Online,
-        datasource_id: From::from(DATASOURCE_ID),
+        datasource_id: config.datasource_id.clone(),
     }
 }
 
@@ -109,6 +110,7 @@ fn config_interceptor_handler(
     Config {
         mode: old_config.mode.clone(),
         port: old_config.port,
+        datasource_id: old_config.datasource_id.clone(),
         input_type: old_config.input_type,
         output_type: old_config.output_type,
         additional_config: {

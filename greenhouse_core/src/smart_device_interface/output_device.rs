@@ -10,13 +10,13 @@ use crate::{
 };
 
 use super::{
-    device_service::DeviceService,
+    device_builder::DeviceBuilder,
     handler::{
         config_update_handler, get_config_handler, read_device_handler, status_device_handler,
     },
 };
 
-pub fn init_output_router<T>(device_service: DeviceService<T>) -> Router
+pub fn init_output_router<T>(device_service: DeviceBuilder<T>) -> Router
 where
     T: Clone + Default + Serialize + DeserializeOwned + Send + Sync + 'static,
 {

@@ -17,11 +17,11 @@ use crate::{
 
 use super::{
     config::{read_config_file_with_path, update_config_file_with_path},
-    device_service::DeviceService,
+    device_builder::DeviceBuilder,
 };
 
 pub(crate) async fn write_device_handler<T>(
-    State(device_service): State<DeviceService<T>>,
+    State(device_service): State<DeviceBuilder<T>>,
     Json(payload): Json<WriteRequestDto>,
 ) -> StatusCode
 where
@@ -35,7 +35,7 @@ where
 }
 
 pub(crate) async fn read_device_handler<T>(
-    State(device_service): State<DeviceService<T>>,
+    State(device_service): State<DeviceBuilder<T>>,
 ) -> Json<ReadResponseDto>
 where
     T: Clone + Default,
@@ -55,7 +55,7 @@ where
 }
 
 pub(crate) async fn get_config_handler<T>(
-    State(mut device_service): State<DeviceService<T>>,
+    State(mut device_service): State<DeviceBuilder<T>>,
 ) -> Json<Option<ConfigResponseDto<T>>>
 where
     T: DeserializeOwned + Clone + Default,
@@ -70,7 +70,7 @@ where
 }
 
 pub(crate) async fn status_device_handler<T>(
-    State(device_service): State<DeviceService<T>>,
+    State(device_service): State<DeviceBuilder<T>>,
 ) -> Json<DeviceStatusResponseDto>
 where
     T: Clone + Default,
@@ -81,7 +81,7 @@ where
 }
 
 pub(crate) async fn config_update_handler<T>(
-    State(device_service): State<DeviceService<T>>,
+    State(device_service): State<DeviceBuilder<T>>,
     Json(config): Json<ConfigRequestDto<T>>,
 ) -> StatusCode
 where
@@ -96,7 +96,7 @@ where
 }
 
 pub(crate) async fn activate_device<T>(
-    State(device_service): State<DeviceService<T>>,
+    State(device_service): State<DeviceBuilder<T>>,
     Json(config): Json<ActivateRequestDto>,
 ) -> StatusCode
 where
@@ -109,6 +109,7 @@ where
         }),
         mode: device_service.config.mode.clone(),
         port: device_service.config.port,
+        datasource_id: device_service.config.datasource_id.clone(),
         input_type: device_service.config.input_type,
         output_type: device_service.config.output_type,
         additional_config: device_service.config.additional_config.clone(),

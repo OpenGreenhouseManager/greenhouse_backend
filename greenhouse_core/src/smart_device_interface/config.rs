@@ -71,6 +71,7 @@ where
 {
     pub mode: Mode,
     pub port: u16,
+    pub datasource_id: String,
     pub input_type: Option<Type>,
     pub output_type: Option<Type>,
     pub additional_config: T,
