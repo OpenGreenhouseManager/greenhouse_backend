@@ -13,7 +13,7 @@ use axum::{
 use diesel::ExpressionMethods;
 use diesel::query_dsl::methods::FilterDsl;
 use diesel_async::RunQueryDsl;
-use greenhouse_core::scripting_dto::token::TokenDto;
+use greenhouse_core::scripting_service_dto::token::TokenDto;
 use reqwest::StatusCode;
 use uuid::Uuid;
 

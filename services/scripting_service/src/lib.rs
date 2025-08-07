@@ -5,7 +5,7 @@ use diesel::{Connection, PgConnection};
 use diesel_async::AsyncPgConnection;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
-use greenhouse_core::scripting_dto;
+use greenhouse_core::scripting_service_dto;
 use serde::Deserialize;
 use tower_http::trace::TraceLayer;
 
@@ -41,7 +41,7 @@ pub fn app(config: Config, pool: Pool) -> Router {
 
     Router::new()
         .nest(
-            scripting_dto::endpoints::TOKEN,
+            scripting_service_dto::endpoints::TOKEN,
             router::scripting_router::routes(state.clone()),
         )
         .layer(TraceLayer::new_for_http())

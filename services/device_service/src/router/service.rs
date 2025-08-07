@@ -1,6 +1,6 @@
 use super::error::{Error, Result};
 use greenhouse_core::{
-    scripting_dto::{self, token::TokenDto},
+    scripting_service_dto::{self, token::TokenDto},
     smart_device_dto::{activation::ActivateRequestDto, endpoints},
 };
 
@@ -81,7 +81,7 @@ pub(crate) async fn request_device_activate(
 
 pub(crate) async fn request_device_token(scripting_api_address: &str) -> Result<TokenDto> {
     let resp = reqwest::Client::new()
-        .post(scripting_api_address.to_string() + scripting_dto::endpoints::TOKEN)
+        .post(scripting_api_address.to_string() + scripting_service_dto::endpoints::TOKEN)
         .send()
         .await
         .map_err(|e| {
