@@ -73,7 +73,7 @@ pub(crate) async fn create_device(
         &entry.address,
         ActivateRequestDto {
             url: config.scripting_api.clone(),
-            token: request_device_token(&config.scripting_api).await?.token,
+            token: request_device_token(&config.scripting_service).await?.token,
         },
     )
     .await;
@@ -145,7 +145,7 @@ pub(crate) async fn activate_device(
         &device.address,
         ActivateRequestDto {
             url: config.scripting_api.clone(),
-            token: request_device_token(&config.scripting_api).await?.token,
+            token: request_device_token(&config.scripting_service).await?.token,
         },
     )
     .await?;

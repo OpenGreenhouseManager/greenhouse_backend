@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
-use axum::{Json, http::StatusCode};
+use axum::http::StatusCode;
 use greenhouse_core::{
+    data_storage_service_dto::alert_dto::alert::Severity,
     smart_device_dto::{
         config::ConfigRequestDto,
         status::{DeviceStatusDto, DeviceStatusResponseDto},
@@ -9,13 +10,15 @@ use greenhouse_core::{
     smart_device_interface::{
         config::{Config, Mode, Type, read_config_file_with_path, update_config_file_with_path},
         device_builder::DeviceBuilder,
+        device_service::{AlertCreation, trigger_alert},
         hybrid_device::init_hybrid_router,
     },
 };
 use serde_derive::{Deserialize, Serialize};
 
-static mut SAVED_NUMBER: i32 = 20;
 const DATASOURCE_ID: &str = "7a224a14-6e07-45a3-91da-b7584a5731c1";
+const LOW_ALERT_IDENTIFIER: &str = "low_alert";
+const HIGH_ALERT_IDENTIFIER: &str = "high_alert";
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 struct ExampleDeviceConfig {
@@ -36,11 +39,11 @@ async fn main() {
         Err(_) => {
             let default_config = Config {
                 mode: Mode::InputOutput,
-                port: 6001,
+                port: 6002,
                 datasource_id: DATASOURCE_ID.to_string(),
                 input_type: Some(Type::Number),
-                output_type: Some(Type::Number),
-                additional_config: ExampleDeviceConfig { min: 0, max: 100 },
+                output_type: None,
+                additional_config: ExampleDeviceConfig { min: 0, max: 10 },
                 scripting_api: None,
             };
 
@@ -61,8 +64,7 @@ async fn main() {
         }
     };
 
-    let device_service = DeviceBuilder::new_hybrid_device_with_config_path(
-        read_handler,
+    let device_service = DeviceBuilder::new_input_device_with_config_path(
         write_handler,
         status_handler,
         config_interceptor_handler,
@@ -79,15 +81,33 @@ async fn main() {
     axum::serve(listener, router).await.unwrap();
 }
 
-async fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> String {
-    Json(unsafe { SAVED_NUMBER }).to_string()
-}
-
 async fn write_handler(json: String, config: Arc<Config<ExampleDeviceConfig>>) -> StatusCode {
     let number: i32 = json.parse().unwrap();
-    unsafe { SAVED_NUMBER = number };
-    if config.additional_config.min > number || config.additional_config.max < number {
-        return StatusCode::INTERNAL_SERVER_ERROR;
+    if number > config.additional_config.max {
+        trigger_alert(
+            config.clone(),
+            AlertCreation {
+                severity: Severity::Error,
+                identifier: HIGH_ALERT_IDENTIFIER.to_string(),
+                value: Some(number.to_string()),
+                note: None,
+            },
+        )
+        .await
+        .unwrap();
+    }
+    if number < config.additional_config.min {
+        trigger_alert(
+            config.clone(),
+            AlertCreation {
+                severity: Severity::Error,
+                identifier: LOW_ALERT_IDENTIFIER.to_string(),
+                value: Some(number.to_string()),
+                note: None,
+            },
+        )
+        .await
+        .unwrap();
     }
     StatusCode::OK
 }

@@ -29,7 +29,7 @@ where
 {
     let config = device_service.config;
     match device_service.write_handler {
-        Some(handler) => handler(payload.data, config),
+        Some(handler) => handler(payload.data, config).await,
         None => StatusCode::INTERNAL_SERVER_ERROR,
     }
 }
@@ -47,10 +47,10 @@ where
     };
     match device_service.read_handler {
         None => Json(Default::default()),
-        Some(handler) => Json(ReadResponseDto {
-            data: handler(config),
-            output_type,
-        }),
+        Some(handler) => {
+            let data = handler(config).await;
+            Json(ReadResponseDto { data, output_type })
+        }
     }
 }
 
@@ -77,7 +77,7 @@ where
 {
     let config = device_service.config;
 
-    Json((device_service.status_handler)(config))
+    Json((device_service.status_handler)(config).await)
 }
 
 pub(crate) async fn config_update_handler<T>(
@@ -87,7 +87,7 @@ pub(crate) async fn config_update_handler<T>(
 where
     T: Serialize + Clone + Default,
 {
-    let config = (device_service.config_interceptor_handler)(config, device_service.config);
+    let config = (device_service.config_interceptor_handler)(config, device_service.config).await;
 
     match update_config_file_with_path(&config, &device_service.config_path) {
         Ok(_) => StatusCode::OK,

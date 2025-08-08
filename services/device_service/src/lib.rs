@@ -19,6 +19,8 @@ pub struct Config {
     pub service_port: u32,
     #[serde(rename = "SCRIPTING_API")]
     pub scripting_api: String,
+    #[serde(rename = "SCRIPTING_SERVICE")]
+    pub scripting_service: String,
     #[serde(rename = "DATABASE_URL")]
     pub database_url: String,
     #[serde(rename = "SENTRY_URL")]
