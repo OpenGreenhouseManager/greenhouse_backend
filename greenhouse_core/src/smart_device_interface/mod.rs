@@ -1,4 +1,5 @@
 pub mod config;
+pub mod device_builder;
 pub mod device_service;
 mod error;
 mod handler;

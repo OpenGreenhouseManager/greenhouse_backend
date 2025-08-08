@@ -71,9 +71,17 @@ where
 {
     pub mode: Mode,
     pub port: u16,
+    pub datasource_id: String,
     pub input_type: Option<Type>,
     pub output_type: Option<Type>,
     pub additional_config: T,
+    pub scripting_api: Option<ScriptingApi>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct ScriptingApi {
+    pub url: String,
+    pub token: String,
 }
 
 impl<T> From<Config<T>> for ConfigResponseDto<T>
@@ -102,6 +110,12 @@ where
                 Some(Type::Unknown) => Some(crate::smart_device_dto::Type::Unknown),
                 None => None,
             },
+            scripting_api: config.scripting_api.map(|s| {
+                crate::smart_device_dto::config::ScriptingApi {
+                    url: s.url,
+                    token: s.token,
+                }
+            }),
             additional_config: config.additional_config,
         }
     }

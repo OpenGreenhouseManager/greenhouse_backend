@@ -259,3 +259,27 @@ pub(crate) async fn get_devices(base_url: &str) -> Result<Vec<DeviceResponseDto>
             .error,
     }))
 }
+
+pub(crate) async fn activate_device(base_url: &str, id: Uuid) -> Result<()> {
+    let resp = reqwest::Client::new()
+        .put(base_url.to_string() + "/" + &id.to_string() + "/" + endpoints::ACTIVATE)
+        .send()
+        .await
+        .map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!("Error in get to service: {:?}", e);
+            Error::Request(e)
+        })?;
+
+    if resp.status().is_success() {
+        return Ok(());
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp.text().await.map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!("Error in get to service: {:?}", e);
+            Error::Json(e)
+        })?,
+    }))
+}

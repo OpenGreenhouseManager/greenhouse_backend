@@ -1,11 +1,10 @@
-use serde::Serialize;
-
 pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub enum Error {
     IllFormattedConfig,
     MissingConfig,
+    Request(reqwest::Error),
 }
 
 // region:    --- Error Boilerplate
