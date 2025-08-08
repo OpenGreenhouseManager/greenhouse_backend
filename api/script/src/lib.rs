@@ -9,15 +9,14 @@ use serde::Deserialize;
 use tower_cookies::CookieManagerLayer;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
+pub(crate) mod alert;
 pub(crate) mod auth;
 pub(crate) mod helper;
 
 #[derive(Clone, Deserialize)]
 pub struct ServiceAddresses {
-    #[serde(rename = "AUTH_SERVICE")]
-    pub auth_service: String,
-    #[serde(rename = "DEVICE_SERVICE")]
-    pub device_service: String,
+    #[serde(rename = "SCRIPTING_SERVICE")]
+    pub scripting_service: String,
     #[serde(rename = "DATA_STORAGE_SERVICE")]
     pub data_storage_service: String,
 }
@@ -50,6 +49,7 @@ pub fn app(config: Config) -> Router {
             "https://localhost:5001".parse().unwrap(),
         ]);
     Router::new()
+        .nest("/alert", alert::router::routes(state.clone()))
         .layer(middleware::from_fn_with_state(state.clone(), check_token))
         .layer(CookieManagerLayer::new())
         .layer(cors)

@@ -19,7 +19,7 @@ pub(crate) async fn check_token(
         .get(AUTH_TOKEN)
         .map(|c| c.value().to_string())
         .ok_or(Error::CookieNotFound)
-        && service::check_token(&config.service_addresses.auth_service, &token)
+        && service::check_token(&config.service_addresses.scripting_service, &token)
             .await
             .is_ok()
     {

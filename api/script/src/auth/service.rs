@@ -4,8 +4,8 @@ use crate::{
 };
 
 use greenhouse_core::{
-    scripting_service_dto::{endpoints, token::TokenDto},
     http_error::ErrorResponseBody,
+    scripting_service_dto::{endpoints, token::TokenDto},
 };
 
 pub(crate) async fn check_token(base_ulr: &str, token: &str) -> Result<()> {

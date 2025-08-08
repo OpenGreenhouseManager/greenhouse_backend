@@ -34,7 +34,7 @@ where
             .header("Cookie", format!("auth-token={}", scripting_api.token))
             .send()
             .await
-            .map_err(|e| Error::Request(e))?;
+            .map_err(Error::Request)?;
 
         if !response.status().is_success() {
             return Err(Error::Request(response.error_for_status().unwrap_err()));

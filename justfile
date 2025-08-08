@@ -17,7 +17,7 @@ run-apis: kill-apis
     mkdir -p logs
     echo "" > logs/apis.log
     stdbuf -oL cargo run --package web_api         | tee -a logs/apis.log &
-    stdbuf -oL cargo run --package script_api      | tee -a logs/apis.log &
+    stdbuf -oL cargo run --package scripting_api      | tee -a logs/apis.log &
     wait
 
 # Run all (services + APIs) combined separately but together
@@ -55,10 +55,10 @@ start-all-except *services: kill-services kill-apis
     else
         echo "Skipping web_api"
     fi
-    if [[ ! "$excluded_services" =~ "script_api" ]]; then
-        stdbuf -oL cargo run --package script_api | tee -a logs/apis.log &
+    if [[ ! "$excluded_services" =~ "scripting_api" ]]; then
+        stdbuf -oL cargo run --package scripting_api | tee -a logs/apis.log &
     else
-        echo "Skipping script_api"
+        echo "Skipping scripting_api"
     fi
     if [[ ! "$excluded_services" =~ "scripting_service" ]]; then
         stdbuf -oL cargo run --package scripting_service | tee -a logs/services.log &
@@ -75,7 +75,7 @@ kill-services:
 
 kill-apis:
     killall web_api || true
-    killall script_api || true
+    killall scripting_api || true
 
 stop-all: kill-services kill-apis
 

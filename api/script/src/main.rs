@@ -1,5 +1,5 @@
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use scripting_api::Config;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 fn main() {
     let config = load_config();
