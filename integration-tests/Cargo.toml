@@ -5,6 +5,7 @@ edition = "2024"
 
 [dev-dependencies]
 web_api = { path = "../api/web" }
+scripting_api = { path = "../api/script" }
 greenhouse_core = { workspace = true, features = ["auth_service_dto"] }
 auth_service = { path = "../services/auth_service" }
 device_service = { path = "../services/device_service" }

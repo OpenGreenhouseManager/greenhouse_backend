@@ -19,6 +19,7 @@ pub struct TestContext {
     scripting_service: Option<JoinHandle<Result<(), std::io::Error>>>,
     device_service: Option<JoinHandle<Result<(), std::io::Error>>>,
     web_api: Option<JoinHandle<Result<(), std::io::Error>>>,
+    scripting_api: Option<JoinHandle<Result<(), std::io::Error>>>,
 }
 
 impl TestContext {
@@ -33,6 +34,7 @@ impl TestContext {
             scripting_service: None,
             device_service: None,
             web_api: None,
+            scripting_api: None,
         }
     }
 
@@ -119,6 +121,9 @@ impl TestContext {
         }
         if self.web_api.is_none() {
             self.web_api = Some(start_web_api().await);
+        }
+        if self.scripting_api.is_none() {
+            self.scripting_api = Some(start_scripting_api().await);
         }
     }
 
@@ -217,8 +222,8 @@ async fn start_device_service(
         database_url: db_url,
         service_port: 3003,
         sentry_url: String::new(),
-        scripting_service: String::from("http://localhost:3101"),
-        scripting_api: String::from("http://localhost:3004"),
+        scripting_service: String::from("http://localhost:3004"),
+        scripting_api: String::from("http://localhost:3100"),
     };
 
     let device_pool = device_service::Pool::builder()
@@ -300,6 +305,23 @@ async fn start_web_api() -> tokio::task::JoinHandle<Result<(), std::io::Error>> 
     tokio::spawn(async move { axum::serve(listener, api_app).await })
 }
 
+async fn start_scripting_api() -> tokio::task::JoinHandle<Result<(), std::io::Error>> {
+    let scripting_api_config = scripting_api::Config {
+        api_port: 3100,
+        service_addresses: scripting_api::ServiceAddresses {
+            data_storage_service: String::from("http://localhost:3002"),
+            scripting_service: String::from("http://localhost:3004"),
+        },
+        sentry_url: String::new(),
+    };
+
+    let api_app = scripting_api::app(scripting_api_config.clone());
+    let url = format!("0.0.0.0:{}", scripting_api_config.api_port);
+    let listener = tokio::net::TcpListener::bind(url).await.unwrap();
+    tokio::spawn(async move { axum::serve(listener, api_app).await })
+
+}
+
 pub async fn admin_login() -> String {
     register_admin().await;
 
@@ -337,4 +359,16 @@ pub async fn api_login() -> String {
     let user_token: greenhouse_core::auth_service_dto::login::LoginResponseDto =
         response.json().await.unwrap();
     user_token.token
+}
+
+pub async fn scripting_login() -> String {
+    let client = reqwest::Client::new();
+    let response = client
+        .post("http://localhost:3004/token")
+        .send()
+        .await
+        .unwrap();
+    assert!(response.status().is_success(), "Failed to login");
+    let user_token: String = response.text().await.unwrap();
+    user_token
 }

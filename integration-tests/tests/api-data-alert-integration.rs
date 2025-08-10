@@ -8,8 +8,7 @@ mod test_helper;
 async fn test_create_and_filter_alert() {
     let mut context = TestContext::new();
     context.start_all_services().await;
-    let token = test_helper::admin_login().await;
-
+    let token = test_helper::scripting_login().await;
     // Create alert
     let client = reqwest::Client::new();
     let create_alert = CreateAlertDto {
@@ -20,7 +19,7 @@ async fn test_create_and_filter_alert() {
         datasource_id: String::from(uuid::Uuid::new_v4()),
     };
     let response = client
-        .post("http://localhost:3000/api/alert")
+        .post("http://localhost:3100/alert")
         .json(&create_alert)
         .header("Access-Control-Allow-Credentials", "true")
         .header("Cookie", format!("auth-token={token}"))
@@ -52,7 +51,7 @@ async fn test_create_and_filter_alert() {
 async fn test_alert_subset() {
     let mut context = TestContext::new();
     context.start_all_services().await;
-    let token = test_helper::admin_login().await;
+    let token = test_helper::scripting_login().await;
 
     // Create alert
     let client = reqwest::Client::new();
@@ -64,7 +63,7 @@ async fn test_alert_subset() {
         datasource_id: String::from(uuid::Uuid::new_v4()),
     };
     let response = client
-        .post("http://localhost:3000/api/alert")
+        .post("http://localhost:3100/alert")
         .json(&create_alert)
         .header("Access-Control-Allow-Credentials", "true")
         .header("Cookie", format!("auth-token={token}"))
@@ -171,7 +170,7 @@ async fn test_create_alert_unauthorized() {
         "datasource_id": uuid::Uuid::new_v4().to_string()
     });
     let response = client
-        .post("http://localhost:3000/api/alert")
+        .post("http://localhost:3100/alert")
         .json(&create_alert)
         .header("Access-Control-Allow-Credentials", "true")
         .send()
