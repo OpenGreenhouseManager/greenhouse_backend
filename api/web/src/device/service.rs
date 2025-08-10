@@ -267,7 +267,7 @@ pub(crate) async fn activate_device(base_url: &str, id: Uuid) -> Result<()> {
         .await
         .map_err(|e| {
             sentry::capture_error(&e);
-            tracing::error!("Error in get to service: {:?}", e);
+            tracing::error!("Error in put to service: {:?}", e);
             Error::Request(e)
         })?;
 
@@ -278,7 +278,7 @@ pub(crate) async fn activate_device(base_url: &str, id: Uuid) -> Result<()> {
         status: resp.status(),
         message: resp.text().await.map_err(|e| {
             sentry::capture_error(&e);
-            tracing::error!("Error in get to service: {:?}", e);
+            tracing::error!("Error in put to service: {:?}", e);
             Error::Json(e)
         })?,
     }))

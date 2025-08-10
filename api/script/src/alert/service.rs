@@ -38,7 +38,7 @@ pub(crate) async fn create_alert(base_ulr: &str, alert: CreateAlertDto) -> Resul
             .await
             .map_err(|e| {
                 sentry::capture_error(&e);
-                tracing::error!("Error in get to service: {:?}", e);
+                tracing::error!("Error in post to service: {:?}", e);
                 Error::Json(e)
             })?
             .error,
