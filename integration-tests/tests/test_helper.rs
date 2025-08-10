@@ -319,7 +319,6 @@ async fn start_scripting_api() -> tokio::task::JoinHandle<Result<(), std::io::Er
     let url = format!("0.0.0.0:{}", scripting_api_config.api_port);
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
     tokio::spawn(async move { axum::serve(listener, api_app).await })
-
 }
 
 pub async fn admin_login() -> String {
@@ -355,12 +354,13 @@ pub async fn api_login() -> String {
         .await
         .unwrap();
 
-    assert!(response.status().is_success(), "Failed to login");
+    assert!(response.status().is_success(), "Failed api login");
     let user_token: greenhouse_core::auth_service_dto::login::LoginResponseDto =
         response.json().await.unwrap();
     user_token.token
 }
 
+#[allow(dead_code)]
 pub async fn scripting_login() -> String {
     let client = reqwest::Client::new();
     let response = client
@@ -368,7 +368,7 @@ pub async fn scripting_login() -> String {
         .send()
         .await
         .unwrap();
-    assert!(response.status().is_success(), "Failed to login");
+    assert!(response.status().is_success(), "Failed scripting login");
     let user_token: String = response.text().await.unwrap();
     user_token
 }
