@@ -87,7 +87,7 @@ pub(crate) async fn request_device_token(scripting_api_address: &str) -> Result<
         .map_err(|e| {
             sentry::capture_error(&e);
 
-            tracing::error!("Error in get to scripting api: {:?}", e);
+            tracing::error!("Error in post to scripting api: {:?}", e);
 
             Error::ScriptingApiNotReachable
         })?;
