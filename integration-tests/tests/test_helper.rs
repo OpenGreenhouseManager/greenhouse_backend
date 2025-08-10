@@ -217,7 +217,8 @@ async fn start_device_service(
         database_url: db_url,
         service_port: 3003,
         sentry_url: String::new(),
-        scripting_api: String::from("http://localhost:3101"),
+        scripting_service: String::from("http://localhost:3101"),
+        scripting_api: String::from("http://localhost:3004"),
     };
 
     let device_pool = device_service::Pool::builder()

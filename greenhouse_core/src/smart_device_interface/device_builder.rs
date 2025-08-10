@@ -7,7 +7,7 @@ use axum::http::StatusCode;
 use futures::future::BoxFuture;
 use serde::{Serialize, de::DeserializeOwned};
 use std::future::Future;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 type ReadHandler<T> =
     Option<Arc<dyn Fn(Arc<Config<T>>) -> BoxFuture<'static, String> + Send + Sync>>;
@@ -27,7 +27,7 @@ where
     pub write_handler: WriteHandler<T>,
     pub status_handler: StatusHandler<T>,
     pub config_interceptor_handler: ConfigInterceptorHandler<T>,
-    pub config: Arc<Config<T>>,
+    pub config: Arc<RwLock<Arc<Config<T>>>>,
     pub config_path: String,
 }
 
@@ -98,7 +98,7 @@ where
                     Box::pin(fut)
                 },
             ),
-            config: Arc::new(config),
+            config: Arc::new(RwLock::new(Arc::new(config))),
             config_path: config_path.to_string(),
         })
     }
@@ -162,7 +162,7 @@ where
                     Box::pin(fut)
                 },
             ),
-            config: Arc::new(config),
+            config: Arc::new(RwLock::new(Arc::new(config))),
             config_path: config_path.to_string(),
         })
     }
@@ -226,7 +226,7 @@ where
                     Box::pin(fut)
                 },
             ),
-            config: Arc::new(config),
+            config: Arc::new(RwLock::new(Arc::new(config))),
             config_path: config_path.to_string(),
         })
     }
