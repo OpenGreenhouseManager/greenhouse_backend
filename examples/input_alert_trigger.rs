@@ -32,7 +32,7 @@ async fn main() {
     // Get config path from command line arguments, default to "./config/config.json"
     let config_path = std::env::args()
         .nth(1)
-        .unwrap_or_else(|| "./config/config.json".to_string());
+        .unwrap_or_else(|| "./config/input_alert_trigger/config.json".to_string());
 
     let config = match read_config_file_with_path(&config_path) {
         Ok(config) => config,
