@@ -88,4 +88,8 @@ test:
 fmt:
     cargo fmt --all -- --color always
 
+device:
+    cargo run -p examples --example input_output_int_saver &
+    cargo run -p examples --example input_alert_trigger
+
 ci: lint test fmt
