@@ -14,7 +14,6 @@ use greenhouse_core::{
         hybrid_device::init_hybrid_router,
     },
 };
-use rand::Rng;
 use serde_derive::{Deserialize, Serialize};
 
 const DATASOURCE_ID: &str = "7a224a14-6e07-45a3-91da-b7584a5731c1";
@@ -110,7 +109,7 @@ async fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> String {
             identifier: identifier.to_string(),
         })
         .collect::<Vec<AlertInfo>>();
-    serde_json::to_string(&alert_infos).unwrap()
+    "asd".to_string()
 }
 
 async fn status_handler(config: Arc<Config<ExampleDeviceConfig>>) -> DeviceStatusResponseDto {
@@ -150,14 +149,11 @@ async fn start_periodic_alerts(config: Config<ExampleDeviceConfig>, config_path:
         let current_time = std::time::Instant::now();
         if current_time.duration_since(last_alert_time) >= std::time::Duration::from_secs(interval)
         {
-            let jitter = {
-                let mut rng = rand::rng();
-                rng.random_range(0..random_jitter)
-            };
+            let jitter = 1;
             let next_alert_time = current_time + std::time::Duration::from_secs(interval + jitter);
             last_alert_time = next_alert_time;
-            let random_index = rand::rng().random_range(0..PERIODIC_ALERT_IDENTIFIER_LIST.len());
-            let random_severity = rand::rng().random_range(0..4);
+            let random_index = 1;
+            let random_severity = 1;
             let res = trigger_alert(
                 Arc::new(config.clone()),
                 AlertCreation {
