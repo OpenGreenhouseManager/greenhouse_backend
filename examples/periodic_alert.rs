@@ -5,7 +5,7 @@ use greenhouse_core::{
         config::ConfigRequestDto,
         status::{DeviceStatusDto, DeviceStatusResponseDto},
     }, smart_device_interface::{
-        config::{read_config_file_with_path, update_config_file_with_path, Config, Mode, Type}, device_builder::DeviceBuilder, device_service::{trigger_alert, AlertCreation}, hybrid_device::init_hybrid_router
+        config::{read_config_file_with_path, update_config_file_with_path, Config, Mode, Type}, device_builder::DeviceBuilder, device_service::{trigger_alert, AlertCreation}, hybrid_device::init_hybrid_router, Error
     }
 };
 use rand::Rng;
@@ -88,11 +88,9 @@ async fn main() {
     println!("using config file: {}", config_path);
 
     // Run periodic alerts in a background task, but avoid moving non-Send types into the task.
-    let config_for_alerts = Arc::new(config);
     tokio::spawn({
-        let config = config_for_alerts.clone();
         async move {
-            start_periodic_alerts(config).await;
+            start_periodic_alerts(config, &config_path).await;
         }
     });
 
@@ -133,7 +131,8 @@ async fn config_interceptor_handler(
     }
 }
 
-async fn start_periodic_alerts(config: Arc<Config<ExampleDeviceConfig>>) {
+async fn start_periodic_alerts(config: Config<ExampleDeviceConfig>, config_path: &str) {
+    let mut config = config;
     let interval = config.additional_config.interval;
     let random_jitter = config.additional_config.random_jitter;
     let mut last_alert_time = std::time::Instant::now();
@@ -149,7 +148,7 @@ async fn start_periodic_alerts(config: Arc<Config<ExampleDeviceConfig>>) {
             last_alert_time = next_alert_time;
             let random_index = rand::rng().random_range(0..PERIODIC_ALERT_IDENTIFIER_LIST.len());
             let random_severity = rand::rng().random_range(0..4);
-            let res = trigger_alert(config.clone(), AlertCreation {
+            let res = trigger_alert(Arc::new(config.clone()), AlertCreation {
                 identifier: PERIODIC_ALERT_IDENTIFIER_LIST[random_index].to_string(),
                 severity: match random_severity {
                     0 => Severity::Info,
@@ -163,7 +162,13 @@ async fn start_periodic_alerts(config: Arc<Config<ExampleDeviceConfig>>) {
             }).await;
             match res {
                 Ok(_) => println!("Alert triggered successfully"),
-                Err(e) => println!("Error triggering alert: {}", e),
+                Err(e) => match e {
+                    Error::ScriptingApiNotConfigured => {
+                        println!("Scripting API not configured, reloading config");
+                        config = read_config_file_with_path(&config_path).unwrap();
+                    }
+                    _ => println!("Error triggering alert: {}", e),
+                },
             }
         }
     }

@@ -39,6 +39,7 @@ where
         if !response.status().is_success() {
             return Err(Error::Request(response.error_for_status().unwrap_err()));
         }
+        return Ok(());
     }
-    Ok(())
+    Err(Error::ScriptingApiNotConfigured)
 }

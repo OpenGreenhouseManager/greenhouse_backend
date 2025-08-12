@@ -4,6 +4,7 @@ pub type Result<T> = core::result::Result<T, Error>;
 pub enum Error {
     IllFormattedConfig,
     MissingConfig,
+    ScriptingApiNotConfigured,
     Request(reqwest::Error),
 }
 
