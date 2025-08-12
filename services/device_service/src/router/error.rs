@@ -14,6 +14,8 @@ pub(crate) type Result<T> = core::result::Result<T, Error>;
 pub(crate) enum Error {
     SmartDeviceNotReachable,
     SmartDeviceResponse,
+    ScriptingApiNotReachable,
+    ScriptingApiResponse,
     #[from]
     Database(database::Error),
 }
@@ -41,6 +43,8 @@ impl HttpErrorMapping for Error {
                 database::Error::DatabaseConnection => StatusCode::INTERNAL_SERVER_ERROR,
                 database::Error::Find => StatusCode::NOT_FOUND,
             },
+            Error::ScriptingApiNotReachable => StatusCode::SERVICE_UNAVAILABLE,
+            Error::ScriptingApiResponse => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
@@ -53,6 +57,8 @@ impl HttpErrorMapping for Error {
                 database::Error::DatabaseConnection => String::from("Database connection error"),
                 database::Error::Find => String::from("Database find error"),
             },
+            Error::ScriptingApiNotReachable => String::from("Scripting api not reachable"),
+            Error::ScriptingApiResponse => String::from("Scripting api response error"),
         }
     }
 }

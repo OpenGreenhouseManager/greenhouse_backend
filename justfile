@@ -8,6 +8,7 @@ run-services: kill-services
     stdbuf -oL cargo run --package auth_service         | tee -a logs/services.log &
     stdbuf -oL cargo run --package data_storage_service | tee -a logs/services.log &
     stdbuf -oL cargo run --package device_service       | tee -a logs/services.log &
+    stdbuf -oL cargo run --package scripting_service    | tee -a logs/services.log &
     wait
 
 # Run all APIs combined in one terminal/log
@@ -16,7 +17,7 @@ run-apis: kill-apis
     mkdir -p logs
     echo "" > logs/apis.log
     stdbuf -oL cargo run --package web_api         | tee -a logs/apis.log &
-    stdbuf -oL cargo run --package script_api      | tee -a logs/apis.log &
+    stdbuf -oL cargo run --package scripting_api      | tee -a logs/apis.log &
     wait
 
 # Run all (services + APIs) combined separately but together
@@ -54,10 +55,15 @@ start-all-except *services: kill-services kill-apis
     else
         echo "Skipping web_api"
     fi
-    if [[ ! "$excluded_services" =~ "script_api" ]]; then
-        stdbuf -oL cargo run --package script_api | tee -a logs/apis.log &
+    if [[ ! "$excluded_services" =~ "scripting_api" ]]; then
+        stdbuf -oL cargo run --package scripting_api | tee -a logs/apis.log &
     else
-        echo "Skipping script_api"
+        echo "Skipping scripting_api"
+    fi
+    if [[ ! "$excluded_services" =~ "scripting_service" ]]; then
+        stdbuf -oL cargo run --package scripting_service | tee -a logs/services.log &
+    else
+        echo "Skipping scripting_service"
     fi
     wait
 
@@ -65,10 +71,11 @@ kill-services:
     killall auth_service || true
     killall data_storage_service || true
     killall device_service || true
+    killall scripting_service || true
 
 kill-apis:
     killall web_api || true
-    killall script_api || true
+    killall scripting_api || true
 
 stop-all: kill-services kill-apis
 
@@ -80,5 +87,9 @@ test:
 
 fmt:
     cargo fmt --all -- --color always
+
+device:
+    cargo run -p examples --example input_output_int_saver &
+    cargo run -p examples --example input_alert_trigger
 
 ci: lint test fmt

@@ -8,7 +8,7 @@ use greenhouse_core::{
     },
     smart_device_interface::{
         config::{Config, Mode, Type, read_config_file_with_path, update_config_file_with_path},
-        device_service::DeviceService,
+        device_builder::DeviceBuilder,
         hybrid_device::init_hybrid_router,
     },
 };
@@ -29,7 +29,7 @@ async fn main() {
     // Get config path from command line arguments, default to "./config/config.json"
     let config_path = std::env::args()
         .nth(1)
-        .unwrap_or_else(|| "./config/config.json".to_string());
+        .unwrap_or_else(|| "./config/input_output_int_saver/config.json".to_string());
 
     let config = match read_config_file_with_path(&config_path) {
         Ok(config) => config,
@@ -37,9 +37,11 @@ async fn main() {
             let default_config = Config {
                 mode: Mode::InputOutput,
                 port: 6001,
+                datasource_id: DATASOURCE_ID.to_string(),
                 input_type: Some(Type::Number),
                 output_type: Some(Type::Number),
                 additional_config: ExampleDeviceConfig { min: 0, max: 100 },
+                scripting_api: None,
             };
 
             // Create config directory if it doesn't exist
@@ -59,7 +61,7 @@ async fn main() {
         }
     };
 
-    let device_service = DeviceService::new_hybrid_device_with_config_path(
+    let device_service = DeviceBuilder::new_hybrid_device_with_config_path(
         read_handler,
         write_handler,
         status_handler,
@@ -77,13 +79,11 @@ async fn main() {
     axum::serve(listener, router).await.unwrap();
 }
 
-fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> String {
-    // Implement your read handler here
+async fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> String {
     Json(unsafe { SAVED_NUMBER }).to_string()
 }
 
-fn write_handler(json: String, config: Arc<Config<ExampleDeviceConfig>>) -> StatusCode {
-    // Implement your write handler here
+async fn write_handler(json: String, config: Arc<Config<ExampleDeviceConfig>>) -> StatusCode {
     let number: i32 = json.parse().unwrap();
     unsafe { SAVED_NUMBER = number };
     if config.additional_config.min > number || config.additional_config.max < number {
@@ -92,22 +92,21 @@ fn write_handler(json: String, config: Arc<Config<ExampleDeviceConfig>>) -> Stat
     StatusCode::OK
 }
 
-fn status_handler(_: Arc<Config<ExampleDeviceConfig>>) -> DeviceStatusResponseDto {
-    // Implement your status handler here
+async fn status_handler(config: Arc<Config<ExampleDeviceConfig>>) -> DeviceStatusResponseDto {
     DeviceStatusResponseDto {
         status: DeviceStatusDto::Online,
-        datasource_id: From::from(DATASOURCE_ID),
+        datasource_id: config.datasource_id.clone(),
     }
 }
 
-fn config_interceptor_handler(
+async fn config_interceptor_handler(
     config: ConfigRequestDto<ExampleDeviceConfig>,
     old_config: Arc<Config<ExampleDeviceConfig>>,
 ) -> Config<ExampleDeviceConfig> {
-    // Implement your config interceptor handler here
     Config {
         mode: old_config.mode.clone(),
         port: old_config.port,
+        datasource_id: old_config.datasource_id.clone(),
         input_type: old_config.input_type,
         output_type: old_config.output_type,
         additional_config: {
@@ -116,5 +115,6 @@ fn config_interceptor_handler(
                 max: config.additional_config.max,
             }
         },
+        scripting_api: old_config.scripting_api.clone(),
     }
 }
