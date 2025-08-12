@@ -11,7 +11,6 @@ auth_service = { path = "../services/auth_service" }
 device_service = { path = "../services/device_service" }
 data_storage_service = { path = "../services/data_storage_service" }
 scripting_service = { path = "../services/scripting_service" }
-sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio", "macros"] }
 reqwest = { version = "0.12.15", features = ["json"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 testcontainers = "0.24"
