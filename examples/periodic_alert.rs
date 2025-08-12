@@ -26,11 +26,6 @@ const PERIODIC_ALERT_IDENTIFIER_LIST: [&str; 5] = [
 ];
 
 #[derive(Serialize, Deserialize, Clone, Default)]
-struct AlertInfo {
-    identifier: String,
-}
-
-#[derive(Serialize, Deserialize, Clone, Default)]
 struct ExampleDeviceConfig {
     pub interval: u64,
     pub random_jitter: u64,
