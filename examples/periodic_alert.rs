@@ -1,12 +1,18 @@
 use std::sync::Arc;
 
 use greenhouse_core::{
-    data_storage_service_dto::alert_dto::alert::Severity, smart_device_dto::{
+    data_storage_service_dto::alert_dto::alert::Severity,
+    smart_device_dto::{
         config::ConfigRequestDto,
         status::{DeviceStatusDto, DeviceStatusResponseDto},
-    }, smart_device_interface::{
-        config::{read_config_file_with_path, update_config_file_with_path, Config, Mode, Type}, device_builder::DeviceBuilder, device_service::{trigger_alert, AlertCreation}, hybrid_device::init_hybrid_router, Error
-    }
+    },
+    smart_device_interface::{
+        Error,
+        config::{Config, Mode, Type, read_config_file_with_path, update_config_file_with_path},
+        device_builder::DeviceBuilder,
+        device_service::{AlertCreation, trigger_alert},
+        hybrid_device::init_hybrid_router,
+    },
 };
 use rand::Rng;
 use serde_derive::{Deserialize, Serialize};
@@ -85,7 +91,7 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
     println!("listening on {}", listener.local_addr().unwrap());
-    println!("using config file: {}", config_path);
+    println!("using config file: {config_path}");
 
     // Run periodic alerts in a background task, but avoid moving non-Send types into the task.
     tokio::spawn({
@@ -98,9 +104,12 @@ async fn main() {
 }
 
 async fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> String {
-    let alert_infos = PERIODIC_ALERT_IDENTIFIER_LIST.iter().map(|identifier| AlertInfo {
-        identifier: identifier.to_string(),
-    }).collect::<Vec<AlertInfo>>();
+    let alert_infos = PERIODIC_ALERT_IDENTIFIER_LIST
+        .iter()
+        .map(|identifier| AlertInfo {
+            identifier: identifier.to_string(),
+        })
+        .collect::<Vec<AlertInfo>>();
     serde_json::to_string(&alert_infos).unwrap()
 }
 
@@ -139,7 +148,8 @@ async fn start_periodic_alerts(config: Config<ExampleDeviceConfig>, config_path:
 
     loop {
         let current_time = std::time::Instant::now();
-        if current_time.duration_since(last_alert_time) >= std::time::Duration::from_secs(interval) {
+        if current_time.duration_since(last_alert_time) >= std::time::Duration::from_secs(interval)
+        {
             let jitter = {
                 let mut rng = rand::rng();
                 rng.random_range(0..random_jitter)
@@ -148,26 +158,30 @@ async fn start_periodic_alerts(config: Config<ExampleDeviceConfig>, config_path:
             last_alert_time = next_alert_time;
             let random_index = rand::rng().random_range(0..PERIODIC_ALERT_IDENTIFIER_LIST.len());
             let random_severity = rand::rng().random_range(0..4);
-            let res = trigger_alert(Arc::new(config.clone()), AlertCreation {
-                identifier: PERIODIC_ALERT_IDENTIFIER_LIST[random_index].to_string(),
-                severity: match random_severity {
-                    0 => Severity::Info,
-                    1 => Severity::Warning,
-                    2 => Severity::Error,
-                    3 => Severity::Fatal,
-                    _ => panic!("Invalid severity"),
+            let res = trigger_alert(
+                Arc::new(config.clone()),
+                AlertCreation {
+                    identifier: PERIODIC_ALERT_IDENTIFIER_LIST[random_index].to_string(),
+                    severity: match random_severity {
+                        0 => Severity::Info,
+                        1 => Severity::Warning,
+                        2 => Severity::Error,
+                        3 => Severity::Fatal,
+                        _ => panic!("Invalid severity"),
+                    },
+                    value: None,
+                    note: None,
                 },
-                value: None,
-                note: None,
-            }).await;
+            )
+            .await;
             match res {
                 Ok(_) => println!("Alert triggered successfully"),
                 Err(e) => match e {
                     Error::ScriptingApiNotConfigured => {
                         println!("Scripting API not configured, reloading config");
-                        config = read_config_file_with_path(&config_path).unwrap();
+                        config = read_config_file_with_path(config_path).unwrap();
                     }
-                    _ => println!("Error triggering alert: {}", e),
+                    _ => println!("Error triggering alert: {e}"),
                 },
             }
         }
