@@ -27,7 +27,6 @@ pub(crate) async fn write_device_handler<T>(
 where
     T: Clone + Default + DeserializeOwned,
 {
-    // Use latest in-memory config
     let config = device_service
         .config
         .read()
@@ -46,7 +45,6 @@ pub(crate) async fn read_device_handler<T>(
 where
     T: Clone + Default + DeserializeOwned,
 {
-    // Use latest in-memory config
     let config = device_service
         .config
         .read()
@@ -74,7 +72,6 @@ where
 {
     match read_config_file_with_path(&device_service.config_path) {
         Ok(config) => {
-            // Update in-memory config
             if let Ok(mut guard) = device_service.config.write() {
                 *guard = Arc::new(config.clone());
             }
@@ -90,7 +87,6 @@ pub(crate) async fn status_device_handler<T>(
 where
     T: Clone + Default + DeserializeOwned,
 {
-    // Use latest in-memory config
     let config = device_service
         .config
         .read()
@@ -116,9 +112,7 @@ where
     })
     .await;
 
-    // Persist to disk
     if update_config_file_with_path(&config, &device_service.config_path).is_ok() {
-        // Update in-memory config
         if let Ok(mut guard) = device_service.config.write() {
             *guard = Arc::new(config);
         }
@@ -135,7 +129,6 @@ pub(crate) async fn activate_device<T>(
 where
     T: Clone + Default + Serialize + DeserializeOwned,
 {
-    // Start from in-memory config, falling back to disk if poisoned/empty
     let mut base_config: Config<T> = device_service
         .config
         .read()
@@ -145,13 +138,11 @@ where
             read_config_file_with_path(&device_service.config_path).unwrap_or_default()
         });
 
-    // Update only the scripting_api in the config
     base_config.scripting_api = Some(ScriptingApi {
         url: config.url,
         token: config.token,
     });
 
-    // Persist and refresh in-memory
     if update_config_file_with_path(&base_config, &device_service.config_path).is_ok() {
         if let Ok(mut guard) = device_service.config.write() {
             *guard = Arc::new(base_config);
