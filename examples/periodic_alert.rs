@@ -103,12 +103,6 @@ async fn main() {
 }
 
 async fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> String {
-    let alert_infos = PERIODIC_ALERT_IDENTIFIER_LIST
-        .iter()
-        .map(|identifier| AlertInfo {
-            identifier: identifier.to_string(),
-        })
-        .collect::<Vec<AlertInfo>>();
     "asd".to_string()
 }
 
@@ -142,7 +136,6 @@ async fn config_interceptor_handler(
 async fn start_periodic_alerts(config: Config<ExampleDeviceConfig>, config_path: &str) {
     let mut config = config;
     let interval = config.additional_config.interval;
-    let random_jitter = config.additional_config.random_jitter;
     let mut last_alert_time = std::time::Instant::now();
 
     loop {
