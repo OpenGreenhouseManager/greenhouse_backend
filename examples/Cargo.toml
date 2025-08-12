@@ -20,6 +20,6 @@ path = "input_output_int_saver.rs"
 [[example]]
 name = "input_alert_trigger"
 path = "input_alert_trigger.rs"
-[[example]]
-name = "periodic_alert"
-path = "periodic_alert.rs"
+# [[example]]
+# name = "periodic_alert"
+# path = "periodic_alert.rs"
