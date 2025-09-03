@@ -139,3 +139,22 @@ jobs:
           build-args: |
             BASE_IMAGE=ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
           labels: ${{ steps.meta-auth_service.outputs.labels }}
+          
+      # service examples
+      - name: Docker meta
+        id: meta-examples
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ghcr.io/opengreenhousemanager/examples
+      - name: Publish
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          file: examples/Dockerfile
+          tags: ${{ steps.meta-examples.outputs.tags }}
+          build-args: |
+            BASE_IMAGE=ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
+          labels: ${{ steps.meta-examples.outputs.labels }}

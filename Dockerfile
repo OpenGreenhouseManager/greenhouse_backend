@@ -1,4 +1,4 @@
-ARG RUST_VERSION=1.87.0
+ARG RUST_VERSION=1.89.0
 
 FROM rust:${RUST_VERSION}-slim-bookworm AS builder
 WORKDIR /app
@@ -8,9 +8,9 @@ ARG TARGETARCH
 
 RUN apt-get update -y && apt-get upgrade -y && \ 
   apt-get install --no-install-recommends -y \
-    pkg-config=1.8.1-1 \
-    libssl-dev=3.0.16-1~deb12u1 \
-    libpq-dev=15.13-0+deb12u1  && \
+    pkg-config \
+    libssl-dev \
+    libpq-dev  && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     rustup toolchain install nightly && \
