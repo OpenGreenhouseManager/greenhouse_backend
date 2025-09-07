@@ -39,6 +39,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
     name: Publish Docker images
     steps:
       # Configure build environment
@@ -119,41 +120,3 @@ jobs:
           build-args: |
             BASE_IMAGE=ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
           labels: ${{ steps.meta-web_api.outputs.labels }}
-          
-      # service auth_service
-      - name: Docker meta
-        id: meta-auth_service
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ghcr.io/opengreenhousemanager/auth_service
-      - name: Publish
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          platforms: linux/amd64,linux/arm64
-          file: services/auth_service/Dockerfile
-          tags: ${{ steps.meta-auth_service.outputs.tags }}
-          build-args: |
-            BASE_IMAGE=ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
-          labels: ${{ steps.meta-auth_service.outputs.labels }}
-          
-      # service examples
-      - name: Docker meta
-        id: meta-examples
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            ghcr.io/opengreenhousemanager/examples
-      - name: Publish
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          platforms: linux/amd64,linux/arm64
-          file: examples/Dockerfile
-          tags: ${{ steps.meta-examples.outputs.tags }}
-          build-args: |
-            BASE_IMAGE=ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
-          labels: ${{ steps.meta-examples.outputs.labels }}
