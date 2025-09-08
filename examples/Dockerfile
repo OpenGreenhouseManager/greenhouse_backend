@@ -22,7 +22,6 @@ ENV EXAMPLE_BIN=${EXAMPLE_BIN}
 
 # Leverage caching by copying manifests first
 COPY Cargo.toml ./
-COPY rust-toolchain.toml ./
 COPY greenhouse_core/Cargo.toml greenhouse_core/Cargo.toml
 COPY greenhouse_macro/Cargo.toml greenhouse_macro/Cargo.toml
 COPY services/auth_service/Cargo.toml services/auth_service/Cargo.toml
@@ -66,15 +65,15 @@ RUN apt-get update -y && apt-get upgrade -y && \
 
 # Copy built binary
 COPY --from=builder /${EXAMPLE_BIN} /usr/local/bin/${EXAMPLE_BIN}
-RUN chown appuser /usr/local/bin/${EXAMPLE_BIN} && \
-  chmod +x /usr/local/bin/${EXAMPLE_BIN}
+RUN chmod +x /usr/local/bin/${EXAMPLE_BIN} && \
+  mkdir -p /usr/local/bin/config && \
+  chown -R appuser:appuser /usr/local/bin
 
 USER appuser
 ENV RUST_LOG="${EXAMPLE_BIN}=debug,info"
 
 # Default workdir and config directory
 WORKDIR /usr/local/bin/
-RUN mkdir -p /usr/local/bin/config
 
 # Allow passing CONFIG_PATH env to override default
 # Example: docker run -e CONFIG_PATH=/usr/local/bin/config/input_output_int_saver/config.json IMAGE
