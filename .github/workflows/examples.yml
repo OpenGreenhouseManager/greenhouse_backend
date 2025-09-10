@@ -2,13 +2,8 @@ name: Build and Push Example Images
 
 on:
   push:
-    branches: [ main, add-docker-images-for-staging ]
-    paths:
-      - 'examples/**'
-      - 'greenhouse_core/**'
-      - 'Cargo.toml'
-      - 'rust-toolchain.toml'
-      - '.github/workflows/examples.yml'
+    tags:
+      - "example-*"
   workflow_dispatch: {}
 
 permissions:
@@ -18,7 +13,6 @@ permissions:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
     strategy:
       fail-fast: false
       matrix:
