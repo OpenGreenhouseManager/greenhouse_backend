@@ -144,46 +144,37 @@ async fn start_periodic_alerts(config: Config<ExampleDeviceConfig>, config_path:
     let mut config = config;
     let interval = config.additional_config.interval;
     let random_jitter = config.additional_config.random_jitter;
-    let mut last_alert_time = std::time::Instant::now();
 
     loop {
-        let current_time = std::time::Instant::now();
-        if current_time.duration_since(last_alert_time) >= std::time::Duration::from_secs(interval)
-        {
-            let jitter = {
-                let mut rng = rand::rng();
-                rng.random_range(0..random_jitter)
-            };
-            let next_alert_time = current_time + std::time::Duration::from_secs(interval + jitter);
-            last_alert_time = next_alert_time;
-            let random_index = rand::rng().random_range(0..PERIODIC_ALERT_IDENTIFIER_LIST.len());
-            let random_severity = rand::rng().random_range(0..4);
-            let res = trigger_alert(
-                Arc::new(config.clone()),
-                AlertCreation {
-                    identifier: PERIODIC_ALERT_IDENTIFIER_LIST[random_index].to_string(),
-                    severity: match random_severity {
-                        0 => Severity::Info,
-                        1 => Severity::Warning,
-                        2 => Severity::Error,
-                        3 => Severity::Fatal,
-                        _ => panic!("Invalid severity"),
-                    },
-                    value: None,
-                    note: None,
+        let random_index = rand::rng().random_range(0..PERIODIC_ALERT_IDENTIFIER_LIST.len());
+        let random_severity = rand::rng().random_range(0..4);
+        let wait_time = interval + rand::rng().random_range(0..random_jitter);
+        tokio::time::sleep(std::time::Duration::from_secs(wait_time)).await;
+        let res = trigger_alert(
+            Arc::new(config.clone()),
+            AlertCreation {
+                identifier: PERIODIC_ALERT_IDENTIFIER_LIST[random_index].to_string(),
+                severity: match random_severity {
+                    0 => Severity::Info,
+                    1 => Severity::Warning,
+                    2 => Severity::Error,
+                    3 => Severity::Fatal,
+                    _ => panic!("Invalid severity"),
                 },
-            )
-            .await;
-            match res {
-                Ok(_) => println!("Alert triggered successfully"),
-                Err(e) => match e {
-                    Error::ScriptingApiNotConfigured => {
-                        println!("Scripting API not configured, reloading config");
-                        config = read_config_file_with_path(config_path).unwrap();
-                    }
-                    _ => println!("Error triggering alert: {e}"),
-                },
-            }
+                value: None,
+                note: None,
+            },
+        )
+        .await;
+        match res {
+            Ok(_) => println!("Alert triggered successfully after {wait_time} seconds"),
+            Err(e) => match e {
+                Error::ScriptingApiNotConfigured => {
+                    println!("Scripting API not configured, reloading config");
+                    config = read_config_file_with_path(config_path).unwrap();
+                }
+                _ => println!("Error triggering alert: {e}"),
+            },
         }
     }
 }

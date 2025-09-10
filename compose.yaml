@@ -1,71 +1,4 @@
 services:
-  smart-device-example:
-    build:
-      context: ./
-      dockerfile: ./examples/hybrid_device/Dockerfile
-    volumes:
-      - ./docker/hybrid_device:/usr/local/bin/config
-    ports:
-      - "9099:9099"
-
-  auth_service:
-    build:
-      context: ./
-      dockerfile: ./services/auth_service/Dockerfile
-    volumes:
-      - ./docker/auth_service:/usr/local/bin/config
-    ports:
-      - "9091:5000"
-    depends_on:
-      - db
-    restart: unless-stopped
-    networks:
-      - backend
-
-  data_storage_service:
-    build:
-      context: ./
-      dockerfile: ./services/data_storage_service/Dockerfile
-    volumes:
-      - ./docker/data_storage_service:/usr/local/bin/config
-    ports:
-      - "9092:5000"
-    depends_on:
-      - db
-    restart: unless-stopped
-    networks:
-      - backend
-
-  device_service:
-    build:
-      context: ./
-      dockerfile: ./services/device_service/Dockerfile
-    volumes:
-      - ./docker/device_service:/usr/local/bin/config
-    ports:
-      - "9093:5000"
-    depends_on:
-      - db
-    restart: unless-stopped
-    networks:
-      - backend
-
-  web_api:
-    build:
-      context: ./
-      dockerfile: ./api/web/Dockerfile
-    volumes:
-      - ./docker/api_web:/usr/local/bin/config
-    ports:
-      - "9090:5100"
-    depends_on:
-      - auth_service
-      - data_storage_service
-    restart: unless-stopped
-    networks:
-      - backend
-      - frontend
-
   db:
     image: postgres
     restart: always
@@ -77,6 +10,76 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - backend
+
+  # Example Devices for staging
+  example_input_output_int_saver:
+    build:
+      context: .
+      dockerfile: examples/Dockerfile
+      args:
+        EXAMPLE_BIN: input_output_int_saver
+    image: greenhouse/examples:input_output_int_saver
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=input_output_int_saver=debug,info
+      - CONFIG_PATH=/usr/local/bin/config/input_output_int_saver/config.json
+    volumes:
+      - ./config/input_output_int_saver:/usr/local/bin/config/input_output_int_saver:ro
+    ports:
+      - "6001:6001"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:6001/status || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+  example_input_alert_trigger:
+    build:
+      context: .
+      dockerfile: examples/Dockerfile
+      args:
+        EXAMPLE_BIN: input_alert_trigger
+    image: greenhouse/examples:input_alert_trigger
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=input_alert_trigger=debug,info
+      - CONFIG_PATH=/usr/local/bin/config/input_alert_trigger/config.json
+    volumes:
+      - ./config/input_alert_trigger:/usr/local/bin/config/input_alert_trigger:ro
+    ports:
+      - "6002:6002"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:6002/status || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
+
+  example_periodic_alert:
+    build:
+      context: .
+      dockerfile: examples/Dockerfile
+      args:
+        EXAMPLE_BIN: periodic_alert
+    image: greenhouse/examples:periodic_alert
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=periodic_alert=debug,info
+      - CONFIG_PATH=/usr/local/bin/config/periodic_alert/config.json
+    volumes:
+      - ./config/periodic_alert:/usr/local/bin/config/periodic_alert:ro
+    ports:
+      - "6003:6003"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:6003/status || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     networks:
       - backend
 

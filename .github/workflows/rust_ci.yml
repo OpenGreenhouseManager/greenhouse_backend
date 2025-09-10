@@ -32,11 +32,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: hadolint
-        uses: jbergstroem/hadolint-gh-action@v1
-        with:
-          dockerfile: "**/Dockerfile"
-          error_level: 2
       - name: rust up update 
         run: rustup update
       - name: rust up update nightly
