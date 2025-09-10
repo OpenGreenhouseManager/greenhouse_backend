@@ -17,8 +17,8 @@ RUN chown appuser /usr/local/bin/scripting_api && \
 
 RUN apt-get update -y && apt-get upgrade -y && \ 
   apt-get install --no-install-recommends -y \
-        libpq-dev=15.13-0+deb12u1\
-         ca-certificates=20230311\
+        libpq-dev\
+         ca-certificates\
   && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
