@@ -13,10 +13,13 @@ pub struct TestContext {
     auth_postgres_container: Option<ContainerAsync<Postgres>>,
     data_storage_postgres_container: Option<ContainerAsync<Postgres>>,
     device_postgres_container: Option<ContainerAsync<Postgres>>,
+    scripting_postgres_container: Option<ContainerAsync<Postgres>>,
     auth_service: Option<JoinHandle<Result<(), std::io::Error>>>,
     data_storage_service: Option<JoinHandle<Result<(), std::io::Error>>>,
+    scripting_service: Option<JoinHandle<Result<(), std::io::Error>>>,
     device_service: Option<JoinHandle<Result<(), std::io::Error>>>,
     web_api: Option<JoinHandle<Result<(), std::io::Error>>>,
+    scripting_api: Option<JoinHandle<Result<(), std::io::Error>>>,
 }
 
 impl TestContext {
@@ -25,10 +28,13 @@ impl TestContext {
             auth_postgres_container: None,
             data_storage_postgres_container: None,
             device_postgres_container: None,
+            scripting_postgres_container: None,
             auth_service: None,
             data_storage_service: None,
+            scripting_service: None,
             device_service: None,
             web_api: None,
+            scripting_api: None,
         }
     }
 
@@ -49,6 +55,17 @@ impl TestContext {
         }
         let device_port = self
             .device_postgres_container
+            .as_ref()
+            .unwrap()
+            .get_host_port_ipv4(5432)
+            .await
+            .unwrap();
+
+        if self.scripting_postgres_container.is_none() {
+            self.scripting_postgres_container = Some(start_scripting_postgres().await);
+        }
+        let scripting_port = self
+            .scripting_postgres_container
             .as_ref()
             .unwrap()
             .get_host_port_ipv4(5432)
@@ -83,6 +100,14 @@ impl TestContext {
                 .await,
             );
         }
+        if self.scripting_service.is_none() {
+            self.scripting_service = Some(
+                start_scripting_service(format!(
+                    "postgres://postgres:postgres@localhost:{scripting_port}/scripting"
+                ))
+                .await,
+            );
+        }
         if self.data_storage_service.is_none() {
             self.data_storage_service = Some(
                 start_data_storage_service(format!(
@@ -91,8 +116,14 @@ impl TestContext {
                 .await,
             );
         }
+        if self.scripting_service.is_none() {
+            self.scripting_service = None;
+        }
         if self.web_api.is_none() {
             self.web_api = Some(start_web_api().await);
+        }
+        if self.scripting_api.is_none() {
+            self.scripting_api = Some(start_scripting_api().await);
         }
     }
 
@@ -154,6 +185,15 @@ async fn start_device_postgres() -> ContainerAsync<Postgres> {
         .unwrap()
 }
 
+async fn start_scripting_postgres() -> ContainerAsync<Postgres> {
+    postgres::Postgres::default()
+        .with_db_name("scripting")
+        .with_tag("latest")
+        .start()
+        .await
+        .unwrap()
+}
+
 async fn start_auth_service(db_url: String) -> tokio::task::JoinHandle<Result<(), std::io::Error>> {
     let auth_service_config = auth_service::Config {
         database_url: db_url,
@@ -182,6 +222,8 @@ async fn start_device_service(
         database_url: db_url,
         service_port: 3003,
         sentry_url: String::new(),
+        scripting_service: String::from("http://localhost:3004"),
+        scripting_api: String::from("http://localhost:3100"),
     };
 
     let device_pool = device_service::Pool::builder()
@@ -223,6 +265,29 @@ async fn start_data_storage_service(
     tokio::spawn(async move { axum::serve(listener, data_storage_service_app).await })
 }
 
+async fn start_scripting_service(
+    db_url: String,
+) -> tokio::task::JoinHandle<Result<(), std::io::Error>> {
+    let scripting_service_config = scripting_service::Config {
+        database_url: db_url,
+        service_port: 3004,
+        sentry_url: String::new(),
+        scripting_api: String::from("http://localhost:3100"),
+    };
+
+    let scripting_pool = scripting_service::Pool::builder()
+        .build(AsyncDieselConnectionManager::new(
+            scripting_service_config.database_url.clone(),
+        ))
+        .await
+        .unwrap();
+    let scripting_service_app =
+        scripting_service::app(scripting_service_config.clone(), scripting_pool.clone());
+
+    let url = format!("0.0.0.0:{}", scripting_service_config.service_port);
+    let listener = tokio::net::TcpListener::bind(url).await.unwrap();
+    tokio::spawn(async move { axum::serve(listener, scripting_service_app).await })
+}
 async fn start_web_api() -> tokio::task::JoinHandle<Result<(), std::io::Error>> {
     let web_api_config = web_api::Config {
         api_port: 3000,
@@ -236,6 +301,22 @@ async fn start_web_api() -> tokio::task::JoinHandle<Result<(), std::io::Error>> 
 
     let api_app = web_api::app(web_api_config.clone());
     let url = format!("0.0.0.0:{}", web_api_config.api_port);
+    let listener = tokio::net::TcpListener::bind(url).await.unwrap();
+    tokio::spawn(async move { axum::serve(listener, api_app).await })
+}
+
+async fn start_scripting_api() -> tokio::task::JoinHandle<Result<(), std::io::Error>> {
+    let scripting_api_config = scripting_api::Config {
+        api_port: 3100,
+        service_addresses: scripting_api::ServiceAddresses {
+            data_storage_service: String::from("http://localhost:3002"),
+            scripting_service: String::from("http://localhost:3004"),
+        },
+        sentry_url: String::new(),
+    };
+
+    let api_app = scripting_api::app(scripting_api_config.clone());
+    let url = format!("0.0.0.0:{}", scripting_api_config.api_port);
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();
     tokio::spawn(async move { axum::serve(listener, api_app).await })
 }
@@ -273,8 +354,21 @@ pub async fn api_login() -> String {
         .await
         .unwrap();
 
-    assert!(response.status().is_success(), "Failed to login");
+    assert!(response.status().is_success(), "Failed api login");
     let user_token: greenhouse_core::auth_service_dto::login::LoginResponseDto =
         response.json().await.unwrap();
     user_token.token
+}
+
+#[allow(dead_code)]
+pub async fn scripting_login() -> String {
+    let client = reqwest::Client::new();
+    let response = client
+        .post("http://localhost:3004/token")
+        .send()
+        .await
+        .unwrap();
+    assert!(response.status().is_success(), "Failed scripting login");
+    let user_token: String = response.text().await.unwrap();
+    user_token
 }

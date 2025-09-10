@@ -7,6 +7,7 @@ pub struct ConfigResponseDto<T> {
     pub mode: Mode,
     pub input_type: Option<Type>,
     pub output_type: Option<Type>,
+    pub scripting_api: Option<ScriptingApi>,
     pub additional_config: T,
 }
 
@@ -21,4 +22,10 @@ pub enum Mode {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ConfigRequestDto<T> {
     pub additional_config: T,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ScriptingApi {
+    pub url: String,
+    pub token: String,
 }
