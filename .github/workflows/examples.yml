@@ -3,7 +3,7 @@ name: Build and Push Example Images
 on:
   push:
     tags:
-      - "example-*"
+      - "example-v*"
   workflow_dispatch: {}
 
 permissions:
