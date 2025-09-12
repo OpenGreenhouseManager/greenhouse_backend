@@ -139,6 +139,25 @@ jobs:
           build-args: |
             BASE_IMAGE=ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
           labels: ${{ steps.meta-web_api.outputs.labels }}
+
+      # service script
+      - name: Docker meta
+        id: meta-script_api
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ghcr.io/opengreenhousemanager/script_api
+      - name: Publish
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          file: api/script/Dockerfile
+          tags: ${{ steps.meta-script_api.outputs.tags }}
+          build-args: |
+            BASE_IMAGE=ghcr.io/opengreenhousemanager/greenhouse_backend/base:latest
+          labels: ${{ steps.meta-script_api.outputs.labels }}
           
       # service auth_service
       - name: Docker meta
