@@ -52,6 +52,8 @@ pub fn app(config: Config) -> Router {
             "0.0.0.0".parse().unwrap(),
             "http://localhost:4200".parse().unwrap(),
             "https://localhost:5001".parse().unwrap(),
+            "https://stag.grn.mauderer.work".parse().unwrap(),
+            "https://prod.grn.mauderer.work".parse().unwrap(),
         ]);
     Router::new()
         .nest("/api/settings", settings::router::routes(state.clone()))
