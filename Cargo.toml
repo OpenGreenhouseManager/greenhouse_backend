@@ -15,7 +15,9 @@ default-members = [
     "api/web",
     "api/script",
     "services/auth_service",
+    "services/device_service",
     "services/data_storage_service",
+    "services/scripting_service",
     "greenhouse_core",
 ]
 
