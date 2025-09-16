@@ -25,6 +25,12 @@ pub struct Config {
     pub database_url: String,
     #[serde(rename = "SENTRY_URL")]
     pub sentry_url: String,
+    #[serde(rename = "ENVIRONMENT", default = "default_environment")]
+    pub environment: String,
+}
+
+fn default_environment() -> String {
+    "development".to_string()
 }
 
 pub type Pool = bb8::Pool<AsyncDieselConnectionManager<AsyncPgConnection>>;
