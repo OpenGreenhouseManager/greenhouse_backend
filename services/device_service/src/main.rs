@@ -11,6 +11,7 @@ fn main() {
         config.sentry_url.clone(),
         sentry::ClientOptions {
             release: sentry::release_name!(),
+            environment: Some(config.environment.clone().into()),
             ..Default::default()
         },
     ));

@@ -200,6 +200,7 @@ async fn start_auth_service(db_url: String) -> tokio::task::JoinHandle<Result<()
         service_port: 3001,
         sentry_url: String::new(),
         jwt_secret: AUTH_SECRET.to_string(),
+        environment: String::from("test"),
     };
 
     let auth_pool = auth_service::Pool::builder()
@@ -224,6 +225,7 @@ async fn start_device_service(
         sentry_url: String::new(),
         scripting_service: String::from("http://localhost:3004"),
         scripting_api: String::from("http://localhost:3100"),
+        environment: String::from("test"),
     };
 
     let device_pool = device_service::Pool::builder()
@@ -247,6 +249,7 @@ async fn start_data_storage_service(
         database_url: db_url,
         service_port: 3002,
         sentry_url: String::new(),
+        environment: String::from("test"),
     };
 
     let data_storage_pool = data_storage_service::Pool::builder()
@@ -273,6 +276,7 @@ async fn start_scripting_service(
         service_port: 3004,
         sentry_url: String::new(),
         scripting_api: String::from("http://localhost:3100"),
+        environment: String::from("test"),
     };
 
     let scripting_pool = scripting_service::Pool::builder()
@@ -297,6 +301,7 @@ async fn start_web_api() -> tokio::task::JoinHandle<Result<(), std::io::Error>> 
             device_service: String::from("http://localhost:3003"),
         },
         sentry_url: String::new(),
+        environment: String::from("test"),
     };
 
     let api_app = web_api::app(web_api_config.clone());
@@ -313,6 +318,7 @@ async fn start_scripting_api() -> tokio::task::JoinHandle<Result<(), std::io::Er
             scripting_service: String::from("http://localhost:3004"),
         },
         sentry_url: String::new(),
+        environment: String::from("test"),
     };
 
     let api_app = scripting_api::app(scripting_api_config.clone());

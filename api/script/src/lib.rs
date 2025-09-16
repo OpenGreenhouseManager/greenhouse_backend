@@ -29,6 +29,12 @@ pub struct Config {
     pub service_addresses: ServiceAddresses,
     #[serde(rename = "SENTRY_URL")]
     pub sentry_url: String,
+    #[serde(rename = "ENVIRONMENT", default = "default_environment")]
+    pub environment: String,
+}
+
+fn default_environment() -> String {
+    "development".to_string()
 }
 
 #[derive(FromRef, Clone)]
