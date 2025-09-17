@@ -1,13 +1,16 @@
 use std::sync::Arc;
 
-use axum::{Json, http::StatusCode};
+use axum::http::StatusCode;
 use greenhouse_core::{
     smart_device_dto::{
+        Type,
         config::ConfigRequestDto,
         status::{DeviceStatusDto, DeviceStatusResponseDto},
     },
     smart_device_interface::{
-        config::{Config, Mode, Type, read_config_file_with_path, update_config_file_with_path},
+        config::{
+            Config, Mode, TypeOption, read_config_file_with_path, update_config_file_with_path,
+        },
         device_builder::DeviceBuilder,
         hybrid_device::init_hybrid_router,
     },
@@ -38,8 +41,8 @@ async fn main() {
                 mode: Mode::InputOutput,
                 port: 6001,
                 datasource_id: DATASOURCE_ID.to_string(),
-                input_type: Some(Type::Number),
-                output_type: Some(Type::Number),
+                input_type: Some(TypeOption::Number),
+                output_type: Some(TypeOption::Number),
                 additional_config: ExampleDeviceConfig { min: 0, max: 100 },
                 scripting_api: None,
             };
@@ -79,14 +82,18 @@ async fn main() {
     axum::serve(listener, router).await.unwrap();
 }
 
-async fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> String {
-    Json(unsafe { SAVED_NUMBER }).to_string()
+async fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> Type {
+    Type::Number(unsafe { SAVED_NUMBER } as f64)
 }
 
-async fn write_handler(json: String, config: Arc<Config<ExampleDeviceConfig>>) -> StatusCode {
-    let number: i32 = json.parse().unwrap();
-    unsafe { SAVED_NUMBER = number };
-    if config.additional_config.min > number || config.additional_config.max < number {
+async fn write_handler(data: Type, config: Arc<Config<ExampleDeviceConfig>>) -> StatusCode {
+    let number = match data {
+        Type::Number(number) => number,
+        _ => return StatusCode::BAD_REQUEST,
+    };
+    unsafe { SAVED_NUMBER = number as i32 };
+    if config.additional_config.min > number as i32 || config.additional_config.max < number as i32
+    {
         return StatusCode::INTERNAL_SERVER_ERROR;
     }
     StatusCode::OK

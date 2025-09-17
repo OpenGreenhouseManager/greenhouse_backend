@@ -1,5 +1,5 @@
 use super::{Error, Result};
-use crate::smart_device_dto::{self, config::ConfigResponseDto};
+use crate::smart_device_dto::config::ConfigResponseDto;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 // Default config file path for backward compatibility
@@ -45,23 +45,14 @@ pub enum Mode {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, Default)]
-pub enum Type {
+pub enum TypeOption {
     Number,
-    String,
+    Boolean,
+    Object,
+    Array,
     Stream,
     #[default]
     Unknown,
-}
-
-impl From<Type> for smart_device_dto::Type {
-    fn from(val: Type) -> Self {
-        match val {
-            Type::Number => smart_device_dto::Type::Number,
-            Type::String => smart_device_dto::Type::String,
-            Type::Stream => smart_device_dto::Type::Stream,
-            Type::Unknown => smart_device_dto::Type::Unknown,
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -72,8 +63,8 @@ where
     pub mode: Mode,
     pub port: u16,
     pub datasource_id: String,
-    pub input_type: Option<Type>,
-    pub output_type: Option<Type>,
+    pub input_type: Option<TypeOption>,
+    pub output_type: Option<TypeOption>,
     pub additional_config: T,
     pub scripting_api: Option<ScriptingApi>,
 }
@@ -97,17 +88,41 @@ where
                 Mode::Unknown => crate::smart_device_dto::config::Mode::Unknown,
             },
             input_type: match config.input_type {
-                Some(Type::Number) => Some(crate::smart_device_dto::Type::Number),
-                Some(Type::String) => Some(crate::smart_device_dto::Type::String),
-                Some(Type::Stream) => Some(crate::smart_device_dto::Type::Stream),
-                Some(Type::Unknown) => Some(crate::smart_device_dto::Type::Unknown),
+                Some(TypeOption::Number) => {
+                    Some(crate::smart_device_dto::config::TypeOption::Number)
+                }
+                Some(TypeOption::Boolean) => {
+                    Some(crate::smart_device_dto::config::TypeOption::Boolean)
+                }
+                Some(TypeOption::Object) => {
+                    Some(crate::smart_device_dto::config::TypeOption::Object)
+                }
+                Some(TypeOption::Array) => Some(crate::smart_device_dto::config::TypeOption::Array),
+                Some(TypeOption::Stream) => {
+                    Some(crate::smart_device_dto::config::TypeOption::Stream)
+                }
+                Some(TypeOption::Unknown) => {
+                    Some(crate::smart_device_dto::config::TypeOption::Unknown)
+                }
                 None => None,
             },
             output_type: match config.output_type {
-                Some(Type::Number) => Some(crate::smart_device_dto::Type::Number),
-                Some(Type::String) => Some(crate::smart_device_dto::Type::String),
-                Some(Type::Stream) => Some(crate::smart_device_dto::Type::Stream),
-                Some(Type::Unknown) => Some(crate::smart_device_dto::Type::Unknown),
+                Some(TypeOption::Number) => {
+                    Some(crate::smart_device_dto::config::TypeOption::Number)
+                }
+                Some(TypeOption::Boolean) => {
+                    Some(crate::smart_device_dto::config::TypeOption::Boolean)
+                }
+                Some(TypeOption::Object) => {
+                    Some(crate::smart_device_dto::config::TypeOption::Object)
+                }
+                Some(TypeOption::Array) => Some(crate::smart_device_dto::config::TypeOption::Array),
+                Some(TypeOption::Stream) => {
+                    Some(crate::smart_device_dto::config::TypeOption::Stream)
+                }
+                Some(TypeOption::Unknown) => {
+                    Some(crate::smart_device_dto::config::TypeOption::Unknown)
+                }
                 None => None,
             },
             scripting_api: config.scripting_api.map(|s| {

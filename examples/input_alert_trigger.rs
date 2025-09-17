@@ -4,11 +4,14 @@ use axum::http::StatusCode;
 use greenhouse_core::{
     data_storage_service_dto::alert_dto::alert::Severity,
     smart_device_dto::{
+        Type,
         config::ConfigRequestDto,
         status::{DeviceStatusDto, DeviceStatusResponseDto},
     },
     smart_device_interface::{
-        config::{Config, Mode, Type, read_config_file_with_path, update_config_file_with_path},
+        config::{
+            Config, Mode, TypeOption, read_config_file_with_path, update_config_file_with_path,
+        },
         device_builder::DeviceBuilder,
         device_service::{AlertCreation, trigger_alert},
         hybrid_device::init_hybrid_router,
@@ -41,7 +44,7 @@ async fn main() {
                 mode: Mode::InputOutput,
                 port: 6002,
                 datasource_id: DATASOURCE_ID.to_string(),
-                input_type: Some(Type::Number),
+                input_type: Some(TypeOption::Number),
                 output_type: None,
                 additional_config: ExampleDeviceConfig { min: 0, max: 10 },
                 scripting_api: None,
@@ -81,9 +84,12 @@ async fn main() {
     axum::serve(listener, router).await.unwrap();
 }
 
-async fn write_handler(json: String, config: Arc<Config<ExampleDeviceConfig>>) -> StatusCode {
-    let number: i32 = json.parse().unwrap();
-    if number > config.additional_config.max {
+async fn write_handler(data: Type, config: Arc<Config<ExampleDeviceConfig>>) -> StatusCode {
+    let number = match data {
+        Type::Number(number) => number,
+        _ => return StatusCode::BAD_REQUEST,
+    };
+    if number > config.additional_config.max as f64 {
         trigger_alert(
             config.clone(),
             AlertCreation {
@@ -96,7 +102,7 @@ async fn write_handler(json: String, config: Arc<Config<ExampleDeviceConfig>>) -
         .await
         .unwrap();
     }
-    if number < config.additional_config.min {
+    if number < config.additional_config.min as f64 {
         trigger_alert(
             config.clone(),
             AlertCreation {

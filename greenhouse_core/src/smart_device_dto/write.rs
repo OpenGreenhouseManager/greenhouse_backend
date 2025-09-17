@@ -1,9 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use super::Type;
+use crate::smart_device_dto::Type;
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize)]
 pub struct WriteRequestDto {
-    pub data: String,
-    pub output_type: Type,
+    pub data: Type,
 }

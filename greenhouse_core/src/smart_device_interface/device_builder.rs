@@ -2,6 +2,7 @@ use super::Result;
 use super::config::{
     Config, DEFAULT_CONFIG_FILE_NAME, read_config_file_with_path, update_config_file_with_path,
 };
+use crate::smart_device_dto::Type;
 use crate::smart_device_dto::{config::ConfigRequestDto, status::DeviceStatusResponseDto};
 use axum::http::StatusCode;
 use futures::future::BoxFuture;
@@ -9,10 +10,9 @@ use serde::{Serialize, de::DeserializeOwned};
 use std::future::Future;
 use std::sync::{Arc, RwLock};
 
-type ReadHandler<T> =
-    Option<Arc<dyn Fn(Arc<Config<T>>) -> BoxFuture<'static, String> + Send + Sync>>;
+type ReadHandler<T> = Option<Arc<dyn Fn(Arc<Config<T>>) -> BoxFuture<'static, Type> + Send + Sync>>;
 type WriteHandler<T> =
-    Option<Arc<dyn Fn(String, Arc<Config<T>>) -> BoxFuture<'static, StatusCode> + Send + Sync>>;
+    Option<Arc<dyn Fn(Type, Arc<Config<T>>) -> BoxFuture<'static, StatusCode> + Send + Sync>>;
 type StatusHandler<T> =
     Arc<dyn Fn(Arc<Config<T>>) -> BoxFuture<'static, DeviceStatusResponseDto> + Send + Sync>;
 type ConfigInterceptorHandler<T> =
@@ -43,8 +43,8 @@ where
     ) -> Result<Self>
     where
         RH: Fn(Arc<Config<T>>) -> RF + Send + Sync + 'static,
-        RF: Future<Output = String> + Send + 'static,
-        WH: Fn(String, Arc<Config<T>>) -> WF + Send + Sync + 'static,
+        RF: Future<Output = Type> + Send + 'static,
+        WH: Fn(Type, Arc<Config<T>>) -> WF + Send + Sync + 'static,
         WF: Future<Output = StatusCode> + Send + 'static,
         SH: Fn(Arc<Config<T>>) -> SF + Send + Sync + 'static,
         SF: Future<Output = DeviceStatusResponseDto> + Send + 'static,
@@ -69,8 +69,8 @@ where
     ) -> Result<Self>
     where
         RH: Fn(Arc<Config<T>>) -> RF + Send + Sync + 'static,
-        RF: Future<Output = String> + Send + 'static,
-        WH: Fn(String, Arc<Config<T>>) -> WF + Send + Sync + 'static,
+        RF: Future<Output = Type> + Send + 'static,
+        WH: Fn(Type, Arc<Config<T>>) -> WF + Send + Sync + 'static,
         WF: Future<Output = StatusCode> + Send + 'static,
         SH: Fn(Arc<Config<T>>) -> SF + Send + Sync + 'static,
         SF: Future<Output = DeviceStatusResponseDto> + Send + 'static,
@@ -84,7 +84,7 @@ where
                 let fut = read_handler(cfg);
                 Box::pin(fut)
             })),
-            write_handler: Some(Arc::new(move |data: String, cfg: Arc<Config<T>>| {
+            write_handler: Some(Arc::new(move |data: Type, cfg: Arc<Config<T>>| {
                 let fut = write_handler(data, cfg);
                 Box::pin(fut)
             })),
@@ -110,7 +110,7 @@ where
     ) -> Result<Self>
     where
         RH: Fn(Arc<Config<T>>) -> RF + Send + Sync + 'static,
-        RF: Future<Output = String> + Send + 'static,
+        RF: Future<Output = Type> + Send + 'static,
         SH: Fn(Arc<Config<T>>) -> SF + Send + Sync + 'static,
         SF: Future<Output = DeviceStatusResponseDto> + Send + 'static,
         CIH: Fn(ConfigRequestDto<T>, Arc<Config<T>>) -> CIF + Send + Sync + 'static,
@@ -132,7 +132,7 @@ where
     ) -> Result<Self>
     where
         RH: Fn(Arc<Config<T>>) -> RF + Send + Sync + 'static,
-        RF: Future<Output = String> + Send + 'static,
+        RF: Future<Output = Type> + Send + 'static,
         SH: Fn(Arc<Config<T>>) -> SF + Send + Sync + 'static,
         SF: Future<Output = DeviceStatusResponseDto> + Send + 'static,
         CIH: Fn(ConfigRequestDto<T>, Arc<Config<T>>) -> CIF + Send + Sync + 'static,
@@ -173,7 +173,7 @@ where
         config_interceptor_handler: CIH,
     ) -> Result<Self>
     where
-        WH: Fn(String, Arc<Config<T>>) -> WF + Send + Sync + 'static,
+        WH: Fn(Type, Arc<Config<T>>) -> WF + Send + Sync + 'static,
         WF: Future<Output = StatusCode> + Send + 'static,
         SH: Fn(Arc<Config<T>>) -> SF + Send + Sync + 'static,
         SF: Future<Output = DeviceStatusResponseDto> + Send + 'static,
@@ -195,7 +195,7 @@ where
         config_path: &str,
     ) -> Result<Self>
     where
-        WH: Fn(String, Arc<Config<T>>) -> WF + Send + Sync + 'static,
+        WH: Fn(Type, Arc<Config<T>>) -> WF + Send + Sync + 'static,
         WF: Future<Output = StatusCode> + Send + 'static,
         SH: Fn(Arc<Config<T>>) -> SF + Send + Sync + 'static,
         SF: Future<Output = DeviceStatusResponseDto> + Send + 'static,
@@ -212,7 +212,7 @@ where
         };
         Ok(DeviceBuilder {
             read_handler: None,
-            write_handler: Some(Arc::new(move |data: String, cfg: Arc<Config<T>>| {
+            write_handler: Some(Arc::new(move |data: Type, cfg: Arc<Config<T>>| {
                 let fut = write_handler(data, cfg);
                 Box::pin(fut)
             })),
