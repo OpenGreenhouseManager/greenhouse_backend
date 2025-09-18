@@ -7,4 +7,5 @@ pub struct DeviceResponseDto {
     pub address: String,
     pub description: String,
     pub canscript: bool,
+    pub scraping: bool,
 }

@@ -106,6 +106,7 @@ impl From<Device> for DeviceResponseDto {
             address: val.address,
             description: val.description,
             canscript: val.canscript,
+            scraping: val.scraping,
         }
     }
 }
