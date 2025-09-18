@@ -10,7 +10,7 @@ use greenhouse_core::{
     },
     smart_device_interface::{
         config::{
-            Config, Mode, TypeOption, read_config_file_with_path, update_config_file_with_path,
+            Config, Mode, TypeOptionDto, read_config_file_with_path, update_config_file_with_path,
         },
         device_builder::DeviceBuilder,
         device_service::{AlertCreation, trigger_alert},
@@ -44,7 +44,7 @@ async fn main() {
                 mode: Mode::InputOutput,
                 port: 6002,
                 datasource_id: DATASOURCE_ID.to_string(),
-                input_type: Some(TypeOption::Number),
+                input_type: Some(TypeOptionDto::Number),
                 output_type: None,
                 additional_config: ExampleDeviceConfig { min: 0, max: 10 },
                 scripting_api: None,

@@ -142,6 +142,7 @@ async fn test_create_and_update_device_entry() {
         can_script: false,
         name: String::from("UpdatedDevice"),
         description: String::from("Updated description"),
+        scraping: true,
     };
 
     let response = client

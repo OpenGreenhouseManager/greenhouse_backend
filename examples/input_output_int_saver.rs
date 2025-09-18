@@ -9,7 +9,7 @@ use greenhouse_core::{
     },
     smart_device_interface::{
         config::{
-            Config, Mode, TypeOption, read_config_file_with_path, update_config_file_with_path,
+            Config, Mode, TypeOptionDto, read_config_file_with_path, update_config_file_with_path,
         },
         device_builder::DeviceBuilder,
         hybrid_device::init_hybrid_router,
@@ -41,8 +41,8 @@ async fn main() {
                 mode: Mode::InputOutput,
                 port: 6001,
                 datasource_id: DATASOURCE_ID.to_string(),
-                input_type: Some(TypeOption::Number),
-                output_type: Some(TypeOption::Number),
+                input_type: Some(TypeOptionDto::Number),
+                output_type: Some(TypeOptionDto::Number),
                 additional_config: ExampleDeviceConfig { min: 0, max: 100 },
                 scripting_api: None,
             };
