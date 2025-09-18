@@ -9,11 +9,12 @@ use uuid::Uuid;
 #[diesel(table_name = crate::database::schema::device)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub(crate) struct Device {
-    id: Uuid,
+    pub(crate) id: Uuid,
     pub(crate) name: String,
     pub(crate) address: String,
     pub(crate) description: String,
     pub(crate) canscript: bool,
+    pub(crate) scraping: bool,
 }
 
 impl Device {
@@ -22,6 +23,7 @@ impl Device {
         description: &str,
         device_address: &str,
         can_script: bool,
+        scraping: bool,
     ) -> Self {
         Self {
             id: Uuid::new_v4(),
@@ -29,6 +31,7 @@ impl Device {
             description: String::from(description),
             address: String::from(device_address),
             canscript: can_script,
+            scraping,
         }
     }
 
@@ -78,6 +81,21 @@ impl Device {
 
         Ok(())
     }
+
+    pub(crate) async fn get_scraping_devices(pool: &Pool) -> Result<Vec<Self>> {
+        let mut conn = pool.get().await.map_err(|e| {
+            sentry::capture_error(&e);
+            Error::DatabaseConnection
+        })?;
+        device::table
+            .filter(device::scraping.eq(true))
+            .get_results(&mut conn)
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                Error::Find
+            })
+    }
 }
 
 impl From<Device> for DeviceResponseDto {
@@ -88,6 +106,7 @@ impl From<Device> for DeviceResponseDto {
             address: val.address,
             description: val.description,
             canscript: val.canscript,
+            scraping: val.scraping,
         }
     }
 }

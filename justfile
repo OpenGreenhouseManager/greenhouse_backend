@@ -90,6 +90,7 @@ fmt:
 
 device:
     cargo run -p examples --example input_output_int_saver &
-    cargo run -p examples --example input_alert_trigger
+    cargo run -p examples --example input_alert_trigger &
+    cargo run -p examples --example periodic_alert 
 
 ci: lint test fmt

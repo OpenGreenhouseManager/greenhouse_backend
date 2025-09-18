@@ -1,14 +1,17 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use greenhouse_core::{
     data_storage_service_dto::alert_dto::alert::Severity,
     smart_device_dto::{
+        Type,
         config::ConfigRequestDto,
         status::{DeviceStatusDto, DeviceStatusResponseDto},
     },
     smart_device_interface::{
         Error,
-        config::{Config, Mode, Type, read_config_file_with_path, update_config_file_with_path},
+        config::{
+            Config, Mode, TypeOptionDto, read_config_file_with_path, update_config_file_with_path,
+        },
         device_builder::DeviceBuilder,
         device_service::{AlertCreation, trigger_alert},
         hybrid_device::init_hybrid_router,
@@ -52,7 +55,7 @@ async fn main() {
                 mode: Mode::InputOutput,
                 port: 6003,
                 datasource_id: DATASOURCE_ID.to_string(),
-                input_type: Some(Type::Number),
+                input_type: Some(TypeOptionDto::Number),
                 output_type: None,
                 additional_config: ExampleDeviceConfig {
                     interval: 10,
@@ -103,14 +106,19 @@ async fn main() {
     axum::serve(listener, router).await.unwrap();
 }
 
-async fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> String {
+async fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> Type {
     let alert_infos = PERIODIC_ALERT_IDENTIFIER_LIST
         .iter()
         .map(|identifier| AlertInfo {
             identifier: identifier.to_string(),
         })
         .collect::<Vec<AlertInfo>>();
-    serde_json::to_string(&alert_infos).unwrap()
+    Type::Object(HashMap::from_iter(alert_infos.iter().map(|alert_info| {
+        (
+            alert_info.identifier.clone(),
+            Type::String(alert_info.identifier.clone()),
+        )
+    })))
 }
 
 async fn status_handler(config: Arc<Config<ExampleDeviceConfig>>) -> DeviceStatusResponseDto {

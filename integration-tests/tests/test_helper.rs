@@ -235,7 +235,7 @@ async fn start_device_service(
         .await
         .unwrap();
     let device_service_app =
-        device_service::app(device_service_config.clone(), device_pool.clone());
+        device_service::test_app(device_service_config.clone(), device_pool.clone());
 
     let url = format!("0.0.0.0:{}", device_service_config.service_port);
     let listener = tokio::net::TcpListener::bind(url).await.unwrap();

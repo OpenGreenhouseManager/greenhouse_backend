@@ -6,4 +6,5 @@ pub struct PutDeviceDtoRequest {
     pub description: String,
     pub address: String,
     pub can_script: bool,
+    pub scraping: bool,
 }

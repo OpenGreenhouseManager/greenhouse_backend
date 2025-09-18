@@ -7,5 +7,6 @@ diesel::table! {
         address -> Varchar,
         description -> Varchar,
         canscript -> Bool,
+        scraping -> Bool,
     }
 }

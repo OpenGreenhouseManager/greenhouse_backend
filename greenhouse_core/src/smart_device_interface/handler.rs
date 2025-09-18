@@ -5,7 +5,7 @@ use serde::{Serialize, de::DeserializeOwned};
 
 use crate::{
     smart_device_dto::{
-        self,
+        Type,
         activation::ActivateRequestDto,
         config::{ConfigRequestDto, ConfigResponseDto},
         read::ReadResponseDto,
@@ -51,15 +51,13 @@ where
         .map(|c| c.clone())
         .unwrap_or_else(|_| Arc::new(Config::<T>::default()));
 
-    let output_type = match config.output_type {
-        Some(output_type) => output_type.into(),
-        None => smart_device_dto::Type::Unknown,
-    };
     match device_service.read_handler {
-        None => Json(Default::default()),
+        None => Json(ReadResponseDto {
+            data: Type::Unknown("No handler found".to_string()),
+        }),
         Some(handler) => {
             let data = handler(config).await;
-            Json(ReadResponseDto { data, output_type })
+            Json(ReadResponseDto { data })
         }
     }
 }
