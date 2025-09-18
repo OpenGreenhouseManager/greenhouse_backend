@@ -1,0 +1,2 @@
+-- Your SQL goes here
+ALTER TABLE device ADD COLUMN scraping BOOLEAN NOT NULL DEFAULT TRUE;

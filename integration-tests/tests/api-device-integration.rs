@@ -18,6 +18,7 @@ async fn test_create_device_entry() {
         can_script: true,
         name: String::from("testDevice"),
         description: String::from("test Description"),
+        scraping: true,
     };
     let response = client
         .post("http://localhost:3000/api/device")
@@ -57,6 +58,7 @@ async fn test_create_and_get_device_entry() {
         can_script: false,
         name: String::from("TestDevice2"),
         description: String::from("Second test device"),
+        scraping: true,
     };
 
     let response = client
@@ -115,6 +117,7 @@ async fn test_create_and_update_device_entry() {
         can_script: true,
         name: String::from("OriginalDevice"),
         description: String::from("Original description"),
+        scraping: true,
     };
 
     let response = client
@@ -211,6 +214,7 @@ async fn test_status_for_offline_device_entry() {
         can_script: true,
         name: String::from("OfflineDevice"),
         description: String::from("Device that can't be reached"),
+        scraping: true,
     };
 
     let response = client
@@ -266,12 +270,14 @@ async fn test_get_all_devices() {
             can_script: true,
             name: String::from("Device1"),
             description: String::from("First device"),
+            scraping: true,
         },
         PostDeviceDtoRequest {
             address: String::from("10.0.1.2:8000"),
             can_script: false,
             name: String::from("Device2"),
             description: String::from("Second device"),
+            scraping: true,
         },
     ];
 
@@ -330,6 +336,7 @@ async fn test_get_device_config() {
         can_script: true,
         name: String::from("ConfigTestDevice"),
         description: String::from("Device for config testing"),
+        scraping: true,
     };
 
     let response = client

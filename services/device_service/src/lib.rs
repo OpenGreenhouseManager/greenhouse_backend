@@ -1,15 +1,20 @@
 extern crate diesel_migrations;
-use axum::Router;
+use std::future::ready;
+use std::time::Duration;
+
 use axum::extract::FromRef;
+use axum::{Router, routing::get};
 use diesel::{Connection, PgConnection};
 use diesel_async::AsyncPgConnection;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
+use metrics_exporter_prometheus::{PrometheusBuilder, PrometheusHandle};
 use serde::Deserialize;
 use tower_http::trace::TraceLayer;
 
 pub(crate) mod database;
 mod router;
+mod scrape_service;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
@@ -45,8 +50,11 @@ pub fn app(config: Config, pool: Pool) -> Router {
     run_migration(&config.database_url);
 
     let state = AppState { config, pool };
+    let recorder_handle = setup_metrics_recorder();
 
+    scrape_service::start_scrape_devices(state.clone());
     Router::new()
+        .route("/metrics", get(move || ready(recorder_handle.render())))
         .merge(router::device_router::routes(state.clone()))
         .layer(TraceLayer::new_for_http())
 }
@@ -54,4 +62,18 @@ pub fn app(config: Config, pool: Pool) -> Router {
 fn run_migration(database_url: &str) {
     let mut conn = PgConnection::establish(database_url).unwrap();
     conn.run_pending_migrations(MIGRATIONS).unwrap();
+}
+
+fn setup_metrics_recorder() -> PrometheusHandle {
+    let recorder_handle = PrometheusBuilder::new().install_recorder().unwrap();
+
+    let upkeep_handle = recorder_handle.clone();
+    tokio::spawn(async move {
+        loop {
+            tokio::time::sleep(Duration::from_secs(5)).await;
+            upkeep_handle.run_upkeep();
+        }
+    });
+
+    recorder_handle
 }
