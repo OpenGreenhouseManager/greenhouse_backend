@@ -59,6 +59,16 @@ pub fn app(config: Config, pool: Pool) -> Router {
         .layer(TraceLayer::new_for_http())
 }
 
+pub fn test_app(config: Config, pool: Pool) -> Router {
+    run_migration(&config.database_url);
+
+    let state = AppState { config, pool };
+
+    Router::new()
+        .merge(router::device_router::routes(state.clone()))
+        .layer(TraceLayer::new_for_http())
+}
+
 fn run_migration(database_url: &str) {
     let mut conn = PgConnection::establish(database_url).unwrap();
     conn.run_pending_migrations(MIGRATIONS).unwrap();
