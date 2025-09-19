@@ -12,10 +12,9 @@ pub mod write;
 #[derive(Serialize, Deserialize)]
 pub enum Type {
     Number(f64),
-    String(String),
     Boolean(bool),
     Object(HashMap<String, Type>),
     Array(Vec<Type>),
     Stream,
-    Unknown(String),
+    None,
 }

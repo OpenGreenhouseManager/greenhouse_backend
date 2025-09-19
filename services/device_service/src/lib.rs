@@ -28,6 +28,8 @@ pub struct Config {
     pub scripting_service: String,
     #[serde(rename = "DATABASE_URL")]
     pub database_url: String,
+    #[serde(rename = "PROMETHEUS_URL")]
+    pub prometheus_url: String,
     #[serde(rename = "SENTRY_URL")]
     pub sentry_url: String,
     #[serde(rename = "ENVIRONMENT", default = "default_environment")]

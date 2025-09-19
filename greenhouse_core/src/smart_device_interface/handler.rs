@@ -52,9 +52,7 @@ where
         .unwrap_or_else(|_| Arc::new(Config::<T>::default()));
 
     match device_service.read_handler {
-        None => Json(ReadResponseDto {
-            data: Type::Unknown("No handler found".to_string()),
-        }),
+        None => Json(ReadResponseDto { data: Type::None }),
         Some(handler) => {
             let data = handler(config).await;
             Json(ReadResponseDto { data })
