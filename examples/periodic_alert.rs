@@ -129,15 +129,14 @@ async fn main() {
 }
 
 async fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> Type {
-    let alerts = Type::Object(HashMap::from_iter(ALERTS_MUTEX.read().await.iter().map(
+    Type::Object(HashMap::from_iter(ALERTS_MUTEX.read().await.iter().map(
         |alert| {
             (
                 alert.identifier.to_string(),
                 Type::Number(alert.count as f64),
             )
         },
-    )));
-    alerts
+    )))
 }
 
 async fn status_handler(config: Arc<Config<ExampleDeviceConfig>>) -> DeviceStatusResponseDto {
