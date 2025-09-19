@@ -1,5 +1,6 @@
 use auth::middleware::check_token;
 use axum::extract::FromRef;
+use axum::routing::get;
 use axum::{Router, middleware};
 use reqwest::{
     Method,
@@ -70,5 +71,6 @@ pub fn app(config: Config) -> Router {
         .merge(auth::router::routes(state))
         .layer(CookieManagerLayer::new())
         .layer(cors)
+        .route("/health", get(|| async {}))
         .layer(TraceLayer::new_for_http())
 }

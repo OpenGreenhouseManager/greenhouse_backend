@@ -4,6 +4,7 @@ use crate::router::auth_router::{
 
 extern crate diesel_migrations;
 use axum::extract::FromRef;
+use axum::routing::get;
 use axum::{Router, routing::post};
 use diesel::{Connection, PgConnection};
 use diesel_async::AsyncPgConnection;
@@ -59,6 +60,7 @@ pub fn app(config: Config, pool: Pool) -> Router {
             endpoints::GENERATE_ONE_TIME_TOKEN,
             post(generate_one_time_token),
         )
+        .route("/health", get(|| async {}))
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }

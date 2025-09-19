@@ -1,6 +1,6 @@
 extern crate diesel_migrations;
-use axum::Router;
 use axum::extract::FromRef;
+use axum::{Router, routing::get};
 use diesel::{Connection, PgConnection};
 use diesel_async::{AsyncPgConnection, pooled_connection::AsyncDieselConnectionManager};
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
@@ -47,6 +47,7 @@ pub fn app(config: Config, pool: Pool) -> Router {
     Router::new()
         .nest(ALERT, router::alert_router::routes(state.clone()))
         .nest(DIARY, router::diary_entry_router::routes(state.clone()))
+        .route("/health", get(|| async {}))
         .layer(TraceLayer::new_for_http())
 }
 
