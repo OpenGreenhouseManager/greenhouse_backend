@@ -56,6 +56,7 @@ pub fn app(config: Config, pool: Pool) -> Router {
     Router::new()
         .route("/metrics", get(move || ready(recorder_handle.render())))
         .merge(router::device_router::routes(state.clone()))
+        .route("/health", get(|| async {}))
         .layer(TraceLayer::new_for_http())
 }
 
