@@ -107,8 +107,6 @@ fn generate_metric(name: String, data: &Type) {
             gauge.set(b);
         }
         Type::Object(data) => {
-            let _ = gauge!(name.clone(), &[("type", "object")]);
-
             for (key, value) in data.iter() {
                 let next_name = format!("{name}_{key}");
                 generate_metric(next_name, value);
