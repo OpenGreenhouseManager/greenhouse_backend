@@ -226,6 +226,7 @@ async fn start_device_service(
         scripting_service: String::from("http://localhost:3004"),
         scripting_api: String::from("http://localhost:3100"),
         environment: String::from("test"),
+        prometheus_url: String::from("http://localhost:9090"),
     };
 
     let device_pool = device_service::Pool::builder()

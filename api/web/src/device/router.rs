@@ -1,7 +1,7 @@
 use crate::{AppState, device::service, helper::error::HttpResult};
 use axum::{
     Json, Router,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::HeaderValue,
     response::IntoResponse,
     routing::{get, post, put},
@@ -10,6 +10,7 @@ use greenhouse_core::device_service_dto::{
     endpoints::{ACTIVATE, CONFIG, STATUS},
     post_device::PostDeviceDtoRequest,
     put_device::PutDeviceDtoRequest,
+    query::PromQuery,
 };
 use reqwest::{StatusCode, header};
 use uuid::Uuid;
@@ -23,6 +24,7 @@ pub(crate) fn routes(state: AppState) -> Router {
         .route(&format!("/{{id}}/{ACTIVATE}"), put(activate_device))
         .route(&format!("/{{id}}/{CONFIG}"), get(get_device_config))
         .route(&format!("/{{id}}/{STATUS}"), get(get_device_status))
+        .route("/{id}/timeseries", get(get_device_timeseries))
         .with_state(state)
 }
 
@@ -102,4 +104,15 @@ pub(crate) async fn activate_device(
 ) -> HttpResult<impl IntoResponse> {
     service::activate_device(&config.service_addresses.device_service, id).await?;
     Ok(StatusCode::OK.into_response())
+}
+
+#[axum::debug_handler]
+pub(crate) async fn get_device_timeseries(
+    State(AppState { config }): State<AppState>,
+    Path(id): Path<Uuid>,
+    Query(query): Query<PromQuery>,
+) -> HttpResult<impl IntoResponse> {
+    let response =
+        service::get_device_timeseries(&config.service_addresses.device_service, id, query).await?;
+    Ok(Json(response))
 }
