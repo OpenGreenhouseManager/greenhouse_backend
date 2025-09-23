@@ -1,7 +1,7 @@
 use greenhouse_core::{
     device_service_dto::{
-        endpoints, get_device::DeviceResponseDto, post_device::PostDeviceDtoRequest,
-        put_device::PutDeviceDtoRequest,
+        endpoints, get_device::DeviceResponseDto, get_timeseries::TimeseriesDto,
+        post_device::PostDeviceDtoRequest, put_device::PutDeviceDtoRequest, query::PromQuery,
     },
     http_error::ErrorResponseBody,
 };
@@ -281,5 +281,42 @@ pub(crate) async fn activate_device(base_url: &str, id: Uuid) -> Result<()> {
             tracing::error!("Error in put to service: {:?}", e);
             Error::Json(e)
         })?,
+    }))
+}
+
+pub(crate) async fn get_device_timeseries(
+    base_url: &str,
+    id: Uuid,
+    query: PromQuery,
+) -> Result<Vec<TimeseriesDto>> {
+    let resp = reqwest::Client::new()
+        .get(base_url.to_string() + "/" + &id.to_string() + "/timeseries")
+        .query(&query)
+        .send()
+        .await
+        .map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!("Error in get to service: {:?}", e);
+            Error::Request(e)
+        })?;
+
+    if resp.status().is_success() {
+        return resp.json().await.map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!("Error in get to service: {:?}", e);
+            Error::Json(e)
+        });
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
     }))
 }

@@ -93,4 +93,9 @@ device:
     cargo run -p examples --example input_alert_trigger &
     cargo run -p examples --example periodic_alert 
 
+device-stop:
+    killall periodic_alert || true
+    killall input_output_int_saver || true
+    killall input_alert_trigger || true
+
 ci: lint test fmt

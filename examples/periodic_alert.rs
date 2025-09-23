@@ -1,4 +1,7 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::HashMap,
+    sync::{Arc, LazyLock},
+};
 
 use greenhouse_core::{
     data_storage_service_dto::alert_dto::alert::Severity,
@@ -19,19 +22,38 @@ use greenhouse_core::{
 };
 use rand::Rng;
 use serde_derive::{Deserialize, Serialize};
+use tokio::sync::RwLock;
 
 const DATASOURCE_ID: &str = "7a224a14-6e07-45a3-91da-b7584a5731c1";
-const PERIODIC_ALERT_IDENTIFIER_LIST: [&str; 5] = [
-    "periodic_alert_1",
-    "periodic_alert_2",
-    "periodic_alert_3",
-    "periodic_alert_4",
-    "periodic_alert_5",
-];
 
-#[derive(Serialize, Deserialize, Clone, Default)]
-struct AlertInfo {
-    identifier: String,
+static ALERTS_MUTEX: LazyLock<RwLock<[AlertCounter; 5]>> = LazyLock::new(|| {
+    RwLock::new([
+        AlertCounter {
+            identifier: "periodic_alert_1",
+            count: 0,
+        },
+        AlertCounter {
+            identifier: "periodic_alert_2",
+            count: 0,
+        },
+        AlertCounter {
+            identifier: "periodic_alert_3",
+            count: 0,
+        },
+        AlertCounter {
+            identifier: "periodic_alert_4",
+            count: 0,
+        },
+        AlertCounter {
+            identifier: "periodic_alert_5",
+            count: 0,
+        },
+    ])
+});
+
+struct AlertCounter {
+    identifier: &'static str,
+    count: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default)]
@@ -107,18 +129,14 @@ async fn main() {
 }
 
 async fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> Type {
-    let alert_infos = PERIODIC_ALERT_IDENTIFIER_LIST
-        .iter()
-        .map(|identifier| AlertInfo {
-            identifier: identifier.to_string(),
-        })
-        .collect::<Vec<AlertInfo>>();
-    Type::Object(HashMap::from_iter(alert_infos.iter().map(|alert_info| {
-        (
-            alert_info.identifier.clone(),
-            Type::String(alert_info.identifier.clone()),
-        )
-    })))
+    Type::Object(HashMap::from_iter(ALERTS_MUTEX.read().await.iter().map(
+        |alert| {
+            (
+                alert.identifier.to_string(),
+                Type::Number(alert.count as f64),
+            )
+        },
+    )))
 }
 
 async fn status_handler(config: Arc<Config<ExampleDeviceConfig>>) -> DeviceStatusResponseDto {
@@ -154,14 +172,17 @@ async fn start_periodic_alerts(config: Config<ExampleDeviceConfig>, config_path:
     let random_jitter = config.additional_config.random_jitter;
 
     loop {
-        let random_index = rand::rng().random_range(0..PERIODIC_ALERT_IDENTIFIER_LIST.len());
+        let range = ALERTS_MUTEX.read().await.len();
+        let random_index = rand::rng().random_range(0..range);
         let random_severity = rand::rng().random_range(0..4);
         let wait_time = interval + rand::rng().random_range(0..random_jitter);
         tokio::time::sleep(std::time::Duration::from_secs(wait_time)).await;
         let res = trigger_alert(
             Arc::new(config.clone()),
             AlertCreation {
-                identifier: PERIODIC_ALERT_IDENTIFIER_LIST[random_index].to_string(),
+                identifier: ALERTS_MUTEX.read().await[random_index]
+                    .identifier
+                    .to_string(),
                 severity: match random_severity {
                     0 => Severity::Info,
                     1 => Severity::Warning,
@@ -175,7 +196,11 @@ async fn start_periodic_alerts(config: Config<ExampleDeviceConfig>, config_path:
         )
         .await;
         match res {
-            Ok(_) => println!("Alert triggered successfully after {wait_time} seconds"),
+            Ok(_) => {
+                println!("Alert triggered successfully after {wait_time} seconds");
+
+                ALERTS_MUTEX.write().await[random_index].count += 1;
+            }
             Err(e) => match e {
                 Error::ScriptingApiNotConfigured => {
                     println!("Scripting API not configured, reloading config");

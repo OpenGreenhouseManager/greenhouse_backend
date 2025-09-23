@@ -5,17 +5,19 @@ use greenhouse_core::{
     http_error::{HttpErrorMapping, HttpErrorResponse},
     impl_http_error_from,
 };
-use serde::Serialize;
-
 pub(crate) type HttpResult<T> = core::result::Result<T, HttpErrorResponse<Error>>;
 pub(crate) type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, Serialize, From)]
+#[derive(Debug, From)]
 pub(crate) enum Error {
     SmartDeviceNotReachable,
     SmartDeviceResponse,
     ScriptingApiNotReachable,
     ScriptingApiResponse,
+    Prometheus(reqwest::Error),
+    PrometheusJson(reqwest::Error),
+    PrometheusInvalidResultType,
+    PrometheusNotImplemented,
     #[from]
     Database(database::Error),
 }
@@ -45,6 +47,10 @@ impl HttpErrorMapping for Error {
             },
             Error::ScriptingApiNotReachable => StatusCode::SERVICE_UNAVAILABLE,
             Error::ScriptingApiResponse => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::Prometheus(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::PrometheusJson(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::PrometheusInvalidResultType => StatusCode::BAD_REQUEST,
+            Error::PrometheusNotImplemented => StatusCode::NOT_IMPLEMENTED,
         }
     }
 
@@ -59,6 +65,10 @@ impl HttpErrorMapping for Error {
             },
             Error::ScriptingApiNotReachable => String::from("Scripting api not reachable"),
             Error::ScriptingApiResponse => String::from("Scripting api response error"),
+            Error::Prometheus(e) => format!("Prometheus error: {e}"),
+            Error::PrometheusJson(e) => format!("Prometheus json error: {e}"),
+            Error::PrometheusInvalidResultType => String::from("Prometheus invalid result type"),
+            Error::PrometheusNotImplemented => String::from("Prometheus type not implemented"),
         }
     }
 }

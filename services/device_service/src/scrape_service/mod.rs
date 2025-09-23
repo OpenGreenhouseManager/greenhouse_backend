@@ -82,32 +82,32 @@ async fn read_device(id: Uuid, address: String) -> Result<()> {
         .await
         .map_err(|_| Error::Json)?;
 
-    generate_metric(format!("scrape_service_duration_{id}"), response.data);
+    generate_metric(format!("scrape_service_duration_{id}"), &response.data);
 
     Ok(())
 }
 
-fn generate_metric(name: String, data: Type) {
+fn generate_metric(name: String, data: &Type) {
     match data {
-        Type::Array(_) => {
-            tracing::error!("Not implemented: received array");
+        Type::Array(data) => {
+            let gauge = gauge!(name.clone(), &[("type", "array")]);
+            gauge.set(data.len() as f64);
+            for (index, value) in data.iter().enumerate() {
+                let next_name = format!("{name}_{index}");
+                generate_metric(next_name, value);
+            }
         }
         Type::Number(data) => {
             let gauge = gauge!(name, &[("type", "number")]);
-            gauge.set(data);
-        }
-        Type::String(data) => {
-            let labels = [("type", String::from("string")), ("string_value", data)];
-            let gauge = gauge!(name, &labels);
-            gauge.set(1);
+            gauge.set(*data);
         }
         Type::Boolean(data) => {
             let gauge = gauge!(name, &[("type", "boolean")]);
-            let b = if data { 1.0 } else { 0.0 };
+            let b = if *data { 1.0 } else { 0.0 };
             gauge.set(b);
         }
         Type::Object(data) => {
-            for (key, value) in data {
+            for (key, value) in data.iter() {
                 let next_name = format!("{name}_{key}");
                 generate_metric(next_name, value);
             }
@@ -115,8 +115,8 @@ fn generate_metric(name: String, data: Type) {
         Type::Stream => {
             tracing::debug!("Not implemented: received stream");
         }
-        Type::Unknown(_) => {
-            tracing::debug!("received unknown");
+        Type::None => {
+            tracing::debug!("received none");
         }
     }
 }

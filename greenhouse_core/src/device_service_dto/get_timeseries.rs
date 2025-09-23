@@ -2,12 +2,16 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-pub mod activation;
-pub mod config;
-pub mod endpoints;
-pub mod read;
-pub mod status;
-pub mod write;
+#[derive(Serialize, Deserialize)]
+pub struct GetTimeseriesDto {
+    pub timeseries: Vec<TimeseriesDto>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct TimeseriesDto {
+    pub timestamp: u64,
+    pub value: Type,
+}
 
 #[derive(Serialize, Deserialize)]
 pub enum Type {
@@ -15,6 +19,4 @@ pub enum Type {
     Boolean(bool),
     Object(HashMap<String, Type>),
     Array(Vec<Type>),
-    Stream,
-    None,
 }
