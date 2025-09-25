@@ -24,17 +24,11 @@ pub(crate) async fn check_token(
             service::check_token(&config.service_addresses.auth_service, &token).await
     {
         return match user_token.role.as_str() {
-            "guest" => {
-                match req.method() {
-                    &Method::POST => {
-                        Response::builder().status(200).body(Body::empty()).unwrap()
-                    }
-                    &Method::PUT => {
-                        Response::builder().status(200).body(Body::empty()).unwrap()
-                    }
-                    _ => next.run(req).await,
-                }
-            }
+            "guest" => match *req.method() {
+                Method::POST => Response::builder().status(200).body(Body::empty()).unwrap(),
+                Method::PUT => Response::builder().status(200).body(Body::empty()).unwrap(),
+                _ => next.run(req).await,
+            },
             _ => next.run(req).await,
         };
     }

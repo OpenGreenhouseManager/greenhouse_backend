@@ -239,8 +239,5 @@ pub(crate) async fn check_token(
         return Err(Error::TokenInvalid.into());
     }
 
-    Ok(Json(TokenResponseDto {
-        role: user.role,
-    })
-    .into_response())
+    Ok(Json(TokenResponseDto { role: user.role }).into_response())
 }
