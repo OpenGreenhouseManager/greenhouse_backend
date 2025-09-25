@@ -1,5 +1,5 @@
 use crate::router::auth_router::{
-    check_token, generate_one_time_token, login, register, register_admin,
+    check_token, generate_one_time_token, login, register, register_admin, register_guest,
 };
 
 extern crate diesel_migrations;
@@ -56,6 +56,7 @@ pub fn app(config: Config, pool: Pool) -> Router {
         .route(endpoints::LOGIN, post(login))
         .route(endpoints::CHECK_TOKEN, post(check_token))
         .route(endpoints::ADMIN_REGISTER, post(register_admin))
+        .route(endpoints::GUEST_REGISTER, post(register_guest))
         .route(
             endpoints::GENERATE_ONE_TIME_TOKEN,
             post(generate_one_time_token),

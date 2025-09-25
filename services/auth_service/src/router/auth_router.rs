@@ -8,13 +8,14 @@ use crate::{
     Config, Pool, database::schema::users::dsl::users, token::one_time_token::check_one_time_token,
 };
 use axum::response::IntoResponse;
-use axum::{Json, extract::State, http::StatusCode, response::Response};
+use axum::{Json, extract::State, response::Response};
 use database::schema::users::{id, login_session, username};
 use diesel::{ExpressionMethods, query_dsl::methods::FilterDsl};
 use diesel_async::RunQueryDsl;
 use greenhouse_core::auth_service_dto::generate_one_time_token::{
     GenerateOneTimeTokenRequestDto, GenerateOneTimeTokenResponseDto,
 };
+use greenhouse_core::auth_service_dto::token::TokenResponseDto;
 use greenhouse_core::auth_service_dto::{
     login::{LoginRequestDto, LoginResponseDto},
     register::{RegisterRequestDto, RegisterResponseDto},
@@ -49,6 +50,20 @@ pub(crate) async fn register_admin(
     Json(user): Json<RegisterAdminRequestDto>,
 ) -> HttpResult<Response> {
     let role = "admin";
+    let token = register_user(&user.username, &user.password, role, &config, &pool).await?;
+    Ok(Json(RegisterAdminResponseDto {
+        token,
+        token_type: String::from("Bearer"),
+    })
+    .into_response())
+}
+
+#[axum::debug_handler]
+pub(crate) async fn register_guest(
+    State(AppState { config, pool }): State<AppState>,
+    Json(user): Json<RegisterAdminRequestDto>,
+) -> HttpResult<Response> {
+    let role = "guest";
     let token = register_user(&user.username, &user.password, role, &config, &pool).await?;
     Ok(Json(RegisterAdminResponseDto {
         token,
@@ -224,5 +239,8 @@ pub(crate) async fn check_token(
         return Err(Error::TokenInvalid.into());
     }
 
-    Ok(StatusCode::OK.into_response())
+    Ok(Json(TokenResponseDto {
+        role: user.role,
+    })
+    .into_response())
 }
