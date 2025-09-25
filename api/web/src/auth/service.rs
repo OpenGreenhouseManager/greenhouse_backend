@@ -8,7 +8,7 @@ use greenhouse_core::{
         endpoints,
         login::{LoginRequestDto, LoginResponseDto},
         register::{RegisterRequestDto, RegisterResponseDto},
-        token::TokenRequestDto,
+        token::{TokenRequestDto, TokenResponseDto},
     },
     http_error::ErrorResponseBody,
 };
@@ -128,7 +128,7 @@ pub(crate) async fn login(
     }))
 }
 
-pub(crate) async fn check_token(base_ulr: &str, token: &str) -> Result<()> {
+pub(crate) async fn check_token(base_ulr: &str, token: &str) -> Result<TokenResponseDto> {
     let resp = reqwest::Client::new()
         .post(base_ulr.to_string() + endpoints::CHECK_TOKEN)
         .json(&TokenRequestDto {
@@ -150,7 +150,11 @@ pub(crate) async fn check_token(base_ulr: &str, token: &str) -> Result<()> {
             Error::Request(e)
         })?;
     if resp.status().is_success() {
-        return Ok(());
+        return resp.json().await.map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!("Error in response json: {:?}", e);
+            Error::Json(e)
+        });
     }
     Err(Error::Api(ApiError {
         status: resp.status(),

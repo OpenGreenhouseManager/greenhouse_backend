@@ -4,6 +4,7 @@ use axum::{
     middleware::Next,
     response::Response,
 };
+use reqwest::Method;
 use tower_cookies::{Cookie, Cookies};
 
 use super::{AUTH_TOKEN, service};
@@ -19,11 +20,17 @@ pub(crate) async fn check_token(
         .get(AUTH_TOKEN)
         .map(|c| c.value().to_string())
         .ok_or(Error::CookieNotFound)
-        && service::check_token(&config.service_addresses.auth_service, &token)
-            .await
-            .is_ok()
+        && let Ok(user_token) =
+            service::check_token(&config.service_addresses.auth_service, &token).await
     {
-        return next.run(req).await;
+        return match user_token.role.as_str() {
+            "guest" => match *req.method() {
+                Method::POST => Response::builder().status(200).body(Body::empty()).unwrap(),
+                Method::PUT => Response::builder().status(200).body(Body::empty()).unwrap(),
+                _ => next.run(req).await,
+            },
+            _ => next.run(req).await,
+        };
     }
 
     cookies.remove(Cookie::from(AUTH_TOKEN));
