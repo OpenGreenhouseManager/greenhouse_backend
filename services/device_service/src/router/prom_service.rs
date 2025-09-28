@@ -149,7 +149,10 @@ pub(crate) async fn request_device_query_operations(
     let url_suffix = ".*'}";
     let resp = client
         .get(format!("{}/series", prometheus_url.trim_end_matches('/')))
-        .query(&[("match[]", &format!("{url_prefix}scrape_service_duration_{id}_{url_suffix}"))])
+        .query(&[(
+            "match[]",
+            &format!("{url_prefix}scrape_service_duration_{id}_{url_suffix}"),
+        )])
         .send()
         .await
         .map_err(Error::Prometheus)?
@@ -160,7 +163,12 @@ pub(crate) async fn request_device_query_operations(
     Ok(resp
         .data
         .iter()
-        .filter_map(|series| series.name.strip_prefix(&format!("scrape_service_duration_{id}_")).map(|s| s.to_string()))
+        .filter_map(|series| {
+            series
+                .name
+                .strip_prefix(&format!("scrape_service_duration_{id}_"))
+                .map(|s| s.to_string())
+        })
         .collect::<HashSet<_>>()
         .into_iter()
         .collect())
