@@ -144,11 +144,12 @@ pub(crate) async fn request_device_query_operations(
     id: &str,
 ) -> Result<Vec<String>> {
     let client = Client::new();
-    let url = format!("{}/api/v1/series", prometheus_url.trim_end_matches('/'));
-
+    let id = id.to_string().replace("-", "_");
+    let url_prefix = "{__name__=~'";
+    let url_suffix = ".*'}";
     let resp = client
-        .get(url)
-        .query(&[("match[]", &format!("scrape_service_duration_{id}_.*"))])
+        .get(format!("{}/series", prometheus_url.trim_end_matches('/')))
+        .query(&[("match[]", &format!("{url_prefix}scrape_service_duration_{id}_{url_suffix}"))])
         .send()
         .await
         .map_err(Error::Prometheus)?

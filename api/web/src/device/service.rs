@@ -320,3 +320,35 @@ pub(crate) async fn get_device_timeseries(
             .error,
     }))
 }
+
+pub(crate) async fn get_device_operations(base_url: &str, id: Uuid) -> Result<Vec<String>> {
+    let resp = reqwest::Client::new()
+        .get(base_url.to_string() + "/" + &id.to_string() + "/options")
+        .send()
+        .await
+        .map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!("Error in get to service: {:?}", e);
+            Error::Request(e)
+        })?;
+
+    if resp.status().is_success() {
+        return resp.json().await.map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!("Error in get to service: {:?}", e);
+            Error::Json(e)
+        });
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
+    }))
+}

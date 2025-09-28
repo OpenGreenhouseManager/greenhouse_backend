@@ -39,7 +39,7 @@ pub(crate) fn routes(state: AppState) -> Router {
         .route(&format!("/{{id}}/{CONFIG}"), get(get_device_config))
         .route(&format!("/{{id}}/{STATUS}"), get(get_device_status))
         .route("/{id}/timeseries", get(get_device_timeseries))
-        .route("/{id}/operations", get(get_device_query_operations))
+        .route("/{id}/options", get(get_device_query_operations))
         .with_state(state)
 }
 

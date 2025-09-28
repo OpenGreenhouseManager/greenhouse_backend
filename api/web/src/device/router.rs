@@ -25,6 +25,7 @@ pub(crate) fn routes(state: AppState) -> Router {
         .route(&format!("/{{id}}/{CONFIG}"), get(get_device_config))
         .route(&format!("/{{id}}/{STATUS}"), get(get_device_status))
         .route("/{id}/timeseries", get(get_device_timeseries))
+        .route("/{id}/options", get(get_device_operations))
         .with_state(state)
 }
 
@@ -114,5 +115,14 @@ pub(crate) async fn get_device_timeseries(
 ) -> HttpResult<impl IntoResponse> {
     let response =
         service::get_device_timeseries(&config.service_addresses.device_service, id, query).await?;
+    Ok(Json(response))
+}
+
+pub(crate) async fn get_device_operations(
+    State(AppState { config }): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> HttpResult<impl IntoResponse> {
+    let response =
+        service::get_device_operations(&config.service_addresses.device_service, id).await?;
     Ok(Json(response))
 }
