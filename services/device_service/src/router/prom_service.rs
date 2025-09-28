@@ -160,7 +160,7 @@ pub(crate) async fn request_device_query_operations(
     Ok(resp
         .data
         .iter()
-        .map(|series| series.name.clone())
+        .filter_map(|series| series.name.strip_prefix(&format!("scrape_service_duration_{id}_")).map(|s| s.to_string()))
         .collect::<HashSet<_>>()
         .into_iter()
         .collect())
