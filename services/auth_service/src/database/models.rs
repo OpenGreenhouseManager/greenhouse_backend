@@ -17,6 +17,31 @@ pub(crate) struct User {
     hash: String,
 }
 
+#[derive(Debug, Queryable, Selectable, Deserialize, Insertable, AsChangeset)]
+#[diesel(table_name = crate::database::schema::preferences)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub(crate) struct Preferences {
+    pub(crate) id: Uuid,
+    pub(crate) dashboard_preferences: serde_json::Value,
+    pub(crate) alert_preferences: serde_json::Value,
+    pub(crate) user_id: Uuid,
+}
+
+impl Preferences {
+    pub(crate) fn new(
+        user_id: Uuid,
+        dashboard_preferences: serde_json::Value,
+        alert_preferences: serde_json::Value,
+    ) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            dashboard_preferences,
+            alert_preferences,
+            user_id,
+        }
+    }
+}
+
 impl User {
     pub(crate) fn new(username: &str, password: &str, role: &str) -> Result<Self> {
         let password_hash = bcrypt::hash_with_result(password, 12).map_err(|e| {

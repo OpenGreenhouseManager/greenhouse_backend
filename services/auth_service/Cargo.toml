@@ -12,7 +12,7 @@ bb8 = { workspace = true }
 bcrypt = { workspace = true }
 chrono = { workspace = true }
 derive_more = { workspace = true }
-diesel =  { workspace = true, features = [ "uuid", "postgres" ] }
+diesel =  { workspace = true, features = [ "uuid", "postgres", "serde_json" ] }
 diesel-async =  { workspace = true }
 greenhouse_core = { workspace = true, features = ["auth_service_dto", "error_handling"] }
 jsonwebtoken = { workspace = true }

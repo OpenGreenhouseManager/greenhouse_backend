@@ -4,4 +4,5 @@ pub mod login;
 pub mod register;
 pub mod register_admin;
 pub mod token;
+pub mod user_preferences;
 pub mod user_token;

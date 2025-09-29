@@ -1,12 +1,15 @@
 use super::{Error, HttpResult};
+use crate::database::schema::preferences::user_id;
 use crate::token;
 use crate::{
     AppState,
-    database::{self, models::User},
+    database::{self, models::Preferences, models::User},
 };
 use crate::{
-    Config, Pool, database::schema::users::dsl::users, token::one_time_token::check_one_time_token,
+    Config, Pool, database::schema::preferences::dsl::preferences,
+    database::schema::users::dsl::users, token::one_time_token::check_one_time_token,
 };
+use axum::extract::Path;
 use axum::response::IntoResponse;
 use axum::{Json, extract::State, response::Response};
 use database::schema::users::{id, login_session, username};
@@ -16,12 +19,16 @@ use greenhouse_core::auth_service_dto::generate_one_time_token::{
     GenerateOneTimeTokenRequestDto, GenerateOneTimeTokenResponseDto,
 };
 use greenhouse_core::auth_service_dto::token::TokenResponseDto;
+use greenhouse_core::auth_service_dto::user_preferences::{
+    UserPreferencesRequestDto, UserPreferencesResponseDto,
+};
 use greenhouse_core::auth_service_dto::{
     login::{LoginRequestDto, LoginResponseDto},
     register::{RegisterRequestDto, RegisterResponseDto},
     register_admin::{RegisterAdminRequestDto, RegisterAdminResponseDto},
     token::TokenRequestDto,
 };
+use uuid::Uuid;
 
 #[axum::debug_handler]
 pub(crate) async fn register(
@@ -240,4 +247,45 @@ pub(crate) async fn check_token(
     }
 
     Ok(Json(TokenResponseDto { role: user.role }).into_response())
+}
+
+#[axum::debug_handler]
+pub(crate) async fn get_preferences(
+    State(AppState { config: _, pool }): State<AppState>,
+    Path(user_id_param): Path<Uuid>,
+) -> HttpResult<UserPreferencesResponseDto> {
+    let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
+    let pref = preferences
+        .filter(user_id.eq(&user_id_param))
+        .get_result::<Preferences>(&mut conn)
+        .await
+        .map_err(|_| Error::DatabaseConnection)?;
+    Ok(UserPreferencesResponseDto {
+        dashboard_preferences: pref.dashboard_preferences,
+        alert_preferences: pref.alert_preferences,
+    })
+}
+
+#[axum::debug_handler]
+pub(crate) async fn set_preferences(
+    State(AppState { config: _, pool }): State<AppState>,
+    Path(user_id_param): Path<Uuid>,
+    Json(new_preferences): Json<UserPreferencesRequestDto>,
+) -> HttpResult<UserPreferencesResponseDto> {
+    let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
+
+    diesel::insert_into(preferences)
+        .values(Preferences::new(
+            user_id_param,
+            new_preferences.dashboard_preferences.clone(),
+            new_preferences.alert_preferences.clone(),
+        ))
+        .execute(&mut conn)
+        .await
+        .map_err(|_| Error::DatabaseConnection)?;
+
+    Ok(UserPreferencesResponseDto {
+        dashboard_preferences: new_preferences.dashboard_preferences,
+        alert_preferences: new_preferences.alert_preferences,
+    })
 }
