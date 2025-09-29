@@ -9,9 +9,11 @@ use greenhouse_core::{
         login::{LoginRequestDto, LoginResponseDto},
         register::{RegisterRequestDto, RegisterResponseDto},
         token::{TokenRequestDto, TokenResponseDto},
+        user_preferences::{UserPreferencesRequestDto, UserPreferencesResponseDto},
     },
     http_error::ErrorResponseBody,
 };
+use uuid::Uuid;
 
 pub(crate) async fn register(
     base_ulr: &str,
@@ -166,6 +168,56 @@ pub(crate) async fn check_token(base_ulr: &str, token: &str) -> Result<TokenResp
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?
+            .error,
+    }))
+}
+
+pub(crate) async fn get_user_preferences(
+    base_ulr: &str,
+    user_id: Uuid,
+) -> Result<UserPreferencesResponseDto> {
+    let resp = reqwest::Client::new()
+        .get(base_ulr.to_string() + &format!("{}/{}", endpoints::PREFERENCES, user_id))
+        .send()
+        .await
+        .map_err(Error::Request)?;
+
+    if resp.status().is_success() {
+        return resp.json().await.map_err(Error::Json);
+    }
+
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(Error::Json)?
+            .error,
+    }))
+}
+
+pub(crate) async fn set_user_preferences(
+    base_ulr: &str,
+    user_id: Uuid,
+    user_preferences: UserPreferencesRequestDto,
+) -> Result<UserPreferencesResponseDto> {
+    let resp = reqwest::Client::new()
+        .post(base_ulr.to_string() + &format!("{}/{}", endpoints::PREFERENCES, user_id))
+        .json(&user_preferences)
+        .send()
+        .await
+        .map_err(Error::Request)?;
+
+    if resp.status().is_success() {
+        return resp.json().await.map_err(Error::Json);
+    }
+
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(Error::Json)?
             .error,
     }))
 }

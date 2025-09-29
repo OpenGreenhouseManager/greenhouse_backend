@@ -1,5 +1,5 @@
 use super::{Error, HttpResult};
-use crate::database::schema::preferences::user_id;
+use crate::database::schema::preferences::{user_id, dashboard_preferences, alert_preferences};
 use crate::token;
 use crate::{
     AppState,
@@ -272,7 +272,10 @@ pub(crate) async fn set_preferences(
     Path(user_id_param): Path<Uuid>,
     Json(new_preferences): Json<UserPreferencesRequestDto>,
 ) -> HttpResult<UserPreferencesResponseDto> {
-    let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
+    let mut conn = pool.get().await.map_err(|e| {
+        tracing::error!("Error getting database connection: {:?}", e);
+        Error::DatabaseConnection
+    })?;
 
     diesel::insert_into(preferences)
         .values(Preferences::new(
@@ -280,9 +283,19 @@ pub(crate) async fn set_preferences(
             new_preferences.dashboard_preferences.clone(),
             new_preferences.alert_preferences.clone(),
         ))
+        .on_conflict(user_id)
+        .do_update()
+        .set(
+            (
+                dashboard_preferences.eq(new_preferences.dashboard_preferences.clone()),
+                alert_preferences.eq(new_preferences.alert_preferences.clone()),
+            )
+        )
         .execute(&mut conn)
         .await
-        .map_err(|_| Error::DatabaseConnection)?;
+        .map_err(|e: diesel::result::Error| {
+            tracing::error!("Error setting preferences: {:?}", e);  
+            Error::DatabaseConnection})?;
 
     Ok(UserPreferencesResponseDto {
         dashboard_preferences: new_preferences.dashboard_preferences,
