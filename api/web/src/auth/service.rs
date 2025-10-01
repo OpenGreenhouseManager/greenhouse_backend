@@ -15,7 +15,6 @@ use greenhouse_core::{
     },
     http_error::ErrorResponseBody,
 };
-use uuid::Uuid;
 
 pub(crate) async fn register(
     base_ulr: &str,

@@ -9,7 +9,6 @@ use crate::{
     Config, Pool, database::schema::preferences::dsl::preferences,
     database::schema::users::dsl::users, token::one_time_token::check_one_time_token,
 };
-use axum::extract::Path;
 use axum::response::IntoResponse;
 use axum::{Json, extract::State, response::Response};
 use database::schema::users::{id, login_session, username};
@@ -20,7 +19,7 @@ use greenhouse_core::auth_service_dto::generate_one_time_token::{
 };
 use greenhouse_core::auth_service_dto::token::TokenResponseDto;
 use greenhouse_core::auth_service_dto::user_preferences::{
-    SetPreferencesRequestDto, UserPreferencesRequestDto, UserPreferencesResponseDto,
+    SetPreferencesRequestDto, UserPreferencesResponseDto,
 };
 use greenhouse_core::auth_service_dto::{
     login::{LoginRequestDto, LoginResponseDto},
@@ -28,7 +27,6 @@ use greenhouse_core::auth_service_dto::{
     register_admin::{RegisterAdminRequestDto, RegisterAdminResponseDto},
     token::TokenRequestDto,
 };
-use uuid::Uuid;
 
 #[axum::debug_handler]
 pub(crate) async fn register(
