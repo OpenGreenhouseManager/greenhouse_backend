@@ -1,5 +1,5 @@
 use super::{Error, HttpResult};
-use crate::database::schema::preferences::{user_id, dashboard_preferences, alert_preferences};
+use crate::database::schema::preferences::{alert_preferences, dashboard_preferences, user_id};
 use crate::token;
 use crate::{
     AppState,
@@ -20,7 +20,7 @@ use greenhouse_core::auth_service_dto::generate_one_time_token::{
 };
 use greenhouse_core::auth_service_dto::token::TokenResponseDto;
 use greenhouse_core::auth_service_dto::user_preferences::{
-    UserPreferencesRequestDto, UserPreferencesResponseDto,
+    SetPreferencesRequestDto, UserPreferencesRequestDto, UserPreferencesResponseDto,
 };
 use greenhouse_core::auth_service_dto::{
     login::{LoginRequestDto, LoginResponseDto},
@@ -251,12 +251,26 @@ pub(crate) async fn check_token(
 
 #[axum::debug_handler]
 pub(crate) async fn get_preferences(
-    State(AppState { config: _, pool }): State<AppState>,
-    Path(user_id_param): Path<Uuid>,
+    State(AppState { config, pool }): State<AppState>,
+    Json(token_request): Json<TokenRequestDto>,
 ) -> HttpResult<UserPreferencesResponseDto> {
     let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
+
+    // Extract user info from token
+    let claims = token::user_token::get_claims(&token_request.token, &config.jwt_secret)?;
+
+    let user = users
+        .filter(username.eq(&claims.user_name))
+        .get_result::<User>(&mut conn)
+        .await
+        .map_err(|_| Error::UserNotFound)?;
+
+    if token_request.token != user.login_session {
+        return Err(Error::TokenInvalid.into());
+    }
+
     let pref = preferences
-        .filter(user_id.eq(&user_id_param))
+        .filter(user_id.eq(&user.id))
         .get_result::<Preferences>(&mut conn)
         .await
         .map_err(|_| Error::DatabaseConnection)?;
@@ -268,37 +282,48 @@ pub(crate) async fn get_preferences(
 
 #[axum::debug_handler]
 pub(crate) async fn set_preferences(
-    State(AppState { config: _, pool }): State<AppState>,
-    Path(user_id_param): Path<Uuid>,
-    Json(new_preferences): Json<UserPreferencesRequestDto>,
+    State(AppState { config, pool }): State<AppState>,
+    Json(request): Json<SetPreferencesRequestDto>,
 ) -> HttpResult<UserPreferencesResponseDto> {
     let mut conn = pool.get().await.map_err(|e| {
         tracing::error!("Error getting database connection: {:?}", e);
         Error::DatabaseConnection
     })?;
 
+    // Extract user info from token
+    let claims = token::user_token::get_claims(&request.token, &config.jwt_secret)?;
+
+    let user = users
+        .filter(username.eq(&claims.user_name))
+        .get_result::<User>(&mut conn)
+        .await
+        .map_err(|_| Error::UserNotFound)?;
+
+    if request.token != user.login_session {
+        return Err(Error::TokenInvalid.into());
+    }
+
     diesel::insert_into(preferences)
         .values(Preferences::new(
-            user_id_param,
-            new_preferences.dashboard_preferences.clone(),
-            new_preferences.alert_preferences.clone(),
+            user.id,
+            request.preferences.dashboard_preferences.clone(),
+            request.preferences.alert_preferences.clone(),
         ))
         .on_conflict(user_id)
         .do_update()
-        .set(
-            (
-                dashboard_preferences.eq(new_preferences.dashboard_preferences.clone()),
-                alert_preferences.eq(new_preferences.alert_preferences.clone()),
-            )
-        )
+        .set((
+            dashboard_preferences.eq(request.preferences.dashboard_preferences.clone()),
+            alert_preferences.eq(request.preferences.alert_preferences.clone()),
+        ))
         .execute(&mut conn)
         .await
         .map_err(|e: diesel::result::Error| {
-            tracing::error!("Error setting preferences: {:?}", e);  
-            Error::DatabaseConnection})?;
+            tracing::error!("Error setting preferences: {:?}", e);
+            Error::DatabaseConnection
+        })?;
 
     Ok(UserPreferencesResponseDto {
-        dashboard_preferences: new_preferences.dashboard_preferences,
-        alert_preferences: new_preferences.alert_preferences,
+        dashboard_preferences: request.preferences.dashboard_preferences,
+        alert_preferences: request.preferences.alert_preferences,
     })
 }

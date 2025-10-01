@@ -59,11 +59,11 @@ pub fn app(config: Config, pool: Pool) -> Router {
         .route(endpoints::ADMIN_REGISTER, post(register_admin))
         .route(endpoints::GUEST_REGISTER, post(register_guest))
         .route(
-            &format!("{}/{{user_id}}", endpoints::PREFERENCES),
-            get(get_preferences),
+            &format!("{}/get", endpoints::PREFERENCES),
+            post(get_preferences),
         )
         .route(
-            &format!("{}/{{user_id}}", endpoints::PREFERENCES),
+            &format!("{}/set", endpoints::PREFERENCES),
             post(set_preferences),
         )
         .route(

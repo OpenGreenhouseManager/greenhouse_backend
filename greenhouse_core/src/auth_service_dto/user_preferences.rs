@@ -27,3 +27,15 @@ impl IntoResponse for UserPreferencesResponseDto {
         Json(self).into_response()
     }
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SetPreferencesRequestDto {
+    pub token: String,
+    pub preferences: UserPreferencesRequestDto,
+}
+
+impl IntoResponse for SetPreferencesRequestDto {
+    fn into_response(self) -> Response {
+        Json(self).into_response()
+    }
+}

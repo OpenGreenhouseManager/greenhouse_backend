@@ -9,7 +9,9 @@ use greenhouse_core::{
         login::{LoginRequestDto, LoginResponseDto},
         register::{RegisterRequestDto, RegisterResponseDto},
         token::{TokenRequestDto, TokenResponseDto},
-        user_preferences::{UserPreferencesRequestDto, UserPreferencesResponseDto},
+        user_preferences::{
+            SetPreferencesRequestDto, UserPreferencesRequestDto, UserPreferencesResponseDto,
+        },
     },
     http_error::ErrorResponseBody,
 };
@@ -173,11 +175,17 @@ pub(crate) async fn check_token(base_ulr: &str, token: &str) -> Result<TokenResp
 }
 
 pub(crate) async fn get_user_preferences(
-    base_ulr: &str,
-    user_id: Uuid,
+    base_url: &str,
+    token: &str,
 ) -> Result<UserPreferencesResponseDto> {
+    let token_request = TokenRequestDto {
+        token: token.to_string(),
+        token_type: "Bearer".to_string(),
+    };
+
     let resp = reqwest::Client::new()
-        .get(base_ulr.to_string() + &format!("{}/{}", endpoints::PREFERENCES, user_id))
+        .post(base_url.to_string() + &format!("{}/get", endpoints::PREFERENCES))
+        .json(&token_request)
         .send()
         .await
         .map_err(Error::Request)?;
@@ -191,19 +199,27 @@ pub(crate) async fn get_user_preferences(
         message: resp
             .json::<ErrorResponseBody>()
             .await
-            .map_err(Error::Json)?
+            .map_err(|e| {
+                tracing::error!("Error parsing error response: {:?}", e);
+                Error::Json(e)
+            })?
             .error,
     }))
 }
 
 pub(crate) async fn set_user_preferences(
-    base_ulr: &str,
-    user_id: Uuid,
+    base_url: &str,
+    token: &str,
     user_preferences: UserPreferencesRequestDto,
 ) -> Result<UserPreferencesResponseDto> {
+    let request = SetPreferencesRequestDto {
+        token: token.to_string(),
+        preferences: user_preferences,
+    };
+
     let resp = reqwest::Client::new()
-        .post(base_ulr.to_string() + &format!("{}/{}", endpoints::PREFERENCES, user_id))
-        .json(&user_preferences)
+        .post(base_url.to_string() + &format!("{}/set", endpoints::PREFERENCES))
+        .json(&request)
         .send()
         .await
         .map_err(Error::Request)?;
