@@ -3,17 +3,28 @@ use axum::{
     Json, Router,
     extract::State,
     response::{IntoResponse, Response},
-    routing::post,
+    routing::{get, post},
 };
-use greenhouse_core::auth_service_dto::{login::LoginRequestDto, register::RegisterRequestDto};
+use greenhouse_core::auth_service_dto::{
+    login::LoginRequestDto,
+    register::RegisterRequestDto,
+    user_preferences::{UserPreferencesRequestDto, UserPreferencesResponseDto},
+};
 use tower_cookies::{Cookie, Cookies, cookie::SameSite};
 
 use super::{AUTH_TOKEN, service};
 
-pub(crate) fn routes(state: AppState) -> Router {
+pub(crate) fn auth_routes(state: AppState) -> Router {
     Router::new()
         .route("/api/register", post(api_register_handler))
         .route("/api/login", post(api_login_handler))
+        .with_state(state)
+}
+
+pub(crate) fn user_routes(state: AppState) -> Router {
+    Router::new()
+        .route("/preferences", get(api_get_user_preferences_handler))
+        .route("/preferences", post(api_set_user_preferences_handler))
         .with_state(state)
 }
 
@@ -69,4 +80,39 @@ pub(crate) async fn api_login_handler(
             Err(e.into())
         }
     }
+}
+
+#[axum::debug_handler]
+pub(crate) async fn api_get_user_preferences_handler(
+    State(AppState { config }): State<AppState>,
+    cookies: Cookies,
+) -> HttpResult<UserPreferencesResponseDto> {
+    let token = cookies
+        .get(AUTH_TOKEN)
+        .map(|c| c.value().to_string())
+        .ok_or(crate::auth::Error::CookieNotFound)?;
+
+    let resp =
+        service::get_user_preferences(&config.service_addresses.auth_service, &token).await?;
+    Ok(resp)
+}
+
+#[axum::debug_handler]
+pub(crate) async fn api_set_user_preferences_handler(
+    State(AppState { config }): State<AppState>,
+    cookies: Cookies,
+    Json(user_preferences): Json<UserPreferencesRequestDto>,
+) -> HttpResult<UserPreferencesResponseDto> {
+    let token = cookies
+        .get(AUTH_TOKEN)
+        .map(|c| c.value().to_string())
+        .ok_or(crate::auth::Error::CookieNotFound)?;
+
+    let resp = service::set_user_preferences(
+        &config.service_addresses.auth_service,
+        &token,
+        user_preferences,
+    )
+    .await?;
+    Ok(resp)
 }

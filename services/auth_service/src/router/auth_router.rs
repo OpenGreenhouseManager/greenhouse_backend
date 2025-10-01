@@ -1,11 +1,13 @@
 use super::{Error, HttpResult};
+use crate::database::schema::preferences::{alert_preferences, dashboard_preferences, user_id};
 use crate::token;
 use crate::{
     AppState,
-    database::{self, models::User},
+    database::{self, models::Preferences, models::User},
 };
 use crate::{
-    Config, Pool, database::schema::users::dsl::users, token::one_time_token::check_one_time_token,
+    Config, Pool, database::schema::preferences::dsl::preferences,
+    database::schema::users::dsl::users, token::one_time_token::check_one_time_token,
 };
 use axum::response::IntoResponse;
 use axum::{Json, extract::State, response::Response};
@@ -16,6 +18,9 @@ use greenhouse_core::auth_service_dto::generate_one_time_token::{
     GenerateOneTimeTokenRequestDto, GenerateOneTimeTokenResponseDto,
 };
 use greenhouse_core::auth_service_dto::token::TokenResponseDto;
+use greenhouse_core::auth_service_dto::user_preferences::{
+    SetPreferencesRequestDto, UserPreferencesResponseDto,
+};
 use greenhouse_core::auth_service_dto::{
     login::{LoginRequestDto, LoginResponseDto},
     register::{RegisterRequestDto, RegisterResponseDto},
@@ -240,4 +245,83 @@ pub(crate) async fn check_token(
     }
 
     Ok(Json(TokenResponseDto { role: user.role }).into_response())
+}
+
+#[axum::debug_handler]
+pub(crate) async fn get_preferences(
+    State(AppState { config, pool }): State<AppState>,
+    Json(token_request): Json<TokenRequestDto>,
+) -> HttpResult<UserPreferencesResponseDto> {
+    let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
+
+    // Extract user info from token
+    let claims = token::user_token::get_claims(&token_request.token, &config.jwt_secret)?;
+
+    let user = users
+        .filter(username.eq(&claims.user_name))
+        .get_result::<User>(&mut conn)
+        .await
+        .map_err(|_| Error::UserNotFound)?;
+
+    if token_request.token != user.login_session {
+        return Err(Error::TokenInvalid.into());
+    }
+
+    let pref = preferences
+        .filter(user_id.eq(&user.id))
+        .get_result::<Preferences>(&mut conn)
+        .await
+        .map_err(|_| Error::DatabaseConnection)?;
+    Ok(UserPreferencesResponseDto {
+        dashboard_preferences: pref.dashboard_preferences,
+        alert_preferences: pref.alert_preferences,
+    })
+}
+
+#[axum::debug_handler]
+pub(crate) async fn set_preferences(
+    State(AppState { config, pool }): State<AppState>,
+    Json(request): Json<SetPreferencesRequestDto>,
+) -> HttpResult<UserPreferencesResponseDto> {
+    let mut conn = pool.get().await.map_err(|e| {
+        tracing::error!("Error getting database connection: {:?}", e);
+        Error::DatabaseConnection
+    })?;
+
+    // Extract user info from token
+    let claims = token::user_token::get_claims(&request.token, &config.jwt_secret)?;
+
+    let user = users
+        .filter(username.eq(&claims.user_name))
+        .get_result::<User>(&mut conn)
+        .await
+        .map_err(|_| Error::UserNotFound)?;
+
+    if request.token != user.login_session {
+        return Err(Error::TokenInvalid.into());
+    }
+
+    diesel::insert_into(preferences)
+        .values(Preferences::new(
+            user.id,
+            request.preferences.dashboard_preferences.clone(),
+            request.preferences.alert_preferences.clone(),
+        ))
+        .on_conflict(user_id)
+        .do_update()
+        .set((
+            dashboard_preferences.eq(request.preferences.dashboard_preferences.clone()),
+            alert_preferences.eq(request.preferences.alert_preferences.clone()),
+        ))
+        .execute(&mut conn)
+        .await
+        .map_err(|e: diesel::result::Error| {
+            tracing::error!("Error setting preferences: {:?}", e);
+            Error::DatabaseConnection
+        })?;
+
+    Ok(UserPreferencesResponseDto {
+        dashboard_preferences: request.preferences.dashboard_preferences,
+        alert_preferences: request.preferences.alert_preferences,
+    })
 }

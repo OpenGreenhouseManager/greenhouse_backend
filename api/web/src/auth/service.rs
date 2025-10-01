@@ -9,6 +9,9 @@ use greenhouse_core::{
         login::{LoginRequestDto, LoginResponseDto},
         register::{RegisterRequestDto, RegisterResponseDto},
         token::{TokenRequestDto, TokenResponseDto},
+        user_preferences::{
+            SetPreferencesRequestDto, UserPreferencesRequestDto, UserPreferencesResponseDto,
+        },
     },
     http_error::ErrorResponseBody,
 };
@@ -166,6 +169,70 @@ pub(crate) async fn check_token(base_ulr: &str, token: &str) -> Result<TokenResp
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?
+            .error,
+    }))
+}
+
+pub(crate) async fn get_user_preferences(
+    base_url: &str,
+    token: &str,
+) -> Result<UserPreferencesResponseDto> {
+    let token_request = TokenRequestDto {
+        token: token.to_string(),
+        token_type: "Bearer".to_string(),
+    };
+
+    let resp = reqwest::Client::new()
+        .post(base_url.to_string() + &format!("{}/get", endpoints::PREFERENCES))
+        .json(&token_request)
+        .send()
+        .await
+        .map_err(Error::Request)?;
+
+    if resp.status().is_success() {
+        return resp.json().await.map_err(Error::Json);
+    }
+
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                tracing::error!("Error parsing error response: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
+    }))
+}
+
+pub(crate) async fn set_user_preferences(
+    base_url: &str,
+    token: &str,
+    user_preferences: UserPreferencesRequestDto,
+) -> Result<UserPreferencesResponseDto> {
+    let request = SetPreferencesRequestDto {
+        token: token.to_string(),
+        preferences: user_preferences,
+    };
+
+    let resp = reqwest::Client::new()
+        .post(base_url.to_string() + &format!("{}/set", endpoints::PREFERENCES))
+        .json(&request)
+        .send()
+        .await
+        .map_err(Error::Request)?;
+
+    if resp.status().is_success() {
+        return resp.json().await.map_err(Error::Json);
+    }
+
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(Error::Json)?
             .error,
     }))
 }
