@@ -7,10 +7,7 @@ use axum::{
     routing::{get, post, put},
 };
 use greenhouse_core::device_service_dto::{
-    endpoints::{ACTIVATE, CONFIG, STATUS},
-    post_device::PostDeviceDtoRequest,
-    put_device::PutDeviceDtoRequest,
-    query::PromQuery,
+    endpoints::{ACTIVATE, CONFIG, STATUS}, get_device::DeviceResponseDto, post_device::PostDeviceDtoRequest, put_device::PutDeviceDtoRequest, query::PromQuery
 };
 use reqwest::{StatusCode, header};
 use uuid::Uuid;
@@ -41,9 +38,9 @@ pub(crate) async fn create_device(
 #[axum::debug_handler]
 pub(crate) async fn get_devices(
     State(AppState { config }): State<AppState>,
-) -> HttpResult<impl IntoResponse> {
-    let devices = service::get_devices(&config.service_addresses.device_service).await?;
-    Ok(Json(devices))
+) -> HttpResult<Vec<DeviceResponseDto>> {
+    let devices: Vec<greenhouse_core::device_service_dto::get_device::DeviceResponseDto> = service::get_devices(&config.service_addresses.device_service).await?;
+    Ok(devices.into())
 }
 
 #[axum::debug_handler]

@@ -1,8 +1,8 @@
 use axum::{
-    Json,
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use greenhouse_macro::IntoResponse;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
@@ -51,7 +51,7 @@ macro_rules! impl_http_error_from {
 }
 
 /// The JSON structure for error responses
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, IntoResponse)]
 pub struct ErrorResponseBody {
     pub error: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -80,6 +80,6 @@ where
             "HTTP error response"
         );
 
-        (status_code, Json(body)).into_response()
+        (status_code, body).into_response()
     }
 }

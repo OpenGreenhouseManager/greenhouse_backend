@@ -1,6 +1,7 @@
+use greenhouse_macro::IntoResponse;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, IntoResponse)]
 pub struct DeviceResponseDto {
     pub id: String,
     pub name: String,
