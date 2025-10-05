@@ -6,7 +6,7 @@ use axum::{
 };
 use greenhouse_core::data_storage_service_dto::alert_dto::{
     alert::{AlertDto, AlertsDto},
-    get_aggrigated_alert::{AggrigatedAlertDto, AgrigatedAlertsDto},
+    get_aggrigated_alert::{AggrigatedAlertDto, AggrigatedAlertsDto},
     post_create_alert::CreateAlertDto,
     query::{AlertQuery, IntervalQuery},
 };
@@ -36,7 +36,7 @@ async fn filter(
 async fn alert_subset(
     State(AppState { config: _, pool }): State<AppState>,
     Query(query): Query<IntervalQuery>,
-) -> HttpResult<AgrigatedAlertsDto> {
+) -> HttpResult<AggrigatedAlertsDto> {
     let a = Alert::aggrigate(query, &pool)
         .await?
         .into_iter()

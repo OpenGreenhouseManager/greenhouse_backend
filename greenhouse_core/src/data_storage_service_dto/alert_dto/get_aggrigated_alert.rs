@@ -14,11 +14,11 @@ pub struct AggrigatedAlertDto {
 }
 
 #[derive(Serialize, Deserialize, Debug, IntoJsonResponse)]
-pub struct AgrigatedAlertsDto {
+pub struct AggrigatedAlertsDto {
     pub alerts: Vec<AggrigatedAlertDto>,
 }
 
-impl From<Vec<AggrigatedAlertDto>> for AgrigatedAlertsDto {
+impl From<Vec<AggrigatedAlertDto>> for AggrigatedAlertsDto {
     fn from(alerts: Vec<AggrigatedAlertDto>) -> Self {
         Self { alerts }
     }
