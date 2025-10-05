@@ -53,7 +53,7 @@ pub fn authenticate(args: TokenStream, input: TokenStream) -> TokenStream {
     output.into()
 }
 
-#[proc_macro_derive(IntoResponse)]
+#[proc_macro_derive(IntoJsonResponse)]
 pub fn into_response_derive(input: TokenStream) -> TokenStream {
     // Construct a representation of Rust code as a syntax tree
     // that we can manipulate.
@@ -66,7 +66,7 @@ pub fn into_response_derive(input: TokenStream) -> TokenStream {
 fn impl_into_response_macro(ast: &syn::DeriveInput) -> TokenStream {
     let name = &ast.ident;
     let generated = quote! {
-        
+
         impl axum::response::IntoResponse for #name {
             fn into_response(self) -> axum::response::Response {
                 axum::Json(self).into_response()

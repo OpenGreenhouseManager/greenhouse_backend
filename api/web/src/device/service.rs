@@ -1,7 +1,12 @@
 use greenhouse_core::{
     device_service_dto::{
-        endpoints, get_device::DeviceResponseDto, get_timeseries::TimeseriesDto,
-        post_device::PostDeviceDtoRequest, put_device::PutDeviceDtoRequest, query::PromQuery,
+        endpoints,
+        get_device::{DeviceResponseDto, DevicesResponseDto},
+        get_timeseries::GetTimeseriesDto,
+        operations::OperationsDto,
+        post_device::PostDeviceDtoRequest,
+        put_device::PutDeviceDtoRequest,
+        query::PromQuery,
     },
     http_error::ErrorResponseBody,
 };
@@ -222,7 +227,7 @@ pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String
     }))
 }
 
-pub(crate) async fn get_devices(base_url: &str) -> Result<Vec<DeviceResponseDto>> {
+pub(crate) async fn get_devices(base_url: &str) -> Result<DevicesResponseDto> {
     let resp = reqwest::Client::new()
         .get(base_url.to_string())
         .send()
@@ -288,7 +293,7 @@ pub(crate) async fn get_device_timeseries(
     base_url: &str,
     id: Uuid,
     query: PromQuery,
-) -> Result<Vec<TimeseriesDto>> {
+) -> Result<GetTimeseriesDto> {
     let resp = reqwest::Client::new()
         .get(base_url.to_string() + "/" + &id.to_string() + "/timeseries")
         .query(&query)
@@ -321,7 +326,7 @@ pub(crate) async fn get_device_timeseries(
     }))
 }
 
-pub(crate) async fn get_device_operations(base_url: &str, id: Uuid) -> Result<Vec<String>> {
+pub(crate) async fn get_device_operations(base_url: &str, id: Uuid) -> Result<OperationsDto> {
     let resp = reqwest::Client::new()
         .get(base_url.to_string() + "/" + &id.to_string() + "/options")
         .send()

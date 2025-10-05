@@ -56,39 +56,6 @@ impl Alert {
         Ok(alert)
     }
 
-    //pub(crate) async fn find_by_id(id: Uuid, pool: &Pool) -> Result<Self> {
-    //    let mut conn = pool.get().await.map_err(|e| {
-    //        sentry::capture_error(&e);
-    //        Error::DatabaseConnection
-    //    })?;
-    //    alert::table
-    //        .filter(alert::id.eq(id))
-    //        .first(&mut conn)
-    //        .await
-    //        .map_err(|e| {
-    //            sentry::capture_error(&e);
-    //            Error::FindError
-    //        })
-    //}
-    //
-    //pub(crate) async fn find_by_data_source_id(
-    //    datasource_id: Uuid,
-    //    pool: &Pool,
-    //) -> Result<Vec<Self>> {
-    //    let mut conn = pool.get().await.map_err(|e| {
-    //        sentry::capture_error(&e);
-    //        Error::DatabaseConnection
-    //    })?;
-    //    alert::table
-    //        .filter(alert::datasource_id.eq(datasource_id))
-    //        .load(&mut conn)
-    //        .await
-    //        .map_err(|e| {
-    //            sentry::capture_error(&e);
-    //            Error::FindError
-    //        })
-    //}
-
     pub(crate) async fn query(alert_query: AlertQuery, pool: &Pool) -> Result<Vec<Self>> {
         let mut conn = pool.get().await.map_err(|e| {
             sentry::capture_error(&e);

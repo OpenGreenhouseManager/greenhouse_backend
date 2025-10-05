@@ -1,8 +1,5 @@
-use axum::{
-    http::StatusCode,
-    response::{IntoResponse, Response},
-};
-use greenhouse_macro::IntoResponse;
+use axum::{http::StatusCode, response::Response};
+use greenhouse_macro::IntoJsonResponse;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
@@ -51,14 +48,14 @@ macro_rules! impl_http_error_from {
 }
 
 /// The JSON structure for error responses
-#[derive(Serialize, Deserialize, IntoResponse)]
+#[derive(Serialize, Deserialize, IntoJsonResponse)]
 pub struct ErrorResponseBody {
     pub error: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     context: Option<serde_json::Value>,
 }
 
-impl<E> IntoResponse for HttpErrorResponse<E>
+impl<E> axum::response::IntoResponse for HttpErrorResponse<E>
 where
     E: HttpErrorMapping + fmt::Display + fmt::Debug,
 {

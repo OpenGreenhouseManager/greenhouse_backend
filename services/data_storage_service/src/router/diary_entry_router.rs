@@ -1,7 +1,6 @@
 use axum::{
     Json, Router,
     extract::{Path, State},
-    response::IntoResponse,
     routing::{get, post, put},
 };
 use chrono::{DateTime, Utc};
@@ -38,7 +37,7 @@ pub(crate) async fn update_diary_entry(
     State(AppState { config: _, pool }): State<AppState>,
     Path(id): Path<Uuid>,
     Json(update): Json<PutDiaryEntryDtoRequest>,
-) -> HttpResult<impl IntoResponse> {
+) -> HttpResult<DiaryEntryResponseDto> {
     let mut entry = DiaryEntry::find_by_id(id, &pool).await?;
     entry.title = update.title.clone();
     entry.entry_date = update.date.parse::<DateTime<Utc>>().map_err(|e| {
@@ -55,15 +54,14 @@ pub(crate) async fn update_diary_entry(
 
     entry.content = update.content.clone();
     entry.flush(&pool).await?;
-    let response: DiaryEntryResponseDto = entry.into();
-    Ok(Json(response))
+    Ok(entry.into())
 }
 
 #[axum::debug_handler]
 pub(crate) async fn create_diary_entry(
     State(AppState { config: _, pool }): State<AppState>,
     Json(entry): Json<PostDiaryEntryDtoRequest>,
-) -> HttpResult<impl IntoResponse> {
+) -> HttpResult<DiaryEntryResponseDto> {
     let mut entry = DiaryEntry::new(
         entry.date.parse::<DateTime<Utc>>().map_err(|e| {
             sentry::configure_scope(|scope| {
@@ -80,25 +78,22 @@ pub(crate) async fn create_diary_entry(
         &entry.content,
     );
     entry.flush(&pool).await?;
-    let response: DiaryEntryResponseDto = entry.into();
-    Ok(Json(response))
+    Ok(entry.into())
 }
 
 #[axum::debug_handler]
 pub(crate) async fn get_diary_entry(
     State(AppState { config: _, pool }): State<AppState>,
     Path(id): Path<Uuid>,
-) -> HttpResult<impl IntoResponse> {
-    let entry = DiaryEntry::find_by_id(id, &pool).await?;
-    let response: DiaryEntryResponseDto = entry.into();
-    Ok(Json(response))
+) -> HttpResult<DiaryEntryResponseDto> {
+    Ok(DiaryEntry::find_by_id(id, &pool).await?.into())
 }
 
 #[axum::debug_handler]
 pub(crate) async fn get_diary(
     State(AppState { config: _, pool }): State<AppState>,
     Path(Params { start, end }): Path<Params>,
-) -> HttpResult<impl IntoResponse> {
+) -> HttpResult<GetDiaryResponseDto> {
     let start = start.parse::<DateTime<Utc>>().map_err(|e| {
         sentry::configure_scope(|scope| {
             let mut map = std::collections::BTreeMap::new();
@@ -122,8 +117,7 @@ pub(crate) async fn get_diary(
         Error::TimeError
     })?;
     let entries = DiaryEntry::find_by_date_range(start, end, &pool).await?;
-    let response: GetDiaryResponseDto = GetDiaryResponseDto {
+    Ok(GetDiaryResponseDto {
         entries: entries.into_iter().map(|entry| entry.into()).collect(),
-    };
-    Ok(Json(response))
+    })
 }

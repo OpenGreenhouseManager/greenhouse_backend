@@ -1,6 +1,7 @@
+use greenhouse_macro::IntoJsonResponse;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, IntoJsonResponse)]
 pub struct DiaryEntryResponseDto {
     pub id: String,
     pub date: String,
