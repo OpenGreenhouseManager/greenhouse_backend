@@ -1,8 +1,8 @@
 use greenhouse_core::{
     data_storage_service_dto::alert_dto::{
-        alert::AlertDto,
+        alert::AlertsDto,
         endpoints,
-        get_aggrigated_alert::AlertAggrigatedDto,
+        get_aggrigated_alert::AggrigatedAlertsDto,
         query::{AlertQuery, IntervalQuery},
     },
     http_error::ErrorResponseBody,
@@ -13,7 +13,7 @@ use crate::{
     helper::error::ApiError,
 };
 
-pub(crate) async fn get_filtered_alert(base_ulr: &str, query: AlertQuery) -> Result<Vec<AlertDto>> {
+pub(crate) async fn get_filtered_alert(base_ulr: &str, query: AlertQuery) -> Result<AlertsDto> {
     let resp = reqwest::Client::new()
         .get(base_ulr.to_string() + endpoints::ALERT + "/filter")
         .query(&query)
@@ -58,7 +58,7 @@ pub(crate) async fn get_filtered_alert(base_ulr: &str, query: AlertQuery) -> Res
 pub(crate) async fn get_alert_subset(
     base_ulr: &str,
     query: IntervalQuery,
-) -> Result<Vec<AlertAggrigatedDto>> {
+) -> Result<AggrigatedAlertsDto> {
     let resp = reqwest::Client::new()
         .get(base_ulr.to_string() + endpoints::ALERT)
         .query(&query)

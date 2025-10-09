@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
+use greenhouse_macro::IntoJsonResponse;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, IntoJsonResponse)]
 pub struct GetTimeseriesDto {
     pub timeseries: Vec<TimeseriesDto>,
 }
@@ -19,4 +20,10 @@ pub enum Type {
     Boolean(bool),
     Object(HashMap<String, Type>),
     Array(Vec<Type>),
+}
+
+impl From<Vec<TimeseriesDto>> for GetTimeseriesDto {
+    fn from(timeseries: Vec<TimeseriesDto>) -> Self {
+        Self { timeseries }
+    }
 }

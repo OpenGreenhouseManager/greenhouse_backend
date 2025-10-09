@@ -20,7 +20,9 @@ use axum::{
 use greenhouse_core::{
     device_service_dto::{
         endpoints::{ACTIVATE, CONFIG, STATUS},
-        get_device::DeviceResponseDto,
+        get_device::{DeviceResponseDto, DevicesResponseDto},
+        get_timeseries::GetTimeseriesDto,
+        operations::OperationsDto,
         post_device::PostDeviceDtoRequest,
         put_device::PutDeviceDtoRequest,
         query::PromQuery,
@@ -48,7 +50,7 @@ pub(crate) async fn update_device(
     State(AppState { config: _, pool }): State<AppState>,
     Path(id): Path<Uuid>,
     Json(update): Json<PutDeviceDtoRequest>,
-) -> HttpResult<impl IntoResponse> {
+) -> HttpResult<DeviceResponseDto> {
     let mut entry = Device::find_by_id(id, &pool).await?;
     entry.name = update.name.clone();
     entry.description = update.description.clone();
@@ -57,15 +59,14 @@ pub(crate) async fn update_device(
     entry.scraping = update.scraping;
     entry.flush(&pool).await?;
 
-    let response: DeviceResponseDto = entry.into();
-    Ok(Json(response))
+    Ok(entry.into())
 }
 
 #[axum::debug_handler]
 pub(crate) async fn create_device(
     State(AppState { config, pool }): State<AppState>,
     Json(entry): Json<PostDeviceDtoRequest>,
-) -> HttpResult<impl IntoResponse> {
+) -> HttpResult<DeviceResponseDto> {
     let mut device = Device::new(
         &entry.name,
         &entry.description,
@@ -84,18 +85,15 @@ pub(crate) async fn create_device(
     )
     .await;
 
-    let response: DeviceResponseDto = device.into();
-    Ok(Json(response))
+    Ok(device.into())
 }
 
 #[axum::debug_handler]
 pub(crate) async fn get_device(
     State(AppState { config: _, pool }): State<AppState>,
     Path(id): Path<Uuid>,
-) -> HttpResult<impl IntoResponse> {
-    let entry = Device::find_by_id(id, &pool).await?;
-    let response: DeviceResponseDto = entry.into();
-    Ok(Json(response))
+) -> HttpResult<DeviceResponseDto> {
+    Ok(Device::find_by_id(id, &pool).await?.into())
 }
 
 #[axum::debug_handler]
@@ -135,17 +133,20 @@ pub(crate) async fn get_device_status(
 #[axum::debug_handler]
 pub(crate) async fn get_devices(
     State(AppState { config: _, pool }): State<AppState>,
-) -> HttpResult<impl IntoResponse> {
+) -> HttpResult<DevicesResponseDto> {
     let entries = Device::all(&pool).await?;
-    let response: Vec<DeviceResponseDto> = entries.into_iter().map(|entry| entry.into()).collect();
-    Ok(Json(response))
+    Ok(entries
+        .into_iter()
+        .map(|entry| entry.into())
+        .collect::<Vec<DeviceResponseDto>>()
+        .into())
 }
 
 #[axum::debug_handler]
 pub(crate) async fn activate_device(
     State(AppState { config, pool }): State<AppState>,
     Path(id): Path<Uuid>,
-) -> HttpResult<impl IntoResponse> {
+) -> HttpResult<StatusCode> {
     let device = Device::find_by_id(id, &pool).await?;
     let _ = request_device_activate(
         &device.address,
@@ -155,7 +156,7 @@ pub(crate) async fn activate_device(
         },
     )
     .await?;
-    Ok(StatusCode::OK.into_response())
+    Ok(StatusCode::OK)
 }
 
 #[axum::debug_handler]
@@ -163,16 +164,13 @@ pub(crate) async fn get_device_timeseries(
     State(AppState { config, pool: _ }): State<AppState>,
     Path(id): Path<Uuid>,
     Query(query): Query<PromQuery>,
-) -> HttpResult<impl IntoResponse> {
-    let response =
-        get_device_query_timeseries(&config.prometheus_url, &id.to_string(), query).await?;
-    Ok(Json(response))
+) -> HttpResult<GetTimeseriesDto> {
+    Ok(get_device_query_timeseries(&config.prometheus_url, &id.to_string(), query).await?)
 }
 
 async fn get_device_query_operations(
     State(AppState { config, pool: _ }): State<AppState>,
     Path(id): Path<Uuid>,
-) -> HttpResult<impl IntoResponse> {
-    let response = request_device_query_operations(&config.prometheus_url, &id.to_string()).await?;
-    Ok(Json(response))
+) -> HttpResult<OperationsDto> {
+    Ok(request_device_query_operations(&config.prometheus_url, &id.to_string()).await?)
 }

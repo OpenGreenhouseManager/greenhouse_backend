@@ -1,6 +1,7 @@
 use super::error::{Error, Result};
 use greenhouse_core::device_service_dto::{
-    get_timeseries::{TimeseriesDto, Type},
+    get_timeseries::{GetTimeseriesDto, TimeseriesDto, Type},
+    operations::OperationsDto,
     query::PromQuery,
 };
 use reqwest::Client;
@@ -52,7 +53,7 @@ pub(crate) async fn get_device_query_timeseries(
     prometheus_url: &str,
     id: &str,
     query: PromQuery,
-) -> Result<Vec<TimeseriesDto>> {
+) -> Result<GetTimeseriesDto> {
     let client = Client::new();
 
     // Example metric name: scrape_service_duration_<uuid>_periodic_alert_4
@@ -106,25 +107,27 @@ pub(crate) async fn get_device_query_timeseries(
             Err(Error::PrometheusNotImplemented)
         }
         "number" => {
-            let timeseries: Vec<TimeseriesDto> = resp.data.result[0]
+            let timeseries = resp.data.result[0]
                 .values
                 .iter()
                 .map(|result| TimeseriesDto {
                     timestamp: result.0,
                     value: Type::Number(result.1.parse::<f64>().unwrap()),
                 })
-                .collect();
+                .collect::<Vec<TimeseriesDto>>()
+                .into();
             Ok(timeseries)
         }
         "boolean" => {
-            let timeseries: Vec<TimeseriesDto> = resp.data.result[0]
+            let timeseries = resp.data.result[0]
                 .values
                 .iter()
                 .map(|result| TimeseriesDto {
                     timestamp: result.0,
                     value: Type::Boolean(result.1.parse::<bool>().unwrap()),
                 })
-                .collect();
+                .collect::<Vec<TimeseriesDto>>()
+                .into();
             Ok(timeseries)
         }
         "object" => {
@@ -138,11 +141,10 @@ pub(crate) async fn get_device_query_timeseries(
     }
 }
 
-// http://192.168.178.96:9090/api/v1/series?match[]={__name__=~"scrape_service_duration_b7091cb8_01f8_4099_b138_5ee6771c5f03_.*"}
 pub(crate) async fn request_device_query_operations(
     prometheus_url: &str,
     id: &str,
-) -> Result<Vec<String>> {
+) -> Result<OperationsDto> {
     let client = Client::new();
     let id = id.to_string().replace("-", "_");
     let url_prefix = "{__name__=~'";
@@ -171,5 +173,6 @@ pub(crate) async fn request_device_query_operations(
         })
         .collect::<HashSet<_>>()
         .into_iter()
-        .collect())
+        .collect::<Vec<String>>()
+        .into())
 }

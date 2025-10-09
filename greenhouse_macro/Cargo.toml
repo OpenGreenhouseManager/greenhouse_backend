@@ -11,3 +11,5 @@ quote = "1"
 syn = { version = "1.0.109", features = ["full"] }
 proc-macro2 = "1"
 proc_macro_tools = "0.1.17"
+
+axum = { workspace = true}
