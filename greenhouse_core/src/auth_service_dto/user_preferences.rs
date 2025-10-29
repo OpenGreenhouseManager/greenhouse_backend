@@ -1,7 +1,3 @@
-use axum::{
-    Json,
-    response::{IntoResponse, Response},
-};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -10,9 +6,10 @@ pub struct UserPreferencesRequestDto {
     pub alert_preferences: serde_json::Value,
 }
 
-impl IntoResponse for UserPreferencesRequestDto {
-    fn into_response(self) -> Response {
-        Json(self).into_response()
+#[cfg(feature = "error_handling")]
+impl axum::response::IntoResponse for UserPreferencesRequestDto {
+    fn into_response(self) -> axum::response::Response {
+        axum::Json(self).into_response()
     }
 }
 
@@ -22,9 +19,10 @@ pub struct UserPreferencesResponseDto {
     pub alert_preferences: serde_json::Value,
 }
 
-impl IntoResponse for UserPreferencesResponseDto {
-    fn into_response(self) -> Response {
-        Json(self).into_response()
+#[cfg(feature = "error_handling")]
+impl axum::response::IntoResponse for UserPreferencesResponseDto {
+    fn into_response(self) -> axum::response::Response {
+        axum::Json(self).into_response()
     }
 }
 
@@ -34,8 +32,9 @@ pub struct SetPreferencesRequestDto {
     pub preferences: UserPreferencesRequestDto,
 }
 
-impl IntoResponse for SetPreferencesRequestDto {
-    fn into_response(self) -> Response {
-        Json(self).into_response()
+#[cfg(feature = "error_handling")]
+impl axum::response::IntoResponse for SetPreferencesRequestDto {
+    fn into_response(self) -> axum::response::Response {
+        axum::Json(self).into_response()
     }
 }

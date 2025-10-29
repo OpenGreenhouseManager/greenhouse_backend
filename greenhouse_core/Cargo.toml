@@ -23,12 +23,27 @@ tracing = { workspace = true, optional = true }
 futures = { workspace = true }
 
 [features]
-default = ["api_web_dto", "api_script_dto", "auth_service_dto", "smart_device_dto", "smart_device_interface", "data_storage_service_dto", "device_service_dto", "error_handling", "scripting_service_dto"]
+default = [
+    "api_web_dto",
+    "api_script_dto",
+    "auth_service_dto",
+    "smart_device_dto",
+    # Keep the generic smart_device_interface available by default (no Axum)
+    "smart_device_interface",
+    "data_storage_service_dto",
+    "device_service_dto",
+    # Do NOT enable error_handling by default (pulls in Axum)
+    # "error_handling",
+    "scripting_service_dto",
+]
 api_web_dto = []
 api_script_dto = []
 auth_service_dto = []
 smart_device_dto = []
-smart_device_interface = ["smart_device_dto", "dep:axum", "dep:tracing"]
+# Generic smart device interface (no Axum dependency)
+smart_device_interface = ["smart_device_dto"]
+# Axum adapter for the smart device interface
+smart_device_interface_axum = ["smart_device_interface", "dep:axum", "dep:tracing"]
 data_storage_service_dto = []
 device_service_dto =[]
 error_handling = ["dep:axum", "dep:tracing"]

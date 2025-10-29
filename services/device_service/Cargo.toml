@@ -8,7 +8,7 @@ axum = { workspace = true, features = ["tracing"]}
 bb8 = { workspace = true }
 diesel =  { workspace = true, features = [ "uuid", "postgres" ] }
 diesel-async =  { workspace = true }
-greenhouse_core = { workspace = true, features = ["auth_service_dto"] }
+greenhouse_core = { workspace = true, features = ["auth_service_dto", "error_handling"] }
 serde = { workspace = true }
 serde_json ={ workspace = true }
 serde_yaml = { workspace = true }

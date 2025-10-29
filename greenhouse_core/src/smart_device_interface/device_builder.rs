@@ -4,7 +4,6 @@ use super::config::{
 };
 use crate::smart_device_dto::Type;
 use crate::smart_device_dto::{config::ConfigRequestDto, status::DeviceStatusResponseDto};
-use axum::http::StatusCode;
 use futures::future::BoxFuture;
 use serde::{Serialize, de::DeserializeOwned};
 use std::future::Future;
@@ -14,8 +13,17 @@ use std::sync::{Arc, RwLock};
 pub trait ReadFuture: Future<Output = Type> + Send + 'static {}
 impl<T> ReadFuture for T where T: Future<Output = Type> + Send + 'static {}
 
-pub trait WriteFuture: Future<Output = StatusCode> + Send + 'static {}
-impl<T> WriteFuture for T where T: Future<Output = StatusCode> + Send + 'static {}
+// Generic write result independent of HTTP/Axum
+#[derive(Debug, Clone, Copy)]
+pub enum WriteError {
+    BadRequest,
+    InternalError,
+}
+
+pub type WriteResult = core::result::Result<(), WriteError>;
+
+pub trait WriteFuture: Future<Output = WriteResult> + Send + 'static {}
+impl<T> WriteFuture for T where T: Future<Output = WriteResult> + Send + 'static {}
 
 pub trait StatusFuture: Future<Output = DeviceStatusResponseDto> + Send + 'static {}
 impl<T> StatusFuture for T where T: Future<Output = DeviceStatusResponseDto> + Send + 'static {}
@@ -84,7 +92,7 @@ where
 
 type ReadHandler<T> = Option<Arc<dyn Fn(Arc<Config<T>>) -> BoxFuture<'static, Type> + Send + Sync>>;
 type WriteHandler<T> =
-    Option<Arc<dyn Fn(Type, Arc<Config<T>>) -> BoxFuture<'static, StatusCode> + Send + Sync>>;
+    Option<Arc<dyn Fn(Type, Arc<Config<T>>) -> BoxFuture<'static, WriteResult> + Send + Sync>>;
 type StatusHandler<T> =
     Arc<dyn Fn(Arc<Config<T>>) -> BoxFuture<'static, DeviceStatusResponseDto> + Send + Sync>;
 type ConfigInterceptorHandler<T> =

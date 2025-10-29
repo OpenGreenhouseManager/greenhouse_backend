@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use axum::http::StatusCode;
 use greenhouse_core::{
     data_storage_service_dto::alert_dto::alert::Severity,
     smart_device_dto::{
@@ -12,7 +11,7 @@ use greenhouse_core::{
         config::{
             Config, Mode, TypeOptionDto, read_config_file_with_path, update_config_file_with_path,
         },
-        device_builder::DeviceBuilder,
+        device_builder::{DeviceBuilder, WriteError, WriteResult},
         device_service::{AlertCreation, trigger_alert},
         hybrid_device::init_hybrid_router,
     },
@@ -84,10 +83,10 @@ async fn main() {
     axum::serve(listener, router).await.unwrap();
 }
 
-async fn write_handler(data: Type, config: Arc<Config<ExampleDeviceConfig>>) -> StatusCode {
+async fn write_handler(data: Type, config: Arc<Config<ExampleDeviceConfig>>) -> WriteResult {
     let number = match data {
         Type::Number(number) => number,
-        _ => return StatusCode::BAD_REQUEST,
+        _ => return Err(WriteError::BadRequest),
     };
     if number > config.additional_config.max as f64 {
         trigger_alert(
@@ -115,7 +114,7 @@ async fn write_handler(data: Type, config: Arc<Config<ExampleDeviceConfig>>) -> 
         .await
         .unwrap();
     }
-    StatusCode::OK
+    Ok(())
 }
 
 async fn status_handler(config: Arc<Config<ExampleDeviceConfig>>) -> DeviceStatusResponseDto {

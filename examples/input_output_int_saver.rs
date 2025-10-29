@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use axum::http::StatusCode;
 use greenhouse_core::{
     smart_device_dto::{
         Type,
@@ -11,7 +10,7 @@ use greenhouse_core::{
         config::{
             Config, Mode, TypeOptionDto, read_config_file_with_path, update_config_file_with_path,
         },
-        device_builder::DeviceBuilder,
+        device_builder::{DeviceBuilder, WriteError, WriteResult},
         hybrid_device::init_hybrid_router,
     },
 };
@@ -86,17 +85,17 @@ async fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> Type {
     Type::Number(unsafe { SAVED_NUMBER } as f64)
 }
 
-async fn write_handler(data: Type, config: Arc<Config<ExampleDeviceConfig>>) -> StatusCode {
+async fn write_handler(data: Type, config: Arc<Config<ExampleDeviceConfig>>) -> WriteResult {
     let number = match data {
         Type::Number(number) => number,
-        _ => return StatusCode::BAD_REQUEST,
+        _ => return Err(WriteError::BadRequest),
     };
     unsafe { SAVED_NUMBER = number as i32 };
     if config.additional_config.min > number as i32 || config.additional_config.max < number as i32
     {
-        return StatusCode::INTERNAL_SERVER_ERROR;
+        return Err(WriteError::InternalError);
     }
-    StatusCode::OK
+    Ok(())
 }
 
 async fn status_handler(config: Arc<Config<ExampleDeviceConfig>>) -> DeviceStatusResponseDto {

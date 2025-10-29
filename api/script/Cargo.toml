@@ -10,7 +10,7 @@ license = "GPL-3.0"
 axum = { workspace = true, features = ["tracing"]}
 reqwest = { workspace = true, features = ["json"]}
 tokio = { workspace = true }
-greenhouse_core = { workspace = true, features = ["scripting_service_dto", "data_storage_service_dto"] }
+greenhouse_core = { workspace = true, features = ["scripting_service_dto", "data_storage_service_dto", "error_handling"] }
 greenhouse_macro = { workspace = true }
 derive_more = { workspace = true }
 serde = { workspace = true }
