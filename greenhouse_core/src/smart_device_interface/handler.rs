@@ -19,6 +19,7 @@ use super::{
     config::{read_config_file_with_path, update_config_file_with_path},
     device_builder::DeviceBuilder,
 };
+use super::error::WriteError;
 
 pub(crate) async fn write_device_handler<T>(
     State(device_service): State<DeviceBuilder<T>>,
@@ -34,7 +35,11 @@ where
         .unwrap_or_else(|_| Arc::new(Config::<T>::default()));
 
     match device_service.write_handler {
-        Some(handler) => handler(payload.data, config).await,
+        Some(handler) => match handler(payload.data, config).await {
+            Ok(()) => StatusCode::OK,
+            Err(WriteError::BadRequest) => StatusCode::BAD_REQUEST,
+            Err(WriteError::InternalError) => StatusCode::INTERNAL_SERVER_ERROR,
+        },
         None => StatusCode::INTERNAL_SERVER_ERROR,
     }
 }

@@ -8,7 +8,7 @@ pub mod device_service_dto;
 pub mod scripting_service_dto;
 #[cfg(feature = "smart_device_dto")]
 pub mod smart_device_dto;
-#[cfg(feature = "smart_device_interface")]
+#[cfg(feature = "smart_device_interface_core")]
 pub mod smart_device_interface;
 
 // HTTP error mapping system - enabled when axum is available

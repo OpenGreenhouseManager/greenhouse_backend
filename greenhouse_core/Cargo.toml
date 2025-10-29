@@ -9,7 +9,7 @@ license = "GPL-3.0"
 [dependencies]
 axum = { workspace = true, optional = true }
 derive_more = { workspace = true }
-reqwest = { workspace = true, features = ["json"]}
+reqwest = { version = "0.12.15", default-features = false, features = ["json", "rustls-tls"]}
 serde = { workspace = true }
 serde_json ={ workspace = true }
 chrono = { workspace = true, features = ["serde"] }
@@ -24,12 +24,30 @@ futures = { workspace = true }
 greenhouse_macro = { path = "../greenhouse_macro" }
 
 [features]
-default = ["api_web_dto", "api_script_dto", "auth_service_dto", "smart_device_dto", "smart_device_interface", "data_storage_service_dto", "device_service_dto", "error_handling", "scripting_service_dto"]
+default = [
+    "api_web_dto",
+    "api_script_dto",
+    "auth_service_dto",
+    "smart_device_dto",
+    # Keep axum-backed interface by default for existing services
+    "smart_device_interface",
+    "data_storage_service_dto",
+    "device_service_dto",
+    "error_handling",
+    "scripting_service_dto",
+]
 api_web_dto = []
 api_script_dto = []
 auth_service_dto = []
 smart_device_dto = []
-smart_device_interface = ["smart_device_dto", "dep:axum", "dep:tracing"]
+# Core device interface with no axum dependency
+smart_device_interface_core = ["smart_device_dto"]
+
+# Axum adapter for the smart device interface
+smart_device_interface_axum = ["smart_device_interface_core", "dep:axum", "dep:tracing"]
+
+# Backwards-compat feature alias (was including axum previously)
+smart_device_interface = ["smart_device_interface_axum"]
 data_storage_service_dto = []
 device_service_dto =[]
 error_handling = ["dep:axum", "dep:tracing"]
