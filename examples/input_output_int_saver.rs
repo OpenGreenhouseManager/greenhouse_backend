@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use greenhouse_core::smart_device_interface::error::WriteError;
+use greenhouse_core::smart_device_interface::SmartDeviceOpResult;
 use greenhouse_core::{
     smart_device_dto::{
         Type,
@@ -82,24 +82,32 @@ async fn main() {
     axum::serve(listener, router).await.unwrap();
 }
 
-async fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> Type {
-    Type::Number(unsafe { SAVED_NUMBER } as f64)
+async fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> SmartDeviceOpResult<Type> {
+    SmartDeviceOpResult::Result(Type::Number(unsafe { SAVED_NUMBER } as f64))
 }
 
 async fn write_handler(
     data: Type,
     config: Arc<Config<ExampleDeviceConfig>>,
-) -> Result<(), WriteError> {
+) -> SmartDeviceOpResult<()> {
     let number = match data {
         Type::Number(number) => number,
-        _ => return Err(WriteError::BadRequest),
+        _ => {
+            return SmartDeviceOpResult::Error {
+                status_code: 400,
+                message: "expected number".to_string(),
+            }
+        }
     };
     unsafe { SAVED_NUMBER = number as i32 };
     if config.additional_config.min > number as i32 || config.additional_config.max < number as i32
     {
-        return Err(WriteError::InternalError);
+        return SmartDeviceOpResult::Error {
+            status_code: 500,
+            message: "value out of range".to_string(),
+        };
     }
-    Ok(())
+    SmartDeviceOpResult::Result(())
 }
 
 async fn status_handler(config: Arc<Config<ExampleDeviceConfig>>) -> DeviceStatusResponseDto {

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use greenhouse_core::smart_device_interface::error::WriteError;
+use greenhouse_core::smart_device_interface::SmartDeviceOpResult;
 use greenhouse_core::{
     data_storage_service_dto::alert_dto::alert::Severity,
     smart_device_dto::{
@@ -87,10 +87,15 @@ async fn main() {
 async fn write_handler(
     data: Type,
     config: Arc<Config<ExampleDeviceConfig>>,
-) -> Result<(), WriteError> {
+) -> SmartDeviceOpResult<()> {
     let number = match data {
         Type::Number(number) => number,
-        _ => return Err(WriteError::BadRequest),
+        _ => {
+            return SmartDeviceOpResult::Error {
+                status_code: 400,
+                message: "expected number".to_string(),
+            }
+        }
     };
     if number > config.additional_config.max as f64 {
         trigger_alert(
@@ -118,7 +123,7 @@ async fn write_handler(
         .await
         .unwrap();
     }
-    Ok(())
+    SmartDeviceOpResult::Result(())
 }
 
 async fn status_handler(config: Arc<Config<ExampleDeviceConfig>>) -> DeviceStatusResponseDto {

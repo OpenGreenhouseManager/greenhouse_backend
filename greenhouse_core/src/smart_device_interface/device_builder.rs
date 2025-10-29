@@ -1,21 +1,20 @@
-use super::Result;
+use super::{Result, SmartDeviceOpResult};
 use super::config::{
     Config, DEFAULT_CONFIG_FILE_NAME, read_config_file_with_path, update_config_file_with_path,
 };
 use crate::smart_device_dto::Type;
 use crate::smart_device_dto::{config::ConfigRequestDto, status::DeviceStatusResponseDto};
-use super::error::WriteError;
 use futures::future::BoxFuture;
 use serde::{Serialize, de::DeserializeOwned};
 use std::future::Future;
 use std::sync::{Arc, RwLock};
 
 // Trait aliases for repetitive future bounds
-pub trait ReadFuture: Future<Output = Type> + Send + 'static {}
-impl<T> ReadFuture for T where T: Future<Output = Type> + Send + 'static {}
+pub trait ReadFuture: Future<Output = SmartDeviceOpResult<Type>> + Send + 'static {}
+impl<T> ReadFuture for T where T: Future<Output = SmartDeviceOpResult<Type>> + Send + 'static {}
 
-pub trait WriteFuture: Future<Output = core::result::Result<(), WriteError>> + Send + 'static {}
-impl<T> WriteFuture for T where T: Future<Output = core::result::Result<(), WriteError>> + Send + 'static {}
+pub trait WriteFuture: Future<Output = SmartDeviceOpResult<()>> + Send + 'static {}
+impl<T> WriteFuture for T where T: Future<Output = SmartDeviceOpResult<()>> + Send + 'static {}
 
 pub trait StatusFuture: Future<Output = DeviceStatusResponseDto> + Send + 'static {}
 impl<T> StatusFuture for T where T: Future<Output = DeviceStatusResponseDto> + Send + 'static {}
@@ -82,9 +81,12 @@ where
 {
 }
 
-type ReadHandler<T> = Option<Arc<dyn Fn(Arc<Config<T>>) -> BoxFuture<'static, Type> + Send + Sync>>;
-type WriteHandler<T> =
-    Option<Arc<dyn Fn(Type, Arc<Config<T>>) -> BoxFuture<'static, core::result::Result<(), WriteError>> + Send + Sync>>;
+type WriteHandler<T> = Option<Arc<
+    dyn Fn(Type, Arc<Config<T>>) -> BoxFuture<'static, SmartDeviceOpResult<()>> + Send + Sync,
+>>;
+type ReadHandler<T> = Option<Arc<
+    dyn Fn(Arc<Config<T>>) -> BoxFuture<'static, SmartDeviceOpResult<Type>> + Send + Sync,
+>>;
 type StatusHandler<T> =
     Arc<dyn Fn(Arc<Config<T>>) -> BoxFuture<'static, DeviceStatusResponseDto> + Send + Sync>;
 type ConfigInterceptorHandler<T> =

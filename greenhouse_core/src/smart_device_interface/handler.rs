@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use axum::{Json, extract::State, http::StatusCode};
+use axum::{Json, extract::State, http::StatusCode, response::IntoResponse, response::Response};
 use serde::{Serialize, de::DeserializeOwned};
 
 use crate::{
@@ -19,12 +19,17 @@ use super::{
     config::{read_config_file_with_path, update_config_file_with_path},
     device_builder::DeviceBuilder,
 };
-use super::error::WriteError;
+use super::SmartDeviceOpResult;
+
+#[derive(Serialize)]
+struct ErrorBody {
+    message: String,
+}
 
 pub(crate) async fn write_device_handler<T>(
     State(device_service): State<DeviceBuilder<T>>,
     Json(payload): Json<WriteRequestDto>,
-) -> StatusCode
+) -> Response
 where
     T: Clone + Default + DeserializeOwned,
 {
@@ -36,17 +41,20 @@ where
 
     match device_service.write_handler {
         Some(handler) => match handler(payload.data, config).await {
-            Ok(()) => StatusCode::OK,
-            Err(WriteError::BadRequest) => StatusCode::BAD_REQUEST,
-            Err(WriteError::InternalError) => StatusCode::INTERNAL_SERVER_ERROR,
+            SmartDeviceOpResult::Result(()) => StatusCode::OK.into_response(),
+            SmartDeviceOpResult::Error { status_code, message } => {
+                let sc = StatusCode::from_u16(status_code as u16)
+                    .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+                (sc, Json(ErrorBody { message })).into_response()
+            }
         },
-        None => StatusCode::INTERNAL_SERVER_ERROR,
+        None => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }
 
 pub(crate) async fn read_device_handler<T>(
     State(device_service): State<DeviceBuilder<T>>,
-) -> Json<ReadResponseDto>
+) -> Response
 where
     T: Clone + Default + DeserializeOwned,
 {
@@ -57,11 +65,17 @@ where
         .unwrap_or_else(|_| Arc::new(Config::<T>::default()));
 
     match device_service.read_handler {
-        None => Json(ReadResponseDto { data: Type::None }),
-        Some(handler) => {
-            let data = handler(config).await;
-            Json(ReadResponseDto { data })
-        }
+        None => Json(ReadResponseDto { data: Type::None }).into_response(),
+        Some(handler) => match handler(config).await {
+            SmartDeviceOpResult::Result(data) => {
+                Json(ReadResponseDto { data }).into_response()
+            }
+            SmartDeviceOpResult::Error { status_code, message } => {
+                let sc = StatusCode::from_u16(status_code as u16)
+                    .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+                (sc, Json(ErrorBody { message })).into_response()
+            }
+        },
     }
 }
 
