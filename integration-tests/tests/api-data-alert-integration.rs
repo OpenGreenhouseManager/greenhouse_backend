@@ -1,4 +1,5 @@
-use greenhouse_core::data_storage_service_dto::alert_dto::alert::Severity;
+use greenhouse_core::data_storage_service_dto::alert_dto::alert::{AlertsDto, Severity};
+use greenhouse_core::data_storage_service_dto::alert_dto::get_aggrigated_alert::AggrigatedAlertsDto;
 use greenhouse_core::data_storage_service_dto::alert_dto::post_create_alert::CreateAlertDto;
 use greenhouse_core::data_storage_service_dto::alert_dto::query::IntervalQuery;
 use test_helper::TestContext;
@@ -42,8 +43,8 @@ async fn test_create_and_filter_alert() {
         .await
         .unwrap();
     assert!(response.status().is_success(), "Failed to filter alerts");
-    let alerts: Vec<serde_json::Value> = response.json().await.unwrap();
-    assert!(!alerts.is_empty(), "No alerts returned");
+    let alerts: AlertsDto = response.json().await.unwrap();
+    assert!(!alerts.alerts.is_empty(), "No alerts returned");
 
     context.stop().await;
 }
@@ -89,8 +90,8 @@ async fn test_alert_subset() {
         .await
         .unwrap();
     assert!(response.status().is_success(), "Failed to get alert subset");
-    let alerts: Vec<serde_json::Value> = response.json().await.unwrap();
-    assert!(!alerts.is_empty(), "No alerts returned in subset");
+    let alerts: AggrigatedAlertsDto = response.json().await.unwrap();
+    assert!(!alerts.alerts.is_empty(), "No alerts returned in subset");
 
     context.stop().await;
 }
@@ -205,9 +206,9 @@ async fn test_filter_alerts_no_results() {
         response.status().is_success(),
         "Filter request should succeed"
     );
-    let alerts: Vec<serde_json::Value> = response.json().await.unwrap();
+    let alerts: AlertsDto = response.json().await.unwrap();
     assert!(
-        alerts.is_empty(),
+        alerts.alerts.is_empty(),
         "No alerts should be returned for unknown identifier"
     );
 
