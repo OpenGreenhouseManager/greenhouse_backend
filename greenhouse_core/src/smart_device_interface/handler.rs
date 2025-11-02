@@ -15,11 +15,11 @@ use crate::{
     smart_device_interface::config::{Config, ScriptingApi},
 };
 
+use super::SmartDeviceOpResult;
 use super::{
     config::{read_config_file_with_path, update_config_file_with_path},
     device_builder::DeviceBuilder,
 };
-use super::SmartDeviceOpResult;
 
 #[derive(Serialize)]
 struct ErrorBody {
@@ -42,7 +42,10 @@ where
     match device_service.write_handler {
         Some(handler) => match handler(payload.data, config).await {
             SmartDeviceOpResult::Result(()) => StatusCode::OK.into_response(),
-            SmartDeviceOpResult::Error { status_code, message } => {
+            SmartDeviceOpResult::Error {
+                status_code,
+                message,
+            } => {
                 let sc = StatusCode::from_u16(status_code as u16)
                     .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
                 (sc, Json(ErrorBody { message })).into_response()
@@ -67,10 +70,11 @@ where
     match device_service.read_handler {
         None => Json(ReadResponseDto { data: Type::None }).into_response(),
         Some(handler) => match handler(config).await {
-            SmartDeviceOpResult::Result(data) => {
-                Json(ReadResponseDto { data }).into_response()
-            }
-            SmartDeviceOpResult::Error { status_code, message } => {
+            SmartDeviceOpResult::Result(data) => Json(ReadResponseDto { data }).into_response(),
+            SmartDeviceOpResult::Error {
+                status_code,
+                message,
+            } => {
                 let sc = StatusCode::from_u16(status_code as u16)
                     .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
                 (sc, Json(ErrorBody { message })).into_response()

@@ -94,7 +94,7 @@ async fn write_handler(
             return SmartDeviceOpResult::Error {
                 status_code: 400,
                 message: "expected number".to_string(),
-            }
+            };
         }
     };
     if number > config.additional_config.max as f64 {

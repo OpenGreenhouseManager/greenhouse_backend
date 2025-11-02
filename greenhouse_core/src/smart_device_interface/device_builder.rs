@@ -1,7 +1,7 @@
-use super::{Result, SmartDeviceOpResult};
 use super::config::{
     Config, DEFAULT_CONFIG_FILE_NAME, read_config_file_with_path, update_config_file_with_path,
 };
+use super::{Result, SmartDeviceOpResult};
 use crate::smart_device_dto::Type;
 use crate::smart_device_dto::{config::ConfigRequestDto, status::DeviceStatusResponseDto};
 use futures::future::BoxFuture;
@@ -81,12 +81,12 @@ where
 {
 }
 
-type WriteHandler<T> = Option<Arc<
-    dyn Fn(Type, Arc<Config<T>>) -> BoxFuture<'static, SmartDeviceOpResult<()>> + Send + Sync,
->>;
-type ReadHandler<T> = Option<Arc<
-    dyn Fn(Arc<Config<T>>) -> BoxFuture<'static, SmartDeviceOpResult<Type>> + Send + Sync,
->>;
+type WriteHandler<T> = Option<
+    Arc<dyn Fn(Type, Arc<Config<T>>) -> BoxFuture<'static, SmartDeviceOpResult<()>> + Send + Sync>,
+>;
+type ReadHandler<T> = Option<
+    Arc<dyn Fn(Arc<Config<T>>) -> BoxFuture<'static, SmartDeviceOpResult<Type>> + Send + Sync>,
+>;
 type StatusHandler<T> =
     Arc<dyn Fn(Arc<Config<T>>) -> BoxFuture<'static, DeviceStatusResponseDto> + Send + Sync>;
 type ConfigInterceptorHandler<T> =

@@ -11,8 +11,7 @@ use greenhouse_core::{
         status::{DeviceStatusDto, DeviceStatusResponseDto},
     },
     smart_device_interface::{
-        SmartDeviceOpResult,
-        Error,
+        Error, SmartDeviceOpResult,
         config::{
             Config, Mode, TypeOptionDto, read_config_file_with_path, update_config_file_with_path,
         },
@@ -131,11 +130,12 @@ async fn main() {
 
 async fn read_handler(_: Arc<Config<ExampleDeviceConfig>>) -> SmartDeviceOpResult<Type> {
     SmartDeviceOpResult::Result(Type::Object(HashMap::from_iter(
-        ALERTS_MUTEX
-            .read()
-            .await
-            .iter()
-            .map(|alert| (alert.identifier.to_string(), Type::Number(alert.count as f64))),
+        ALERTS_MUTEX.read().await.iter().map(|alert| {
+            (
+                alert.identifier.to_string(),
+                Type::Number(alert.count as f64),
+            )
+        }),
     )))
 }
 
