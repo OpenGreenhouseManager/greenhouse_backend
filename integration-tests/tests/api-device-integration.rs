@@ -1,5 +1,6 @@
 use greenhouse_core::device_service_dto::{
-    get_device::DeviceResponseDto, post_device::PostDeviceDtoRequest,
+    get_device::{DeviceResponseDto, DevicesResponseDto},
+    post_device::PostDeviceDtoRequest,
     put_device::PutDeviceDtoRequest,
 };
 use test_helper::TestContext;
@@ -312,11 +313,11 @@ async fn test_get_all_devices() {
         response.text().await.unwrap()
     );
 
-    let devices: Vec<DeviceResponseDto> = response.json().await.unwrap();
-    assert!(devices.len() >= 2, "Should have at least 2 devices");
+    let devices: DevicesResponseDto = response.json().await.unwrap();
+    assert!(devices.devices.len() >= 2, "Should have at least 2 devices");
 
     // Verify we can find our created devices
-    let device_names: Vec<&String> = devices.iter().map(|d| &d.name).collect();
+    let device_names: Vec<&String> = devices.devices.iter().map(|d| &d.name).collect();
     assert!(device_names.contains(&&String::from("Device1")));
     assert!(device_names.contains(&&String::from("Device2")));
 

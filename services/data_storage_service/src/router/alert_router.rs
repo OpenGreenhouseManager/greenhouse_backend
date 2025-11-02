@@ -2,12 +2,11 @@ use super::error::HttpResult;
 use axum::{
     Json, Router,
     extract::{Query, State},
-    response::IntoResponse,
     routing::{get, post},
 };
 use greenhouse_core::data_storage_service_dto::alert_dto::{
-    alert::AlertDto,
-    get_aggrigated_alert::AlertAggrigatedDto,
+    alert::{AlertDto, AlertsDto},
+    get_aggrigated_alert::{AggrigatedAlertDto, AggrigatedAlertsDto},
     post_create_alert::CreateAlertDto,
     query::{AlertQuery, IntervalQuery},
 };
@@ -25,31 +24,32 @@ pub(crate) fn routes(state: AppState) -> Router {
 async fn filter(
     State(AppState { config: _, pool }): State<AppState>,
     Query(query): Query<AlertQuery>,
-) -> HttpResult<impl IntoResponse> {
-    let a: Vec<AlertDto> = Alert::query(query, &pool)
+) -> HttpResult<AlertsDto> {
+    let a = Alert::query(query, &pool)
         .await?
         .into_iter()
         .map(|a| a.into())
-        .collect();
-    Ok(Json(a))
+        .collect::<Vec<AlertDto>>();
+    Ok(a.into())
 }
 
 async fn alert_subset(
     State(AppState { config: _, pool }): State<AppState>,
     Query(query): Query<IntervalQuery>,
-) -> HttpResult<impl IntoResponse> {
-    let a: Vec<AlertAggrigatedDto> = Alert::aggrigate(query, &pool)
+) -> HttpResult<AggrigatedAlertsDto> {
+    let a = Alert::aggrigate(query, &pool)
         .await?
         .into_iter()
         .map(|a| a.into())
-        .collect();
-    Ok(Json(a))
+        .collect::<Vec<AggrigatedAlertDto>>()
+        .into();
+    Ok(a)
 }
 
 async fn create_alert(
     State(AppState { config: _, pool }): State<AppState>,
     Json(alert): Json<CreateAlertDto>,
-) -> HttpResult<impl IntoResponse> {
-    let alert: AlertDto = Alert::create(alert, &pool).await?.into();
-    Ok(Json(alert))
+) -> HttpResult<AlertDto> {
+    let alert = Alert::create(alert, &pool).await?.into();
+    Ok(alert)
 }

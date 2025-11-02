@@ -1,7 +1,7 @@
 use super::severity_models::Severity;
 use chrono::{DateTime, Utc};
 use diesel::deserialize::FromSqlRow;
-use greenhouse_core::data_storage_service_dto::alert_dto::get_aggrigated_alert::AlertAggrigatedDto;
+use greenhouse_core::data_storage_service_dto::alert_dto::get_aggrigated_alert::AggrigatedAlertDto;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -39,7 +39,7 @@ impl AggrigatedAlert {
     }
 }
 
-impl From<AggrigatedAlert> for AlertAggrigatedDto {
+impl From<AggrigatedAlert> for AggrigatedAlertDto {
     fn from(alert: AggrigatedAlert) -> Self {
         Self {
             count: alert.count,

@@ -1,41 +1,20 @@
-use axum::{
-    Json,
-    response::{IntoResponse, Response},
-};
+use greenhouse_macro::IntoJsonResponse;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, IntoJsonResponse)]
 pub struct UserPreferencesRequestDto {
     pub dashboard_preferences: serde_json::Value,
     pub alert_preferences: serde_json::Value,
 }
 
-impl IntoResponse for UserPreferencesRequestDto {
-    fn into_response(self) -> Response {
-        Json(self).into_response()
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, IntoJsonResponse)]
 pub struct UserPreferencesResponseDto {
     pub dashboard_preferences: serde_json::Value,
     pub alert_preferences: serde_json::Value,
 }
 
-impl IntoResponse for UserPreferencesResponseDto {
-    fn into_response(self) -> Response {
-        Json(self).into_response()
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, IntoJsonResponse)]
 pub struct SetPreferencesRequestDto {
     pub token: String,
     pub preferences: UserPreferencesRequestDto,
-}
-
-impl IntoResponse for SetPreferencesRequestDto {
-    fn into_response(self) -> Response {
-        Json(self).into_response()
-    }
 }
