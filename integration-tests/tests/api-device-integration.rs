@@ -1,5 +1,6 @@
 use greenhouse_core::device_service_dto::{
-    get_device::{DeviceResponseDto, DevicesResponseDto}, post_device::PostDeviceDtoRequest,
+    get_device::{DeviceResponseDto, DevicesResponseDto},
+    post_device::PostDeviceDtoRequest,
     put_device::PutDeviceDtoRequest,
 };
 use test_helper::TestContext;
