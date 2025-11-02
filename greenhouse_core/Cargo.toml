@@ -21,7 +21,7 @@ uuid = { workspace = true, features = [
 ] }
 tracing = { workspace = true, optional = true }
 futures = { workspace = true }
-greenhouse_macro = { path = "../greenhouse_macro" }
+greenhouse_macro = { version = "0.1", path = "../greenhouse_macro" }
 
 [features]
 default = ["api_web_dto", "api_script_dto", "auth_service_dto", "smart_device_dto", "smart_device_interface", "data_storage_service_dto", "device_service_dto", "error_handling", "scripting_service_dto"]
