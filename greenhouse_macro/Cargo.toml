@@ -2,6 +2,8 @@
 name = "greenhouse_macro"
 version = "0.1.0"
 edition = "2021"
+description = "greenhouse_macro"
+license = "GPL-3.0"
 
 [lib]
 proc-macro = true
