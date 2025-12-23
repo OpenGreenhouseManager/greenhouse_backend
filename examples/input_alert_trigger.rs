@@ -4,8 +4,8 @@ use axum::http::StatusCode;
 use greenhouse_core::{
     data_storage_service_dto::alert_dto::alert::Severity,
     smart_device_dto::{
-        Type, TypeOption,
-        config::ConfigRequestDto,
+        Type,
+        config::{ConfigRequestDto, TypeOption},
         status::{DeviceStatusDto, DeviceStatusResponseDto},
     },
     smart_device_interface::{

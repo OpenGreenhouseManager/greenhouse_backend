@@ -3,8 +3,8 @@ use std::sync::Arc;
 use axum::http::StatusCode;
 use greenhouse_core::{
     smart_device_dto::{
-        Type, TypeOption,
-        config::ConfigRequestDto,
+        Type,
+        config::{ConfigRequestDto, TypeOption},
         status::{DeviceStatusDto, DeviceStatusResponseDto},
     },
     smart_device_interface::{
