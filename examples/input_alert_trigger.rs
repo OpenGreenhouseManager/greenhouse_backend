@@ -9,9 +9,7 @@ use greenhouse_core::{
         status::{DeviceStatusDto, DeviceStatusResponseDto},
     },
     smart_device_interface::{
-        config::{
-            Config, Mode, TypeOptionDto, read_config_file_with_path, update_config_file_with_path,
-        },
+        config::{Config, read_config_file_with_path, update_config_file_with_path},
         device_builder::DeviceBuilder,
         device_service::{AlertCreation, trigger_alert},
         hybrid_device::init_hybrid_router,
@@ -19,7 +17,6 @@ use greenhouse_core::{
 };
 use serde_derive::{Deserialize, Serialize};
 
-const DATASOURCE_ID: &str = "7a224a14-6e07-45a3-91da-b7584a5731c1";
 const LOW_ALERT_IDENTIFIER: &str = "low_alert";
 const HIGH_ALERT_IDENTIFIER: &str = "high_alert";
 
@@ -41,11 +38,9 @@ async fn main() {
         Ok(config) => config,
         Err(_) => {
             let default_config = Config {
-                mode: Mode::InputOutput,
                 port: 6002,
-                datasource_id: DATASOURCE_ID.to_string(),
-                input_type: Some(TypeOptionDto::Number),
-                output_type: None,
+
+                datasource_id: "7a224a14-6e07-45a3-91da-b7584a5731c1".to_string(),
                 additional_config: ExampleDeviceConfig { min: 0, max: 10 },
                 scripting_api: None,
             };
@@ -130,11 +125,8 @@ async fn config_interceptor_handler(
     old_config: Arc<Config<ExampleDeviceConfig>>,
 ) -> Config<ExampleDeviceConfig> {
     Config {
-        mode: old_config.mode.clone(),
         port: old_config.port,
         datasource_id: old_config.datasource_id.clone(),
-        input_type: old_config.input_type,
-        output_type: old_config.output_type,
         additional_config: {
             ExampleDeviceConfig {
                 min: config.additional_config.min,

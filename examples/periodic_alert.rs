@@ -12,9 +12,7 @@ use greenhouse_core::{
     },
     smart_device_interface::{
         Error,
-        config::{
-            Config, Mode, TypeOptionDto, read_config_file_with_path, update_config_file_with_path,
-        },
+        config::{Config, read_config_file_with_path, update_config_file_with_path},
         device_builder::DeviceBuilder,
         device_service::{AlertCreation, trigger_alert},
         hybrid_device::init_hybrid_router,
@@ -23,8 +21,6 @@ use greenhouse_core::{
 use rand::Rng;
 use serde_derive::{Deserialize, Serialize};
 use tokio::sync::RwLock;
-
-const DATASOURCE_ID: &str = "7a224a14-6e07-45a3-91da-b7584a5731c1";
 
 static ALERTS_MUTEX: LazyLock<RwLock<[AlertCounter; 5]>> = LazyLock::new(|| {
     RwLock::new([
@@ -74,11 +70,8 @@ async fn main() {
         Ok(config) => config,
         Err(_) => {
             let default_config = Config {
-                mode: Mode::InputOutput,
                 port: 6003,
-                datasource_id: DATASOURCE_ID.to_string(),
-                input_type: Some(TypeOptionDto::Number),
-                output_type: None,
+                datasource_id: "7a224a14-6e07-45a3-91da-b7584a5731c1".to_string(),
                 additional_config: ExampleDeviceConfig {
                     interval: 10,
                     random_jitter: 5,
@@ -151,11 +144,8 @@ async fn config_interceptor_handler(
     old_config: Arc<Config<ExampleDeviceConfig>>,
 ) -> Config<ExampleDeviceConfig> {
     Config {
-        mode: old_config.mode.clone(),
         port: old_config.port,
         datasource_id: old_config.datasource_id.clone(),
-        input_type: old_config.input_type,
-        output_type: old_config.output_type,
         additional_config: {
             ExampleDeviceConfig {
                 interval: config.additional_config.interval,

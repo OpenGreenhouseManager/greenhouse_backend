@@ -2,9 +2,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct ConfigResponseDto<T> {
-    pub mode: Mode,
-    pub input_type: Option<TypeOption>,
-    pub output_type: Option<TypeOption>,
     pub scripting_api: Option<ScriptingApi>,
     pub additional_config: T,
 }

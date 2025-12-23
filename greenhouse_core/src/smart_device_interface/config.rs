@@ -1,5 +1,4 @@
 use super::{Error, Result};
-use crate::smart_device_dto::config::{ConfigResponseDto, TypeOption};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 // Default config file path for backward compatibility
@@ -60,11 +59,8 @@ pub struct Config<T>
 where
     T: Clone + Default,
 {
-    pub mode: Mode,
     pub port: u16,
     pub datasource_id: String,
-    pub input_type: Option<TypeOptionDto>,
-    pub output_type: Option<TypeOptionDto>,
     pub additional_config: T,
     pub scripting_api: Option<ScriptingApi>,
 }
@@ -73,42 +69,4 @@ where
 pub struct ScriptingApi {
     pub url: String,
     pub token: String,
-}
-
-impl<T> From<Config<T>> for ConfigResponseDto<T>
-where
-    T: Clone + Default,
-{
-    fn from(config: Config<T>) -> Self {
-        ConfigResponseDto {
-            mode: match config.mode {
-                Mode::Input => crate::smart_device_dto::config::Mode::Input,
-                Mode::Output => crate::smart_device_dto::config::Mode::Output,
-                Mode::InputOutput => crate::smart_device_dto::config::Mode::InputOutput,
-                Mode::Unknown => crate::smart_device_dto::config::Mode::Unknown,
-            },
-            input_type: config.input_type.map(|value| value.into()),
-            output_type: config.output_type.map(|value| value.into()),
-            scripting_api: config.scripting_api.map(|s| {
-                crate::smart_device_dto::config::ScriptingApi {
-                    url: s.url,
-                    token: s.token,
-                }
-            }),
-            additional_config: config.additional_config,
-        }
-    }
-}
-
-impl From<TypeOptionDto> for TypeOption {
-    fn from(type_option: TypeOptionDto) -> Self {
-        match type_option {
-            TypeOptionDto::Number => TypeOption::Number,
-            TypeOptionDto::Boolean => TypeOption::Boolean,
-            TypeOptionDto::Object => TypeOption::Object,
-            TypeOptionDto::Array => TypeOption::Array,
-            TypeOptionDto::Stream => TypeOption::Stream,
-            TypeOptionDto::Unknown => TypeOption::Unknown,
-        }
-    }
 }

@@ -71,7 +71,18 @@ where
             if let Ok(mut guard) = device_service.config.write() {
                 *guard = Arc::new(config.clone());
             }
-            Json(Some(ConfigResponseDto::from(config)))
+
+            let config_dto = ConfigResponseDto {
+                scripting_api: config.scripting_api.map(|s| {
+                    crate::smart_device_dto::config::ScriptingApi {
+                        url: s.url,
+                        token: s.token,
+                    }
+                }),
+                additional_config: config.additional_config,
+            };
+
+            Json(Some(config_dto))
         }
         Err(_) => Json(None),
     }
