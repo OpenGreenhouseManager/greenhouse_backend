@@ -7,12 +7,12 @@ use crate::{
     smart_device_dto::{
         Type,
         activation::ActivateRequestDto,
-        config::{ConfigRequestDto, ConfigResponseDto},
+        config::{ConfigRequestDto, ConfigResponseDto, TypeOption},
         read::ReadResponseDto,
         status::DeviceStatusResponseDto,
         write::WriteRequestDto,
     },
-    smart_device_interface::config::{Config, ScriptingApi},
+    smart_device_interface::config::{Config, Mode, ScriptingApi},
 };
 
 use super::{
@@ -71,7 +71,42 @@ where
             if let Ok(mut guard) = device_service.config.write() {
                 *guard = Arc::new(config.clone());
             }
-            Json(Some(ConfigResponseDto::from(config)))
+            let mut input_type: Option<TypeOption> = None;
+            let mut output_type: Option<TypeOption> = None;
+            let mode: crate::smart_device_dto::config::Mode;
+            match device_service.mode {
+                Mode::Input(t) => {
+                    input_type = Some(t);
+                    mode = crate::smart_device_dto::config::Mode::Input;
+                }
+                Mode::Output(t) => {
+                    output_type = Some(t);
+                    mode = crate::smart_device_dto::config::Mode::Output;
+                }
+                Mode::InputOutput(t_i, t_o) => {
+                    input_type = Some(t_i);
+                    output_type = Some(t_o);
+                    mode = crate::smart_device_dto::config::Mode::InputOutput;
+                }
+                _ => {
+                    mode = crate::smart_device_dto::config::Mode::Unknown;
+                }
+            };
+
+            let config_dto = ConfigResponseDto {
+                mode,
+                input_type,
+                output_type,
+                scripting_api: config.scripting_api.map(|s| {
+                    crate::smart_device_dto::config::ScriptingApi {
+                        url: s.url,
+                        token: s.token,
+                    }
+                }),
+                additional_config: config.additional_config,
+            };
+
+            Json(Some(config_dto))
         }
         Err(_) => Json(None),
     }

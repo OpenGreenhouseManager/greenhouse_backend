@@ -4,13 +4,11 @@ use axum::http::StatusCode;
 use greenhouse_core::{
     smart_device_dto::{
         Type,
-        config::ConfigRequestDto,
+        config::{ConfigRequestDto, TypeOption},
         status::{DeviceStatusDto, DeviceStatusResponseDto},
     },
     smart_device_interface::{
-        config::{
-            Config, Mode, TypeOptionDto, read_config_file_with_path, update_config_file_with_path,
-        },
+        config::{Config, read_config_file_with_path, update_config_file_with_path},
         device_builder::DeviceBuilder,
         hybrid_device::init_hybrid_router,
     },
@@ -18,7 +16,6 @@ use greenhouse_core::{
 use serde_derive::{Deserialize, Serialize};
 
 static mut SAVED_NUMBER: i32 = 20;
-const DATASOURCE_ID: &str = "7a224a14-6e07-45a3-91da-b7584a5731c1";
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 struct ExampleDeviceConfig {
@@ -38,11 +35,8 @@ async fn main() {
         Ok(config) => config,
         Err(_) => {
             let default_config = Config {
-                mode: Mode::InputOutput,
                 port: 6001,
-                datasource_id: DATASOURCE_ID.to_string(),
-                input_type: Some(TypeOptionDto::Number),
-                output_type: Some(TypeOptionDto::Number),
+                datasource_id: "7a224a14-6e07-45a3-91da-b7584a5731c1".to_string(),
                 additional_config: ExampleDeviceConfig { min: 0, max: 100 },
                 scripting_api: None,
             };
@@ -70,6 +64,8 @@ async fn main() {
         status_handler,
         config_interceptor_handler,
         &config_path,
+        TypeOption::Number,
+        TypeOption::Number,
     )
     .unwrap();
     let router = init_hybrid_router(device_service);
@@ -111,11 +107,8 @@ async fn config_interceptor_handler(
     old_config: Arc<Config<ExampleDeviceConfig>>,
 ) -> Config<ExampleDeviceConfig> {
     Config {
-        mode: old_config.mode.clone(),
         port: old_config.port,
         datasource_id: old_config.datasource_id.clone(),
-        input_type: old_config.input_type,
-        output_type: old_config.output_type,
         additional_config: {
             ExampleDeviceConfig {
                 min: config.additional_config.min,

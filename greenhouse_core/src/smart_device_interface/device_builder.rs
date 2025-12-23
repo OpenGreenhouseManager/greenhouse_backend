@@ -3,7 +3,9 @@ use super::config::{
     Config, DEFAULT_CONFIG_FILE_NAME, read_config_file_with_path, update_config_file_with_path,
 };
 use crate::smart_device_dto::Type;
+use crate::smart_device_dto::config::TypeOption;
 use crate::smart_device_dto::{config::ConfigRequestDto, status::DeviceStatusResponseDto};
+use crate::smart_device_interface::config::Mode;
 use axum::http::StatusCode;
 use futures::future::BoxFuture;
 use serde::{Serialize, de::DeserializeOwned};
@@ -101,6 +103,7 @@ where
     pub config_interceptor_handler: ConfigInterceptorHandler<T>,
     pub config: Arc<RwLock<Arc<Config<T>>>>,
     pub config_path: String,
+    pub mode: Mode,
 }
 
 impl<T> DeviceBuilder<T>
@@ -112,6 +115,8 @@ where
         write_handler: WH,
         status_handler: SH,
         config_interceptor_handler: CIH,
+        input_type: TypeOption,
+        output_type: TypeOption,
     ) -> Result<Self>
     where
         RH: ReadHandlerFn<T, RF>,
@@ -129,6 +134,8 @@ where
             status_handler,
             config_interceptor_handler,
             DEFAULT_CONFIG_FILE_NAME,
+            input_type,
+            output_type,
         )
     }
 
@@ -138,6 +145,8 @@ where
         status_handler: SH,
         config_interceptor_handler: CIH,
         config_path: &str,
+        input_type: TypeOption,
+        output_type: TypeOption,
     ) -> Result<Self>
     where
         RH: ReadHandlerFn<T, RF>,
@@ -172,6 +181,7 @@ where
             ),
             config: Arc::new(RwLock::new(Arc::new(config))),
             config_path: config_path.to_string(),
+            mode: Mode::InputOutput(input_type, output_type),
         })
     }
 
@@ -179,6 +189,7 @@ where
         read_handler: RH,
         status_handler: SH,
         config_interceptor_handler: CIH,
+        output_type: TypeOption,
     ) -> Result<Self>
     where
         RH: ReadHandlerFn<T, RF>,
@@ -193,6 +204,7 @@ where
             status_handler,
             config_interceptor_handler,
             DEFAULT_CONFIG_FILE_NAME,
+            output_type,
         )
     }
 
@@ -201,6 +213,7 @@ where
         status_handler: SH,
         config_interceptor_handler: CIH,
         config_path: &str,
+        output_type: TypeOption,
     ) -> Result<Self>
     where
         RH: ReadHandlerFn<T, RF>,
@@ -236,6 +249,7 @@ where
             ),
             config: Arc::new(RwLock::new(Arc::new(config))),
             config_path: config_path.to_string(),
+            mode: Mode::Output(output_type),
         })
     }
 
@@ -243,6 +257,7 @@ where
         write_handler: WH,
         status_handler: SH,
         config_interceptor_handler: CIH,
+        input_type: TypeOption,
     ) -> Result<Self>
     where
         WH: WriteHandlerFn<T, WF>,
@@ -257,6 +272,7 @@ where
             status_handler,
             config_interceptor_handler,
             DEFAULT_CONFIG_FILE_NAME,
+            input_type,
         )
     }
 
@@ -265,6 +281,7 @@ where
         status_handler: SH,
         config_interceptor_handler: CIH,
         config_path: &str,
+        input_type: TypeOption,
     ) -> Result<Self>
     where
         WH: WriteHandlerFn<T, WF>,
@@ -300,6 +317,7 @@ where
             ),
             config: Arc::new(RwLock::new(Arc::new(config))),
             config_path: config_path.to_string(),
+            mode: Mode::Input(input_type),
         })
     }
 }
