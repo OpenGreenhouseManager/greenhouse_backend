@@ -1,3 +1,5 @@
+use crate::smart_device_dto::TypeOption;
+
 use super::{Error, Result};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
@@ -36,9 +38,9 @@ where
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub enum Mode {
-    Input,
-    Output,
-    InputOutput,
+    Input(TypeOption),
+    Output(TypeOption),
+    InputOutput(TypeOption, TypeOption),
     #[default]
     Unknown,
 }

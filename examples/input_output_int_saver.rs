@@ -3,7 +3,7 @@ use std::sync::Arc;
 use axum::http::StatusCode;
 use greenhouse_core::{
     smart_device_dto::{
-        Type,
+        Type, TypeOption,
         config::ConfigRequestDto,
         status::{DeviceStatusDto, DeviceStatusResponseDto},
     },
@@ -64,6 +64,8 @@ async fn main() {
         status_handler,
         config_interceptor_handler,
         &config_path,
+        TypeOption::Number,
+        TypeOption::Number,
     )
     .unwrap();
     let router = init_hybrid_router(device_service);

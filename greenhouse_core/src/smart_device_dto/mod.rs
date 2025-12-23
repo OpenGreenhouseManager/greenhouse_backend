@@ -18,3 +18,13 @@ pub enum Type {
     Stream,
     None,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum TypeOption {
+    Number,
+    Boolean,
+    Object,
+    Array,
+    Stream,
+    Unknown,
+}

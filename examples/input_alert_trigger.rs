@@ -4,7 +4,7 @@ use axum::http::StatusCode;
 use greenhouse_core::{
     data_storage_service_dto::alert_dto::alert::Severity,
     smart_device_dto::{
-        Type,
+        Type, TypeOption,
         config::ConfigRequestDto,
         status::{DeviceStatusDto, DeviceStatusResponseDto},
     },
@@ -67,6 +67,7 @@ async fn main() {
         status_handler,
         config_interceptor_handler,
         &config_path,
+        TypeOption::Number,
     )
     .unwrap();
     let router = init_hybrid_router(device_service);
