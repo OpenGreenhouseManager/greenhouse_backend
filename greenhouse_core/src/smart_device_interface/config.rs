@@ -49,7 +49,7 @@ pub enum TypeOptionDto {
     Number,
     Boolean,
     Object,
-    Array,
+    Measurement,
     Stream,
     #[default]
     Unknown,
@@ -106,7 +106,7 @@ impl From<TypeOptionDto> for TypeOption {
             TypeOptionDto::Number => TypeOption::Number,
             TypeOptionDto::Boolean => TypeOption::Boolean,
             TypeOptionDto::Object => TypeOption::Object,
-            TypeOptionDto::Array => TypeOption::Array,
+            TypeOptionDto::Measurement => TypeOption::Measurement,
             TypeOptionDto::Stream => TypeOption::Stream,
             TypeOptionDto::Unknown => TypeOption::Unknown,
         }

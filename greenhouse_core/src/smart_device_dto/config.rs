@@ -33,7 +33,7 @@ pub enum TypeOption {
     Number,
     Boolean,
     Object,
-    Array,
+    Measurement,
     Stream,
     Unknown,
 }
