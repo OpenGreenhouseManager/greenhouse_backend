@@ -5,9 +5,9 @@ use serde::{Serialize, de::DeserializeOwned};
 
 use crate::{
     smart_device_dto::{
-        Type, TypeOption,
+        Type,
         activation::ActivateRequestDto,
-        config::{ConfigRequestDto, ConfigResponseDto},
+        config::{ConfigRequestDto, ConfigResponseDto, TypeOption},
         read::ReadResponseDto,
         status::DeviceStatusResponseDto,
         write::WriteRequestDto,

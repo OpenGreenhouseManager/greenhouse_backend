@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use crate::smart_device_dto::TypeOption;
-
 #[derive(Serialize, Deserialize)]
 pub struct ConfigResponseDto<T> {
     pub mode: Mode,
@@ -28,4 +26,14 @@ pub struct ConfigRequestDto<T> {
 pub struct ScriptingApi {
     pub url: String,
     pub token: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum TypeOption {
+    Number,
+    Boolean,
+    Object,
+    Measurement,
+    Stream,
+    Unknown,
 }

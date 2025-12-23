@@ -1,4 +1,4 @@
-use crate::smart_device_dto::TypeOption;
+use crate::smart_device_dto::config::TypeOption;
 
 use super::{Error, Result};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
@@ -50,7 +50,7 @@ pub enum TypeOptionDto {
     Number,
     Boolean,
     Object,
-    Array,
+    Measurement,
     Stream,
     #[default]
     Unknown,

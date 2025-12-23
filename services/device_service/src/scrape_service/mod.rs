@@ -89,14 +89,6 @@ async fn read_device(id: Uuid, address: String) -> Result<()> {
 
 fn generate_metric(name: String, data: &Type) {
     match data {
-        Type::Array(data) => {
-            let gauge = gauge!(name.clone(), &[("type", "array")]);
-            gauge.set(data.len() as f64);
-            for (index, value) in data.iter().enumerate() {
-                let next_name = format!("{name}_{index}");
-                generate_metric(next_name, value);
-            }
-        }
         Type::Number(data) => {
             let gauge = gauge!(name, &[("type", "number")]);
             gauge.set(*data);
@@ -111,6 +103,10 @@ fn generate_metric(name: String, data: &Type) {
                 let next_name = format!("{name}_{key}");
                 generate_metric(next_name, value);
             }
+        }
+        Type::Measurement(data) => {
+            let gauge = gauge!(name, "type" => "measurement", "unit" => data.unit.clone());
+            gauge.set(data.value);
         }
         Type::Stream => {
             tracing::debug!("Not implemented: received stream");

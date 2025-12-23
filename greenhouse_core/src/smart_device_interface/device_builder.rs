@@ -2,7 +2,8 @@ use super::Result;
 use super::config::{
     Config, DEFAULT_CONFIG_FILE_NAME, read_config_file_with_path, update_config_file_with_path,
 };
-use crate::smart_device_dto::{Type, TypeOption};
+use crate::smart_device_dto::Type;
+use crate::smart_device_dto::config::TypeOption;
 use crate::smart_device_dto::{config::ConfigRequestDto, status::DeviceStatusResponseDto};
 use crate::smart_device_interface::config::Mode;
 use axum::http::StatusCode;
