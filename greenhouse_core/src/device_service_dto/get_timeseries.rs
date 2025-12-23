@@ -19,7 +19,13 @@ pub enum Type {
     Number(f64),
     Boolean(bool),
     Object(HashMap<String, Type>),
-    Array(Vec<Type>),
+    Measurement(Measurement),
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Measurement {
+    pub value: f64,
+    pub unit: String,
 }
 
 impl From<Vec<TimeseriesDto>> for GetTimeseriesDto {
