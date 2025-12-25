@@ -1,6 +1,6 @@
 use super::error::{Error, Result};
 use greenhouse_core::device_service_dto::{
-    get_timeseries::{GetTimeseriesDto, TimeseriesDto, Type},
+    get_timeseries::{GetTimeseriesDto, Measurement, TimeseriesDto, Type},
     operations::OperationsDto,
     query::PromQuery,
 };
@@ -102,10 +102,6 @@ pub(crate) async fn get_device_query_timeseries(
         .unwrap_or(&String::from("unknown"))
         .as_str()
     {
-        "array" => {
-            tracing::error!("Array type not implemented: {}", resp.data.result_type);
-            Err(Error::PrometheusNotImplemented)
-        }
         "number" => {
             let timeseries = resp.data.result[0]
                 .values
@@ -133,6 +129,24 @@ pub(crate) async fn get_device_query_timeseries(
         "object" => {
             tracing::error!("Object type not implemented: {}", resp.data.result_type);
             Err(Error::PrometheusNotImplemented)
+        }
+        "measurement" => {
+            let unknown = "unknown".to_string();
+            let unit = resp.data.result[0].metric.get("unit").unwrap_or(&unknown);
+
+            let timeseries = resp.data.result[0]
+                .values
+                .iter()
+                .map(|result| TimeseriesDto {
+                    timestamp: result.0,
+                    value: Type::Measurement(Measurement {
+                        value: result.1.parse::<f64>().unwrap(),
+                        unit: unit.to_string(),
+                    }),
+                })
+                .collect::<Vec<TimeseriesDto>>()
+                .into();
+            Ok(timeseries)
         }
         _ => {
             tracing::error!("Prometheus invalid result type: {}", resp.data.result_type);
