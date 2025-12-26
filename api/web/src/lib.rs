@@ -16,6 +16,7 @@ pub(crate) mod device;
 pub(crate) mod diary;
 pub(crate) mod helper;
 pub(crate) mod settings;
+pub(crate) mod push;
 
 #[derive(Clone, Deserialize)]
 pub struct ServiceAddresses {
@@ -25,6 +26,8 @@ pub struct ServiceAddresses {
     pub device_service: String,
     #[serde(rename = "DATA_STORAGE_SERVICE")]
     pub data_storage_service: String,
+    #[serde(rename = "NOTIFICATION_SERVICE")]
+    pub notification_service: String,
 }
 
 #[derive(Clone, Deserialize)]
@@ -67,6 +70,7 @@ pub fn app(config: Config) -> Router {
         .nest("/api/diary", diary::router::routes(state.clone()))
         .nest("/api/alert", alert::router::routes(state.clone()))
         .nest("/api/device", device::router::routes(state.clone()))
+        .nest("/api/push", push::router::routes(state.clone()))
         .nest("/api/user", auth::router::user_routes(state.clone()))
         .layer(middleware::from_fn_with_state(state.clone(), check_token))
         .merge(auth::router::auth_routes(state))

@@ -10,6 +10,8 @@ pub mod scripting_service_dto;
 pub mod smart_device_dto;
 #[cfg(feature = "smart_device_interface")]
 pub mod smart_device_interface;
+#[cfg(feature = "notification_service_dto")]
+pub mod notification_service_dto;
 
 // HTTP error mapping system - enabled when axum is available
 #[cfg(feature = "error_handling")]

@@ -44,9 +44,9 @@ pub fn app(config: Config, pool: Pool) -> Router {
     let state = AppState { config, pool };
 
     Router::new()
+        .nest("/push", router::notification_router::routes(state.clone()))
         .route("/health", get(|| async {}))
         .layer(TraceLayer::new_for_http())
-        .with_state(state)
 }
 
 fn run_migration(database_url: &str) {

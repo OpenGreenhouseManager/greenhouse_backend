@@ -1,9 +1,10 @@
-use crate::AppState;
-use axum::{routing::post, Json, Router};
+use crate::{AppState, helper::error::HttpResult};
+use axum::{Json, Router};
 use axum::extract::State;
+use axum::routing::post;
 use greenhouse_core::notification_service_dto::push::PushSubscriptionDto;
 
-use super::error::HttpResult;
+use super::service;
 
 pub(crate) fn routes(state: AppState) -> Router {
     Router::new()
@@ -13,10 +14,10 @@ pub(crate) fn routes(state: AppState) -> Router {
 
 #[axum::debug_handler]
 pub(crate) async fn subscribe(
-    State(AppState { .. }): State<AppState>,
+    State(AppState { config }): State<AppState>,
     Json(entry): Json<PushSubscriptionDto>,
 ) -> HttpResult<()> {
-    tracing::info!("Received push subscription: {:?}", entry);
+    service::subscribe(&config.service_addresses.notification_service, entry).await?;
     Ok(())
 }
 
