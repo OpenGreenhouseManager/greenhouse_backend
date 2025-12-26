@@ -29,6 +29,36 @@ pub(crate) async fn request_device_config(device_address: &str) -> Result<String
     })
 }
 
+pub(crate) async fn request_device_config_update(
+    device_address: &str,
+    body: serde_json::Value,
+) -> Result<String> {
+    println!("request_device_config_update: {:?}", body);
+    let resp = reqwest::Client::new()
+        .post(device_address.to_string() + endpoints::CONFIG)
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| {
+            sentry::capture_error(&e);
+
+            tracing::error!(
+                "Error in post to smart device for config update: {:?} for url {}",
+                e,
+                device_address
+            );
+
+            Error::SmartDeviceNotReachable
+        })?;
+    resp.text().await.map_err(|e| {
+        sentry::capture_error(&e);
+
+        tracing::error!("Error in response from smart device: {:?}", e);
+
+        Error::SmartDeviceResponse
+    })
+}
+
 pub(crate) async fn request_device_status(device_address: &str) -> Result<String> {
     let resp = reqwest::Client::new()
         .get(device_address.to_string() + endpoints::STATUS)

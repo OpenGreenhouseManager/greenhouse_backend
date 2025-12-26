@@ -227,6 +227,38 @@ pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String
     }))
 }
 
+pub(crate) async fn update_device_config(
+    base_url: &str,
+    id: Uuid,
+    body: serde_json::Value,
+) -> Result<()> {
+    let resp = reqwest::Client::new()
+        .put(base_url.to_string() + "/" + &id.to_string() + "/" + endpoints::CONFIG)
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!("Error in put to service: {:?}", e);
+            Error::Request(e)
+        })?;
+
+    if resp.status().is_success() {
+        return Ok(());
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .text()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in put to service: {:?}", e);
+                Error::Json(e)
+            })?,
+    }))
+}
+
 pub(crate) async fn get_devices(base_url: &str) -> Result<DevicesResponseDto> {
     let resp = reqwest::Client::new()
         .get(base_url.to_string())
