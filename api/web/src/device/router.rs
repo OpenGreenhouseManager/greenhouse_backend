@@ -25,6 +25,7 @@ pub(crate) fn routes(state: AppState) -> Router {
         .route("/{id}", put(update_device))
         .route("/{id}", get(get_device))
         .route(&format!("/{{id}}/{ACTIVATE}"), put(activate_device))
+        .route(&format!("/{{id}}/{CONFIG}"), put(update_device_config))
         .route(&format!("/{{id}}/{CONFIG}"), get(get_device_config))
         .route(&format!("/{{id}}/{STATUS}"), get(get_device_status))
         .route("/{id}/timeseries", get(get_device_timeseries))
@@ -78,6 +79,16 @@ pub(crate) async fn get_device_config(
         )],
         response,
     ))
+}
+
+#[axum::debug_handler]
+pub(crate) async fn update_device_config(
+    State(AppState { config }): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(body): Json<serde_json::Value>,
+) -> HttpResult<StatusCode> {
+    service::update_device_config(&config.service_addresses.device_service, id, body).await?;
+    Ok(StatusCode::OK)
 }
 
 #[axum::debug_handler]

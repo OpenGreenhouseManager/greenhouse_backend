@@ -5,8 +5,8 @@ use crate::{
         error::HttpResult,
         prom_service::{get_device_query_timeseries, request_device_query_operations},
         service::{
-            request_device_activate, request_device_config, request_device_status,
-            request_device_token,
+            request_device_activate, request_device_config, request_device_config_update,
+            request_device_status, request_device_token,
         },
     },
 };
@@ -38,6 +38,7 @@ pub(crate) fn routes(state: AppState) -> Router {
         .route("/{id}", put(update_device))
         .route("/{id}", get(get_device))
         .route(&format!("/{{id}}/{ACTIVATE}"), put(activate_device))
+        .route(&format!("/{{id}}/{CONFIG}"), put(update_device_config))
         .route(&format!("/{{id}}/{CONFIG}"), get(get_device_config))
         .route(&format!("/{{id}}/{STATUS}"), get(get_device_status))
         .route("/{id}/timeseries", get(get_device_timeseries))
@@ -111,6 +112,17 @@ pub(crate) async fn get_device_config(
         )],
         response,
     ))
+}
+
+#[axum::debug_handler]
+pub(crate) async fn update_device_config(
+    State(AppState { config: _, pool }): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> HttpResult<StatusCode> {
+    let device = Device::find_by_id(id, &pool).await?;
+    let _ = request_device_config_update(&device.address, payload).await?;
+    Ok(StatusCode::OK)
 }
 
 #[axum::debug_handler]
