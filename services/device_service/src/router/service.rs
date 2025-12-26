@@ -33,7 +33,6 @@ pub(crate) async fn request_device_config_update(
     device_address: &str,
     body: serde_json::Value,
 ) -> Result<String> {
-    println!("request_device_config_update: {:?}", body);
     let resp = reqwest::Client::new()
         .post(device_address.to_string() + endpoints::CONFIG)
         .json(&body)

@@ -5,8 +5,8 @@ use crate::{
         error::HttpResult,
         prom_service::{get_device_query_timeseries, request_device_query_operations},
         service::{
-            request_device_activate, request_device_config, request_device_config_update, request_device_status,
-            request_device_token,
+            request_device_activate, request_device_config, request_device_config_update,
+            request_device_status, request_device_token,
         },
     },
 };

@@ -248,14 +248,11 @@ pub(crate) async fn update_device_config(
     }
     Err(Error::Api(ApiError {
         status: resp.status(),
-        message: resp
-            .text()
-            .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                tracing::error!("Error in put to service: {:?}", e);
-                Error::Json(e)
-            })?,
+        message: resp.text().await.map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!("Error in put to service: {:?}", e);
+            Error::Json(e)
+        })?,
     }))
 }
 
