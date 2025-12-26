@@ -10,6 +10,7 @@ members = [
     "services/data_storage_service",
     "services/device_service",
     "services/scripting_service",
+    "services/notification_service",
 ]
 default-members = [
     "api/web",
@@ -18,6 +19,7 @@ default-members = [
     "services/device_service",
     "services/data_storage_service",
     "services/scripting_service",
+    "services/notification_service",
     "greenhouse_core",
 ]
 
