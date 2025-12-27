@@ -24,7 +24,7 @@ futures = { workspace = true }
 greenhouse_macro = { version = "0.1", path = "../greenhouse_macro" }
 
 [features]
-default = ["api_web_dto", "api_script_dto", "auth_service_dto", "smart_device_dto", "smart_device_interface", "data_storage_service_dto", "device_service_dto", "error_handling", "scripting_service_dto"]
+default = ["api_web_dto", "api_script_dto", "auth_service_dto", "smart_device_dto", "smart_device_interface", "data_storage_service_dto", "device_service_dto", "error_handling", "scripting_service_dto", "notification_service_dto"]
 api_web_dto = []
 api_script_dto = []
 auth_service_dto = []
@@ -34,6 +34,7 @@ data_storage_service_dto = []
 device_service_dto =[]
 error_handling = ["dep:axum", "dep:tracing"]
 scripting_service_dto = []
+notification_service_dto = []
 
 [dev-dependencies]
 httpc-test = "0.1.9"

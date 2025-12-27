@@ -300,6 +300,7 @@ async fn start_web_api() -> tokio::task::JoinHandle<Result<(), std::io::Error>> 
             auth_service: String::from("http://localhost:3001"),
             data_storage_service: String::from("http://localhost:3002"),
             device_service: String::from("http://localhost:3003"),
+            notification_service: String::from("http://localhost:3004"),
         },
         sentry_url: String::new(),
         environment: String::from("test"),
