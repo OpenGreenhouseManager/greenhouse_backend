@@ -10,6 +10,7 @@ use serde::Deserialize;
 use tower_http::trace::TraceLayer;
 
 pub(crate) mod database;
+pub(crate) mod push;
 mod router;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
@@ -24,6 +25,10 @@ pub struct Config {
     pub sentry_url: String,
     #[serde(rename = "ENVIRONMENT", default = "default_environment")]
     pub environment: String,
+	#[serde(rename = "VAPID_PRIVATE_KEY")]
+	pub vapid_private_key: String,
+	#[serde(rename = "VAPID_SUBJECT")]
+	pub vapid_subject: String,
 }
 
 fn default_environment() -> String {
