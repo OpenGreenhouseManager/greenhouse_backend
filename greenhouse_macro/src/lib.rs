@@ -40,7 +40,7 @@ pub fn authenticate(args: TokenStream, input: TokenStream) -> TokenStream {
                 .map(|c| c.value().to_string())
                 .ok_or(Error::CookieNotFound)
             {
-                let claims = helper::token::get_claims(token)?;
+                let claims = helper::token::get_claims_dangerous(token)?;
                 if claims.role != #expected_role  {
                     return Err(Error::AdminRoute.into());
                 }
