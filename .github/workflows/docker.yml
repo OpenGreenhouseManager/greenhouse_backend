@@ -67,7 +67,7 @@ jobs:
       # service data_storage
       - name: Docker meta
         id: meta-data_storage
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/opengreenhousemanager/data_storage
@@ -86,7 +86,7 @@ jobs:
       # service device
       - name: Docker meta
         id: meta-device_service
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/opengreenhousemanager/device_service
@@ -105,7 +105,7 @@ jobs:
       # service scripting
       - name: Docker meta
         id: meta-scripting_service
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/opengreenhousemanager/scripting_service
@@ -124,7 +124,7 @@ jobs:
       # service web_api
       - name: Docker meta
         id: meta-web_api
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/opengreenhousemanager/web_api
@@ -143,7 +143,7 @@ jobs:
       # service script
       - name: Docker meta
         id: meta-script_api
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/opengreenhousemanager/script_api
@@ -162,7 +162,7 @@ jobs:
       # service auth_service
       - name: Docker meta
         id: meta-auth_service
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/opengreenhousemanager/auth_service
