@@ -31,7 +31,7 @@ jobs:
             args: --release --workspace --all-features -- --test-threads=1
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: rust up update 
         run: rustup update
       - name: rust up update nightly
@@ -60,7 +60,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install cargo-audit
         run: cargo install cargo-audit --locked
       - name: Run security audit
