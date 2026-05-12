@@ -42,7 +42,7 @@ jobs:
             type=raw,value=${{ matrix.example }}-${{ github.sha }}
 
       - name: Build and push ${{ matrix.example }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: examples/Dockerfile
