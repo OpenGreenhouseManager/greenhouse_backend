@@ -1,0 +1,16 @@
+id: no-unwrap-in-handlers
+language: rust
+severity: error
+message: |
+  No `.unwrap()` / `.expect()` in handler or service code. Map errors with
+  `.map_err(|e| { sentry::capture_error(&e); Error::Foo })?`. The only places `.unwrap()` is
+  acceptable are `main.rs`/`lib.rs` startup, migration runners, and tests. See
+  `services/auth_service/src/router/auth_router.rs` for the canonical `.map_err` form.
+rule:
+  any:
+    - pattern: $EXPR.unwrap()
+    - pattern: $EXPR.expect($$$)
+files:
+  - "services/*/src/router/**/*.rs"
+  - "api/*/src/**/router.rs"
+  - "api/*/src/**/service.rs"

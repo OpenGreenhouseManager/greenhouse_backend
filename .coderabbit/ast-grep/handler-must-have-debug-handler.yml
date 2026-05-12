@@ -1,0 +1,19 @@
+id: handler-must-have-debug-handler
+language: rust
+severity: warning
+message: |
+  Axum handlers in this repo are uniformly annotated with `#[axum::debug_handler]` directly
+  above the fn signature. Add the attribute. See
+  `services/auth_service/src/router/auth_router.rs` for examples.
+rule:
+  pattern: |
+    pub(crate) async fn $NAME($$$) -> HttpResult<$$$> {
+      $$$
+    }
+  not:
+    follows:
+      stopBy: neighbor
+      pattern: "#[axum::debug_handler]"
+files:
+  - "services/*/src/router/**/*.rs"
+  - "api/*/src/**/router.rs"

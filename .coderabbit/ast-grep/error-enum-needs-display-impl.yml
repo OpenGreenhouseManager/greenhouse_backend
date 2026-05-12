@@ -1,0 +1,23 @@
+id: error-enum-needs-display-impl
+language: rust
+severity: error
+message: |
+  Every error enum in this repo is followed by manual `impl core::fmt::Display for Error`
+  (body: `write!(fmt, "{self:?}")`) and `impl std::error::Error for Error {}`, wrapped in
+  region markers `// region:    --- Error Boilerplate` / `// endregion: --- Error Boilerplate`.
+  See `services/auth_service/src/router/error.rs:25-31`.
+rule:
+  pattern: |
+    pub(crate) enum Error {
+      $$$
+    }
+  not:
+    inside:
+      stopBy: end
+      has:
+        stopBy: end
+        pattern: impl core::fmt::Display for Error
+files:
+  - "services/*/src/**/error.rs"
+  - "api/*/src/**/error.rs"
+  - "greenhouse_core/src/**/error.rs"

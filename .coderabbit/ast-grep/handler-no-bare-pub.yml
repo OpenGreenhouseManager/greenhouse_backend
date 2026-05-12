@@ -1,0 +1,13 @@
+id: handler-no-bare-pub
+language: rust
+severity: error
+message: |
+  Handlers in this repo are `pub(crate) async fn`, never bare `pub async fn`. They are not part
+  of any public API surface. See `services/auth_service/src/router/auth_router.rs`.
+rule:
+  pattern: |
+    #[axum::debug_handler]
+    pub async fn $NAME($$$) $$$
+files:
+  - "services/*/src/router/**/*.rs"
+  - "api/*/src/**/router.rs"

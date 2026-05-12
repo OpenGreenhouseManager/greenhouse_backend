@@ -1,0 +1,23 @@
+id: from-variant-needs-macro
+language: rust
+severity: error
+message: |
+  This variant is marked `#[from]` but its source type is not registered in the
+  `impl_http_error_from!(Error { ... })` invocation in this file. That macro generates
+  `From<SourceError> for HttpErrorResponse<Error>` — without it, handlers propagating the
+  sub-error via `?` will not compile (or will route through the wrong `From` chain). Add the
+  source type to the macro call. See `services/auth_service/src/router/error.rs:34-37`.
+rule:
+  pattern: |
+    #[from]
+    $VARIANT($SRC)
+  inside:
+    stopBy: end
+    kind: source_file
+    not:
+      has:
+        stopBy: end
+        pattern: impl_http_error_from!($$$)
+files:
+  - "services/*/src/router/error.rs"
+  - "api/*/src/**/error.rs"

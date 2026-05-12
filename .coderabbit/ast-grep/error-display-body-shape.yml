@@ -1,0 +1,22 @@
+id: error-display-body-shape
+language: rust
+severity: warning
+message: |
+  The `Display` impl for `Error` MUST have body `write!(fmt, "{self:?}")`. That body is intended
+  for logs only — user-facing messages come from `HttpErrorMapping::to_error_message`. Replacing
+  the body with a custom message risks leaking internal state to clients via the default
+  `to_error_message` fallback (`self.to_string()`).
+rule:
+  pattern: |
+    impl core::fmt::Display for Error {
+        fn fmt(&self, $_: &mut core::fmt::Formatter) -> core::result::Result<(), core::fmt::Error> {
+            $BODY
+        }
+    }
+  not:
+    has:
+      pattern: write!(fmt, "{self:?}")
+files:
+  - "services/*/src/**/error.rs"
+  - "api/*/src/**/error.rs"
+  - "greenhouse_core/src/**/error.rs"

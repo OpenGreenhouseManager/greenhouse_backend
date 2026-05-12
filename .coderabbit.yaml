@@ -1,30 +1,496 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: "en-US"
 early_access: false
+
+tone_instructions: |
+  Be assertive, terse, and technical. Cite file paths and line ranges. Quote the offending snippet,
+  then show the fix as a diff or code block matching this repo's style. Do not hedge. Do not praise.
+  Do not apologize. Never suggest `anyhow`, `thiserror`, `Box<dyn Error>`, `#[tracing::instrument]`,
+  doc comments (`///`), or `unwrap_or_default()` to swallow errors. Treat existing `error.rs` files
+  and `greenhouse_core/src/http_error.rs` as the source of truth for error handling — flag any
+  deviation and link to a sibling file demonstrating the correct pattern.
+
 reviews:
-  profile: "chill"
-  request_changes_workflow: false
+  profile: "assertive"
+  request_changes_workflow: true
   high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+  auto_title_placeholder: "@coderabbitai"
   poem: false
   review_status: true
   collapse_walkthrough: false
+  changed_files_summary: true
+  sequence_diagrams: true
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+  suggested_labels: true
+  auto_apply_labels: false
+  suggested_reviewers: true
+  auto_assign_reviewers: false
+  abort_on_close: true
+  disable_cache: false
+
   auto_review:
     enabled: true
+    auto_incremental_review: true
     drafts: false
+    base_branches:
+      - "main"
+      - "master"
+      - "develop"
+    ignore_title_keywords:
+      - "WIP"
+      - "DO NOT MERGE"
+      - "wip:"
+
+  finishing_touches:
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
+
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+    title:
+      mode: "warning"
+      requirements: "Use Conventional Commits style, e.g. `feat(auth_service): ...`, `fix(web_api): ...`, `build(<crate>): release version <version>` for releases (matches release.toml)."
+    description:
+      mode: "warning"
+
+  path_filters:
+    - "!**/target/**"
+    - "!Cargo.lock"
+    - "!**/*.lock"
+    - "!**/logs/**"
+    - "!**/node_modules/**"
+    - "!**/dist/**"
+    - "!**/*.svg"
+    - "!**/*.png"
+    - "!**/*.jpg"
+    - "!**/*.jpeg"
+    - "!**/*.ico"
+    - "!**/schema.rs"
+    - "!**/config/.env*"
+
   path_instructions:
-    - path: "**/migrations/**"
+    - path: "services/*/src/router/**/*.rs"
       instructions: |
-        Check that migrations are reversible where possible (down migration exists).
-        Flag missing indexes on foreign keys or frequently queried columns.
-        Warn if a migration drops columns or tables without a confirmed backup strategy.
-    - path: "**/services/**"
+        Axum handlers in this crate follow a strict shape. Enforce every item; cite line ranges:
+
+        1. Every async handler bound to a route MUST be annotated with `#[axum::debug_handler]` on
+           the line directly above the fn. Missing attribute is a blocker.
+        2. Handlers MUST be `pub(crate) async fn`. Reject bare `pub async fn` and plain `async fn`.
+           Handlers are not part of any public API.
+        3. Return type MUST be `HttpResult<T>` or `HttpResult<impl IntoResponse>` where `HttpResult`
+           is the alias from the sibling `error.rs` (`type HttpResult<T> = core::result::Result<T,
+           HttpErrorResponse<Error>>;`). Reject `Result<_, _>`, `anyhow::Result`, or any return that
+           bypasses `HttpErrorResponse`.
+        4. State destructured at the parameter site: `State(AppState { config, pool }): State<AppState>`.
+           Reject `State(state): State<AppState>` followed by `state.pool` field access — destructure
+           at the binding instead.
+        5. `pool.get().await` MUST be followed by
+           `.map_err(|e| { sentry::capture_error(&e); Error::DatabaseConnection })?;`
+           For user-bearing flows, prepend `sentry::configure_scope(|scope| { scope.set_user(...) })`
+           — see `services/auth_service/src/router/auth_router.rs` `register_user` for the canonical
+           form.
+        6. Every `.map_err` arm that produces an `Error::*` variant from a real underlying error
+           MUST call `sentry::capture_error(&e)` before returning the mapped variant. Bare
+           `.map_err(|_| Error::Foo)` is acceptable ONLY when the source has already been captured
+           upstream — call it out explicitly when seen so a human can confirm.
+        7. Every `tracing::error!("...: {:?}", e)` in a handler module MUST be paired with
+           `sentry::capture_error(&e)` within the same function. Either both present or neither;
+           never a `tracing::error!` alone.
+        8. NO `.unwrap()` and NO `.expect()` in handler bodies. These are acceptable ONLY in
+           `main.rs`/`lib.rs` startup or migration runners — not in routes.
+        9. Cookie auth follows the exact form:
+           `cookies.get(AUTH_TOKEN).map(|c| c.value().to_string()).ok_or(Error::CookieNotFound)?`
+           — reject any other shape.
+        10. Upserts use `.on_conflict(<key>).do_update().set((...))` — see
+            `auth_router.rs::set_preferences`. Reject manual select-then-update races.
+        11. Do NOT add `#[tracing::instrument]` — this repo does not use it.
+        12. Do NOT add `///` doc comments — repo convention is no doc comments on handlers.
+
+    - path: "services/*/src/database/**/*.rs"
       instructions: |
-        Ensure errors are propagated with context (use anyhow or thiserror properly).
-        Flag any use of .unwrap() or .expect() in non-test code — prefer proper error handling.
-        Check that async functions don't block the executor (no std::thread::sleep or heavy CPU work without spawn_blocking).
-    - path: "**/*_test.rs"
+        Diesel + diesel-async + bb8 conventions:
+
+        1. Models derive `#[derive(Debug, Queryable, Selectable, Insertable)]` and add `AsChangeset`
+           and/or `Clone` only when needed. `#[diesel(table_name = crate::database::schema::<table>)]`
+           and `#[diesel(check_for_backend(diesel::pg::Pg))]` MUST both be present. Reject models
+           missing `check_for_backend(diesel::pg::Pg)`.
+        2. Pool type alias is `bb8::Pool<AsyncDieselConnectionManager<AsyncPgConnection>>`. Functions
+           take `pool: &Pool`, never an owned `Pool`.
+        3. Connection acquisition is always:
+           `let mut conn = pool.get().await.map_err(|e| { sentry::capture_error(&e); Error::DatabaseConnection })?;`
+           Reject any other shape, including `.expect("db")`.
+        4. Use `diesel_async::RunQueryDsl` (`.execute(&mut conn).await`, `.get_result(&mut conn).await`,
+           `.first(&mut conn).await`). Flag synchronous `diesel::RunQueryDsl`.
+        5. Constructors return `Result<Self>` using the local `Result` alias from `error.rs`. Do not
+           invent ad-hoc `Result<Self, String>` or `Result<Self, Box<dyn Error>>`.
+        6. Inline tests only: `#[cfg(test)] mod tests { ... }`. Use `#[tokio::test]` for async.
+           Never create a separate `*_test.rs` file.
+        7. Do NOT modify `schema.rs` by hand — it is generated by `diesel print-schema`. If a PR
+           edits `schema.rs` without a corresponding migration in `migrations/`, request changes.
+        8. Bcrypt: `bcrypt::hash_with_result(pw, 12)` + `format_for_version(Version::TwoB)` — see
+           `services/auth_service/src/database/models.rs::User::new`. Flag cost-factor changes or
+           downgrades to `bcrypt::hash` (which yields `$2y$`).
+
+    - path: "services/*/src/**/error.rs"
       instructions: |
-        Verify test assertions are meaningful and not trivially true.
-        Check that tests clean up any database or file state they create.
+        Canonical error-module shape. Source of truth: `services/auth_service/src/router/error.rs`
+        (full pattern with nested matches), `services/auth_service/src/token/error.rs` (leaf with
+        PartialEq), `services/device_service/src/router/error.rs` (no Serialize because of
+        reqwest::Error), `api/web/src/helper/error.rs` (struct variant `ApiError`).
+
+        Derive matrix — choose the right form:
+        - `#[derive(Debug, Serialize, From)]` — DEFAULT. Enum with `#[from]` variants wrapping
+          sub-errors, all of which are `Serialize`.
+        - `#[derive(Debug, Serialize)]` — leaf enum with no `#[from]` variants.
+        - `#[derive(Debug, Serialize, PartialEq)]` — same as above, plus error is compared in tests.
+        - `#[derive(Debug, From)]` — drop `Serialize` when a variant holds a non-`Serialize` source
+          like `reqwest::Error`.
+        - `#[derive(Debug)]` — drop `From` too when variants hold both `reqwest::Error` and a
+          custom struct; conversions are written manually.
+        `From` is `derive_more::From` (the crate). Reject `thiserror::Error`, `anyhow::Error`,
+        `Box<dyn std::error::Error>`, `derive_more::Display` on the error, `derive_more::Error`.
+
+        Boilerplate (must appear immediately after the enum, with EXACT spacing — rust-analyzer
+        folding regions):
+
+            // region:    --- Error Boilerplate
+            impl core::fmt::Display for Error {
+                fn fmt(&self, fmt: &mut core::fmt::Formatter) -> core::result::Result<(), core::fmt::Error> {
+                    write!(fmt, "{self:?}")
+                }
+            }
+
+            impl std::error::Error for Error {}
+            // endregion: --- Error Boilerplate
+
+        Do not normalize spacing. Do not replace the `Display` body with anything other than
+        `write!(fmt, "{self:?}")` — that body is for logs; user-facing messages come from
+        `to_error_message`.
+
+        Result aliases (always present):
+            pub(crate) type Result<T> = core::result::Result<T, Error>;
+        HTTP-facing modules additionally:
+            pub(crate) type HttpResult<T> = core::result::Result<T, HttpErrorResponse<Error>>;
+        Never `std::result::Result`. Never `anyhow::Result`.
+
+        `#[from]` ↔ `impl_http_error_from!` invariant — BLOCKER if violated. Every variant marked
+        `#[from] Variant(path::SubError)` MUST have `path::SubError` listed in the
+        `impl_http_error_from!(Error { ... })` invocation in the same file. Adding one without the
+        other (or removing one side) breaks the From-chain for handlers using `?`.
+
+        HttpErrorMapping impl rules (for files implementing it):
+        - `to_status_code` is always implemented; exhaustive match across every variant.
+        - `to_error_message` is always overridden to return a hand-curated user-safe message. Never
+          fall through to the default `self.to_string()` which would expose `{self:?}` to clients.
+        - SECURITY: in auth modules, never distinguish "user not found" from "wrong password" in the
+          message. See `services/auth_service/src/router/error.rs:70-71` — both `UserNotFound` and
+          `PasswordIncorrect` map to `"Username or password incorrect"`. Any new variant that leaks
+          which side failed (e.g. `EmailNotRegistered`, `AccountLocked` with a distinct message) is
+          a user-enumeration regression — request changes.
+        - Nested matches recurse exhaustively into sub-errors (see `auth_service/src/router/error.rs:48-62`).
+          When a sub-error gets a new variant, every outer match MUST be updated in the same PR.
+
+    - path: "api/*/src/**/error.rs"
+      instructions: |
+        Same rules as `services/*/src/**/error.rs` — see the canonical pattern at
+        `services/auth_service/src/router/error.rs`. Notable variation for API gateways: an `Error`
+        may hold a struct variant (e.g. `Error::Api(ApiError)` in `api/web/src/helper/error.rs:14`)
+        where `ApiError { status: StatusCode, message: String }` carries dynamic downstream error
+        data. In that case the enum drops `Serialize` and `From` derives.
+
+        Reject `thiserror`, `anyhow`, `Box<dyn Error>`. Enforce the same `Display`/`Error`/region
+        marker boilerplate and the `#[from]` ↔ `impl_http_error_from!` invariant.
+
+    - path: "services/*/migrations/**/*.sql"
+      instructions: |
+        Diesel migrations are paired `up.sql` + `down.sql` files in a timestamp-prefixed directory.
+
+        1. Every new migration directory MUST contain BOTH `up.sql` AND `down.sql`. Missing
+           `down.sql` is a blocker.
+        2. `down.sql` MUST genuinely reverse `up.sql`. Reject empty `down.sql` or `-- noop`. For
+           genuinely irreversible operations (data backfills, destructive drops), require an
+           explicit `-- IRREVERSIBLE:` comment at the top of both files with a recovery plan, and
+           flag for human acknowledgement.
+        3. Every `FOREIGN KEY (col) REFERENCES other(id)` MUST have an explicit `ON DELETE` clause
+           (`CASCADE`, `SET NULL`, or `RESTRICT`). See
+           `services/auth_service/migrations/2025-09-29-193518_add_user_preferences/up.sql` for
+           `ON DELETE CASCADE`. No bare FKs.
+        4. Every foreign key column MUST be indexed (Postgres does not auto-index FK columns).
+           If `up.sql` adds a FK without a matching `CREATE INDEX ... ON tbl(col);`, request changes.
+        5. Columns used in `WHERE` filters in sibling `router/*.rs` (`username`, `device_id`,
+           `user_id`, etc.) MUST be indexed.
+        6. `DROP TABLE`, `DROP COLUMN`, `ALTER COLUMN ... TYPE` on non-empty tables: require an
+           explicit confirmation comment in the PR description plus a backup/rollout note.
+        7. Primary keys use `UUID PRIMARY KEY DEFAULT gen_random_uuid()` — match existing tables.
+           Do not introduce `SERIAL` or `BIGSERIAL` PKs.
+        8. Migration directory naming: `YYYY-MM-DD-HHMMSS_description`. Do NOT rename or delete
+           existing migration directories — they are part of the deployed schema history.
+
+    - path: "greenhouse_core/src/*_dto/**/*.rs"
+      instructions: |
+        Shared DTOs between services. Wire format. Enforce:
+
+        1. Standard derive: `#[derive(Serialize, Deserialize, Debug)]`. Add `Clone` only when a
+           downstream needs it. Add the `IntoJsonResponse` proc macro from `greenhouse_macro` ONLY
+           when the DTO is returned directly from an Axum handler — see
+           `greenhouse_core/src/http_error.rs::ErrorResponseBody` for the canonical use.
+        2. Fields are `pub` (not `pub(crate)`) — DTOs are the public wire format.
+        3. No business logic in DTOs. They are plain data. Request moving any `impl SomeDto { fn
+           validate() }` etc. into the consuming crate.
+        4. Renames: use per-field `#[serde(rename = "...")]` when the wire format differs from the
+           struct casing. Don't blanket-apply `#[serde(rename_all = ...)]` unless the file already
+           uses it.
+        5. Breaking field changes (rename, removed field, changed type) MUST list every consumer in
+           the PR description. Search `services/`, `api/`, and `examples/` for the DTO name.
+        6. No `#[non_exhaustive]`, no `#[must_use]` — not used elsewhere.
+
+    - path: "greenhouse_core/src/http_error.rs"
+      instructions: |
+        SENSITIVE FILE. Changes here affect every service. Apply maximum scrutiny:
+
+        1. `HttpErrorMapping` trait signature is a contract: `to_status_code`, `to_error_message`,
+           `to_error_context`. Any change requires updating every `impl HttpErrorMapping for Error`
+           across `services/*/src/**/error.rs` and `api/*/src/**/error.rs`. Verify the PR touches
+           all of them.
+        2. The `impl_http_error_from!` macro is consumed across all services. Changing its expansion
+           is a breaking change — PR description MUST list every callsite.
+        3. The `IntoResponse for HttpErrorResponse<E>` impl logs via `tracing::error!` behind
+           `#[cfg(feature = "error_handling")]`. If you remove or change that gating, callers may
+           lose error logs.
+        4. Do NOT leak internal error debug output to clients. `to_error_message` is what clients
+           see; it MUST be hand-curated. The `Display` impl returning `{self:?}` is for logs.
+        5. Adding fields to `ErrorResponseBody` is a wire-format change — call it out and require
+           integration-tests updates.
+
+    - path: "greenhouse_core/src/smart_device_interface/**/*.rs"
+      instructions: |
+        Public surface for device implementations (examples/ and external devices). API stability
+        rules apply:
+
+        1. Any change to `Config`, `DeviceBuilder`, `init_hybrid_router`, `init_input_router`,
+           `init_output_router`, `read_config_file_with_path`, `update_config_file_with_path`,
+           `AlertCreation`, or `trigger_alert` is breaking. Audit every file under `examples/` and
+           update them in the same PR. The `.github/workflows/examples.yml` workflow catches some
+           breakage but reviewer must verify each example still compiles.
+        2. `Config` is `serde_yaml`-backed; field renames break on-disk configs. Use
+           `#[serde(alias = "old_name")]` for one release before removing the old name.
+        3. New required `Config` fields MUST default via `#[serde(default)]` or be wrapped in
+           `Option<_>` — never break existing on-disk configs.
+        4. Same error-module rules as `services/*/src/**/error.rs`.
+        5. Public exports are gatekept via `mod.rs`. Changing visibility from `pub` to `pub(crate)`
+           of any item already used downstream is breaking.
+
+    - path: "greenhouse_macro/**/*.rs"
+      instructions: |
+        Proc-macro crate.
+
+        1. `.unwrap()` is acceptable on `parse_macro_input!` results — failures become
+           `compile_error!`. Do NOT flag `.unwrap()` here the way you would in handler code.
+        2. New macros MUST have at least one in-tree usage in `services/`, `api/`, or
+           `greenhouse_core/` in the same PR. Orphan macros rot.
+        3. The `IntoJsonResponse` derive currently emits `Json(self).into_response()`. Any change
+           to the generated body affects every DTO that derives it. List every `#[derive(IntoJsonResponse)]`
+           site in the PR description.
+        4. The `#[authenticate("ROLE")]` attribute macro injects `use crate::helper::error::Error;`
+           and `use crate::auth::AUTH_TOKEN;`. Consuming crates without those paths will fail to
+           compile. Document the required environment at the top of the macro file if not already.
+        5. Align `proc-macro2`/`quote`/`syn` versions with workspace deps in root `Cargo.toml` — do
+           not pin different versions here.
+        6. NO runtime deps (`tokio`, `axum`) in this `Cargo.toml`; this crate is
+           `[lib] proc-macro = true` and runs at compile time.
+
+    - path: "api/*/src/**/*.rs"
+      instructions: |
+        API gateway crates. Thin HTTP layer over downstream services.
+
+        1. Handler conventions from `services/*/src/router/**/*.rs` apply identically here
+           (`#[axum::debug_handler]`, `pub(crate) async fn`, `HttpResult<_>`, sentry+tracing pairing).
+        2. Each module is split: `mod.rs` + `router.rs` (Axum routes/handlers) + `service.rs`
+           (outbound `reqwest` calls) + optional `middleware.rs`. Do not merge these.
+        3. Error types in `helper/error.rs` are struct-style enums (`Error::Api(ApiError)`,
+           `Error::Request(reqwest::Error)`, `Error::Json(reqwest::Error)`). Keep the variant set in
+           sync with `to_status_code`/`to_error_message` arms. New downstream failure modes get new
+           variants, not stringified fallbacks.
+        4. Outbound HTTP calls MUST set timeouts. If a new `reqwest::Client::new()` or `.post()`
+           call appears without `.timeout(_)`, request changes.
+        5. Cookies are set with `SameSite::None`, `secure(true)`, `path("/")` — match the pattern in
+           `api/web/src/auth/router.rs`. Flag changes to these flags as security-relevant.
+        6. Service addresses come from `Config::service_addresses`. Never hardcode
+           `http://localhost:...` in handler code.
+
+    - path: "examples/**/*.rs"
+      instructions: |
+        Example devices demonstrating `smart_device_interface`. CI-built.
+
+        1. `.unwrap()` is acceptable in `main()` startup and config bootstrap — these are demo
+           binaries. Do NOT flag it. BUT DO flag `.unwrap()` inside request-handling closures
+           (read_handler, write_handler, etc.).
+        2. `#[tokio::main]` is fine.
+        3. When `greenhouse_core::smart_device_interface` API changes, every example MUST still
+           compile. If a PR changes the interface but skips examples, request changes.
+        4. Hardcoded UUIDs (e.g. `datasource_id: "7a224a14-..."`) are fine for examples; flag if
+           copy-pasted into `services/` or `api/`.
+        5. Config bootstrap pattern (create parent dir, write `{}`, then
+           `update_config_file_with_path`) is the canonical recovery flow — match it in new examples.
+
+    - path: "integration-tests/**/*.rs"
+      instructions: |
+        End-to-end tests using `testcontainers` to spin up real Postgres + service binaries.
+
+        1. `.unwrap()` and `.expect()` are acceptable in test setup and assertions. Do not flag.
+        2. New tests MUST use `TestContext` from `tests/test_helper.rs`. Do not introduce a parallel
+           container-management library.
+        3. CI runs tests with `--test-threads=1` (see `.github/workflows/rust_ci.yml`). Do not write
+           tests that assume parallel isolation.
+        4. Container teardown is implicit via `Drop` on `ContainerAsync<Postgres>`. No manual
+           `docker rm` or `kill` in tests.
+        5. Naming: `api-<surface>-<resource>-integration.rs` (see existing
+           `api-auth-integration.rs`, `api-data-alert-integration.rs`).
+        6. `RUSTSEC-2025-0111` is pinned-ignored because it is transitive via
+           `testcontainers -> bollard`. Do not add new audit ignores without an inline justification
+           comment matching the existing one.
+
+    - path: "**/Cargo.toml"
+      instructions: |
+        Workspace dependency conventions:
+
+        1. The root `Cargo.toml` `[workspace.dependencies]` is the single source of truth for shared
+           deps. Member crates MUST consume via `dep = { workspace = true }`. Flag any version
+           literal in a member `Cargo.toml` for a dep already declared in `[workspace.dependencies]`.
+        2. Dependency ordering is enforced by `cargo sort --workspace --grouped` in CI. Any
+           unsorted block is a blocker.
+        3. Adding a new transitive risk surface (network, crypto, ffi) requires a one-line
+           justification in the PR description.
+        4. `features = [...]`: prefer features already declared at the workspace level. Don't
+           silently enable `full`, `unstable`, or `tokio`/`rt-multi-thread` in leaf crates unless
+           genuinely needed.
+        5. NEVER add `anyhow` or `thiserror` to any `Cargo.toml`. If a PR adds either, request
+           changes and link to `services/auth_service/src/router/error.rs` as the canonical pattern.
+        6. Respect `rust-toolchain.toml` (nightly). Do not pin per-crate `rust-version`.
+        7. Adding `cargo audit` ignores requires the same inline comment style as
+           `.github/workflows/rust_ci.yml`.
+
+    - path: ".github/workflows/**/*.yml"
+      instructions: |
+        1. Pin actions by major-version tag (`actions/checkout@v4`) — match existing files. Reject
+           floating `@main` refs.
+        2. `GITHUB_TOKEN` is the only secret currently in use. New secrets require justification and
+           minimum-scope `permissions:` blocks per-job.
+        3. The matrix in `rust_ci.yml` runs `sort`, `build`, `fmt`, `clippy`, `test`. Dropping a
+           check is blocking. Adding checks is welcome but must run in <10m on `ubuntu-latest`.
+        4. Nightly toolchain is installed explicitly. Do not switch to stable without removing
+           nightly-only features.
+        5. `cargo audit --ignore RUSTSEC-2025-0111` — keep the inline comment explaining why.
+           Removing the ignore is fine only once `testcontainers -> bollard` migrates off
+           `tokio-tar`.
+        6. New workflows MUST set `permissions: { contents: read }` at the top level and elevate
+           per-job only when needed. Default-write `GITHUB_TOKEN` is a finding.
+
+    - path: "**/Dockerfile*"
+      instructions: |
+        1. Base image pinning: `rust:${RUST_VERSION}-slim-bookworm` via ARG. Reject `latest` or
+           unpinned tags.
+        2. apt-get pattern: combine `update`, `upgrade`, `install --no-install-recommends`, `clean`,
+           and `rm -rf /var/lib/apt/lists/*` in a single `RUN` to keep layers small — match the
+           existing `Dockerfile`.
+        3. Multi-stage builds: production images should not contain the Rust toolchain. If a
+           Dockerfile installs `rustup` AND copies the final binary into the same stage, flag it.
+        4. `--no-install-recommends` is mandatory on `apt-get install`.
+        5. Build script `scripts/build-image-layer.sh` is invoked with `tools` then `apps`. If a new
+           Dockerfile bypasses it, justify in the PR description.
+        6. Run `hadolint` and fix every finding (`DL3008`, `DL3004`, `DL3020`, etc.).
+        7. Production stages should run as non-root. Don't regress if existing files do.
+
+  tools:
+    ast-grep:
+      rule_dirs:
+        - ".coderabbit/ast-grep"
+      essential_rules: true
+      packages: []
+    clippy:
+      enabled: true
+    hadolint:
+      enabled: true
+    gitleaks:
+      enabled: true
+    actionlint:
+      enabled: true
+    languagetool:
+      enabled: true
+      enabled_only: false
+      level: "default"
+      enabled_rules: []
+      disabled_rules:
+        - "EN_UNPAIRED_BRACKETS"
+        - "WHITESPACE_RULE"
+      enabled_categories: []
+      disabled_categories:
+        - "TYPOS"
+    markdownlint:
+      enabled: true
+    yamllint:
+      enabled: true
+    shellcheck:
+      enabled: true
+    github-checks:
+      enabled: true
+      timeout_ms: 180000
+    semgrep:
+      enabled: true
+    ruff:
+      enabled: false
+    biome:
+      enabled: false
+    eslint:
+      enabled: false
+    golangci-lint:
+      enabled: false
+    detekt:
+      enabled: false
+    checkov:
+      enabled: false
+    rubocop:
+      enabled: false
+    buf:
+      enabled: false
+    regal:
+      enabled: false
+    phpstan:
+      enabled: false
+
 chat:
   auto_reply: true
+  art: false
+  integrations:
+    jira:
+      usage: "disabled"
+    linear:
+      usage: "disabled"
+
+code_generation:
+  docstrings:
+    language: "en-US"
+    path_instructions: []
+  unit_tests:
+    path_instructions: []
+
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: "auto"
+  issues:
+    scope: "auto"
+  jira:
+    usage: "disabled"
+  linear:
+    usage: "disabled"
+  pull_requests:
+    scope: "local"
+  web_search:
+    enabled: true

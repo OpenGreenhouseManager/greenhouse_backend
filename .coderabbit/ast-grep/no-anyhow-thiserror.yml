@@ -1,0 +1,21 @@
+id: no-anyhow-thiserror
+language: rust
+severity: error
+message: |
+  This repo does NOT use `anyhow` or `thiserror`. Use the canonical pattern: a hand-written
+  enum + `#[derive(Debug, Serialize, From)]` (where `From` is `derive_more::From`) + manual
+  `impl Display` (`write!(fmt, "{self:?}")`) + explicit `impl std::error::Error for Error {}`,
+  plus `impl_http_error_from!` for `From` chains into `HttpErrorResponse<Error>`. See
+  `services/auth_service/src/router/error.rs` for the canonical reference.
+rule:
+  any:
+    - pattern: use anyhow::$$$;
+    - pattern: use anyhow;
+    - pattern: anyhow!($$$)
+    - pattern: anyhow::$_
+    - pattern: use thiserror::$$$;
+    - pattern: use thiserror;
+    - pattern: thiserror::$_
+    - pattern: Box<dyn std::error::Error>
+    - pattern: Box<dyn std::error::Error + Send + Sync>
+    - pattern: Box<dyn core::error::Error>

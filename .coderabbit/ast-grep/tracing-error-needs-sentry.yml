@@ -1,0 +1,21 @@
+id: tracing-error-needs-sentry
+language: rust
+severity: error
+message: |
+  Every `tracing::error!(..., e)` in a service/api crate must be paired with
+  `sentry::capture_error(&e)` within the same function. Either both present or neither; never
+  a `tracing::error!` alone — it leaves the error invisible to Sentry. See
+  `services/auth_service/src/router/auth_router.rs` `.map_err` arms (lines around 100, 287, 319)
+  for the canonical pattern.
+rule:
+  kind: function_item
+  has:
+    stopBy: end
+    pattern: tracing::error!($$$)
+  not:
+    has:
+      stopBy: end
+      pattern: sentry::capture_error($$$)
+files:
+  - "services/**/*.rs"
+  - "api/**/*.rs"
