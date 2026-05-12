@@ -4,9 +4,10 @@ members = [
     "api/script",
     "api/web",
     "examples",
-    "greenhouse_core", "integration-tests",
-    "services/auth_service",
+    "greenhouse_core",
     "greenhouse_macro",
+    "integration-tests",
+    "services/auth_service",
     "services/data_storage_service",
     "services/device_service",
     "services/scripting_service",
@@ -23,27 +24,27 @@ default-members = [
 
 [workspace.dependencies]
 axum = { version = "0.8.3", features = ["macros", "tracing"] }
-derive_more = {version = "2.0.1", features = ["full"] }
-tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread"] }
-reqwest = "0.12.15"
-serde = { version = "1.0.219", features = ["serde_derive"] }
-greenhouse_core = { path = "./greenhouse_core" }
-greenhouse_macro = { path = "./greenhouse_macro" }
-serde_json = "1.0.140"
-serde_yaml = "0.9.34+deprecated"
 bb8 = "0.8.6"
+bcrypt = "0.17.0"
+chrono = { version = "0.4.41", features = ["serde"] }
+derive_more = { version = "2.0.1", features = ["full"] }
 diesel = "2.2.10"
 diesel-async = { version = "0.5.2", features = ["postgres", "bb8"] }
-uuid = "1.16.0"
-bcrypt = "0.17.0"
-rand = "0.9.1"
-jsonwebtoken = "9.3.1"
-chrono = { version = "0.4.41", features = ["serde"]  }
 diesel_migrations = "2.2.0"
+futures = "0.3.31" 
+greenhouse_core = { path = "./greenhouse_core" }
+greenhouse_macro = { path = "./greenhouse_macro" }
+jsonwebtoken = "9.3.1"
+rand = "0.9.1"
+reqwest = "0.12.15"
+sentry = "0.37.0"
+serde = { version = "1.0.219", features = ["serde_derive"] }
+serde_json = "1.0.140"
+serde_yaml = "0.9.34+deprecated"
+tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread"] }
 tower-cookies = "0.11.0"
+tower-http = { version = "0.6.2", features = ["trace"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
-tower-http = { version = "0.6.2", features = ["trace"] }
-sentry = "0.37.0"
-futures = "0.3.31" 
+uuid = "1.16.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
