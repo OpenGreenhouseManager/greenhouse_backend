@@ -123,7 +123,10 @@ impl DiaryEntry {
                 diary_entry_tag::diary_entry_id.eq(self.id),
                 diary_entry_tag::diary_tag_id.eq(tag.id),
             ))
-            .on_conflict((diary_entry_tag::diary_entry_id, diary_entry_tag::diary_tag_id))
+            .on_conflict((
+                diary_entry_tag::diary_entry_id,
+                diary_entry_tag::diary_tag_id,
+            ))
             .do_nothing()
             .execute(&mut conn)
             .await

@@ -79,12 +79,7 @@ pub(crate) async fn remove_tag_from_entry(
     State(AppState { config }): State<AppState>,
     Path((id, tag_name)): Path<(Uuid, String)>,
 ) -> HttpResult<StatusCode> {
-    service::remove_tag(
-        &config.service_addresses.data_storage_service,
-        id,
-        tag_name,
-    )
-    .await?;
+    service::remove_tag(&config.service_addresses.data_storage_service, id, tag_name).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -93,8 +88,5 @@ pub(crate) async fn search_entries_by_tag(
     State(AppState { config }): State<AppState>,
     Path(tag_name): Path<String>,
 ) -> HttpResult<GetDiaryResponseDto> {
-    Ok(
-        service::search_by_tag(&config.service_addresses.data_storage_service, tag_name)
-            .await?,
-    )
+    Ok(service::search_by_tag(&config.service_addresses.data_storage_service, tag_name).await?)
 }

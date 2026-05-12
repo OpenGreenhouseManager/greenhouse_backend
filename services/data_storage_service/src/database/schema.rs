@@ -49,9 +49,4 @@ diesel::table! {
 diesel::joinable!(diary_entry_tag -> diary_entry (diary_entry_id));
 diesel::joinable!(diary_entry_tag -> diary_tag   (diary_tag_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    alert,
-    diary_entry,
-    diary_entry_tag,
-    diary_tag,
-);
+diesel::allow_tables_to_appear_in_same_query!(alert, diary_entry, diary_entry_tag, diary_tag,);
