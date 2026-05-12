@@ -1,7 +1,8 @@
 use greenhouse_core::{
     data_storage_service_dto::diary_dtos::{
         endpoints, get_diary::GetDiaryResponseDto, get_diary_entry::DiaryEntryResponseDto,
-        post_diary_entry::PostDiaryEntryDtoRequest, put_diary_entry::PutDiaryEntryDtoRequest,
+        post_diary_entry::PostDiaryEntryDtoRequest, post_diary_tag::PostDiaryTagDtoRequest,
+        put_diary_entry::PutDiaryEntryDtoRequest,
     },
     http_error::ErrorResponseBody,
 };
@@ -153,6 +154,121 @@ pub(crate) async fn get_diary(
         return resp.json().await.map_err(|e| {
             sentry::capture_error(&e);
             tracing::error!("Error in get to service: {:?}", e,);
+            Error::Json(e)
+        });
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
+    }))
+}
+
+pub(crate) async fn add_tag(base_ulr: &str, entry_id: Uuid, tag_name: String) -> Result<()> {
+    let body = PostDiaryTagDtoRequest { tag_name };
+    let resp = reqwest::Client::new()
+        .post(
+            base_ulr.to_string()
+                + endpoints::DIARY
+                + "/"
+                + &entry_id.to_string()
+                + "/tags",
+        )
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!(
+                "Error in post to service: {:?} for url {}",
+                e,
+                base_ulr
+            );
+            Error::Request(e)
+        })?;
+    if resp.status().is_success() {
+        return Ok(());
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
+    }))
+}
+
+pub(crate) async fn remove_tag(base_ulr: &str, entry_id: Uuid, tag_name: String) -> Result<()> {
+    let resp = reqwest::Client::new()
+        .delete(
+            base_ulr.to_string()
+                + endpoints::DIARY
+                + "/"
+                + &entry_id.to_string()
+                + "/tags/"
+                + &tag_name,
+        )
+        .send()
+        .await
+        .map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!(
+                "Error in delete to service: {:?} for url {}",
+                e,
+                base_ulr
+            );
+            Error::Request(e)
+        })?;
+    if resp.status().is_success() {
+        return Ok(());
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
+    }))
+}
+
+pub(crate) async fn search_by_tag(
+    base_ulr: &str,
+    tag_name: String,
+) -> Result<GetDiaryResponseDto> {
+    let resp = reqwest::Client::new()
+        .get(base_ulr.to_string() + endpoints::DIARY + "/tags/" + &tag_name)
+        .send()
+        .await
+        .map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!(
+                "Error in get to service: {:?} for url {}",
+                e,
+                base_ulr
+            );
+            Error::Request(e)
+        })?;
+    if resp.status().is_success() {
+        return resp.json().await.map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!("Error in get to service: {:?}", e);
             Error::Json(e)
         });
     }
