@@ -2,15 +2,17 @@ id: from-variant-needs-macro
 language: rust
 severity: error
 message: |
-  This variant is marked `#[from]` but its source type is not registered in the
-  `impl_http_error_from!(Error { ... })` invocation in this file. That macro generates
-  `From<SourceError> for HttpErrorResponse<Error>` — without it, handlers propagating the
-  sub-error via `?` will not compile (or will route through the wrong `From` chain). Add the
-  source type to the macro call. See `services/auth_service/src/router/error.rs:34-37`.
+  This file has a `#[from]` variant but no `impl_http_error_from!(Error { ... })` invocation.
+  Every `#[from] Variant(SubError)` MUST have its source type registered in that macro so
+  handlers can propagate sub-errors via `?` into `HttpResult<_>`. See
+  `services/auth_service/src/router/error.rs:34-37` for the canonical example.
+
+  NOTE: this rule only checks for the macro's presence in the file. ast-grep metavariables
+  don't propagate across nested `has` patterns, so it cannot verify that the specific source
+  type from `#[from] Variant(SubError)` actually appears inside the macro's brace-list. A
+  reviewer must manually confirm every `#[from]` source type is listed in the macro call.
 rule:
-  pattern: |
-    #[from]
-    $VARIANT($SRC)
+  pattern: "#[from]"
   inside:
     stopBy: end
     kind: source_file

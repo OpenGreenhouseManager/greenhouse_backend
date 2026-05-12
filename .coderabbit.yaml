@@ -65,7 +65,6 @@ reviews:
     - "!**/*.jpg"
     - "!**/*.jpeg"
     - "!**/*.ico"
-    - "!**/schema.rs"
     - "!**/config/.env*"
 
   path_instructions:
@@ -299,24 +298,47 @@ reviews:
         6. NO runtime deps (`tokio`, `axum`) in this `Cargo.toml`; this crate is
            `[lib] proc-macro = true` and runs at compile time.
 
-    - path: "api/*/src/**/*.rs"
+    - path: "api/*/src/**/router.rs"
       instructions: |
-        API gateway crates. Thin HTTP layer over downstream services.
+        API gateway router files. Handler conventions from `services/*/src/router/**/*.rs` apply
+        identically here:
 
-        1. Handler conventions from `services/*/src/router/**/*.rs` apply identically here
-           (`#[axum::debug_handler]`, `pub(crate) async fn`, `HttpResult<_>`, sentry+tracing pairing).
-        2. Each module is split: `mod.rs` + `router.rs` (Axum routes/handlers) + `service.rs`
-           (outbound `reqwest` calls) + optional `middleware.rs`. Do not merge these.
-        3. Error types in `helper/error.rs` are struct-style enums (`Error::Api(ApiError)`,
-           `Error::Request(reqwest::Error)`, `Error::Json(reqwest::Error)`). Keep the variant set in
-           sync with `to_status_code`/`to_error_message` arms. New downstream failure modes get new
-           variants, not stringified fallbacks.
-        4. Outbound HTTP calls MUST set timeouts. If a new `reqwest::Client::new()` or `.post()`
-           call appears without `.timeout(_)`, request changes.
-        5. Cookies are set with `SameSite::None`, `secure(true)`, `path("/")` — match the pattern in
+        1. `#[axum::debug_handler]` on every async route handler.
+        2. `pub(crate) async fn` only — reject bare `pub async fn`.
+        3. Return `HttpResult<T>` or `HttpResult<impl IntoResponse>`.
+        4. `State<AppState>` destructured at the parameter site.
+        5. `.map_err` arms pair `sentry::capture_error(&e)` with the mapped `Error` variant.
+        6. Every `tracing::error!` in this file is paired with `sentry::capture_error(&e)` in the
+           same function.
+        7. No `.unwrap()` / `.expect()` in handler bodies.
+        8. Cookies are set with `SameSite::None`, `secure(true)`, `path("/")` — match
            `api/web/src/auth/router.rs`. Flag changes to these flags as security-relevant.
-        6. Service addresses come from `Config::service_addresses`. Never hardcode
+        9. Service addresses come from `Config::service_addresses`. Never hardcode
            `http://localhost:...` in handler code.
+
+    - path: "api/*/src/**/service.rs"
+      instructions: |
+        Outbound HTTP service layer. Calls downstream services via `reqwest`.
+
+        1. Every outbound HTTP call MUST set a timeout. If `reqwest::Client::new()`, `.get(...)`,
+           `.post(...)`, etc. appears without `.timeout(_)` on the client or the call, request
+           changes.
+        2. Service addresses come from `Config::service_addresses`. Never hardcode
+           `http://localhost:...`.
+        3. Errors propagate as the local `Error` enum (`Error::Request(reqwest::Error)`,
+           `Error::Json(reqwest::Error)`, `Error::Api(ApiError)`) — do not stringify or `.unwrap()`.
+        4. Pair `.map_err` mapping with `sentry::capture_error(&e)` for non-Api variants.
+        5. Module split is mandatory: `service.rs` (this file) holds outbound logic; `router.rs`
+           holds Axum routes; `helper/error.rs` holds the error type. Do not merge them.
+
+    - path: "api/*/src/**/middleware.rs"
+      instructions: |
+        Axum middleware (`from_fn_with_state`-style).
+
+        1. Cookie auth uses `cookies.get(AUTH_TOKEN).map(|c| c.value().to_string()).ok_or(Error::CookieNotFound)?`
+           — reject any other shape.
+        2. Pair `tracing::error!` with `sentry::capture_error(&e)` in the same function.
+        3. No `.unwrap()` / `.expect()` in middleware bodies.
 
     - path: "examples/**/*.rs"
       instructions: |

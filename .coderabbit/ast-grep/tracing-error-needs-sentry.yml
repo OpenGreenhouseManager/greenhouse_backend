@@ -2,11 +2,15 @@ id: tracing-error-needs-sentry
 language: rust
 severity: error
 message: |
-  Every `tracing::error!(..., e)` in a service/api crate must be paired with
-  `sentry::capture_error(&e)` within the same function. Either both present or neither; never
-  a `tracing::error!` alone — it leaves the error invisible to Sentry. See
-  `services/auth_service/src/router/auth_router.rs` `.map_err` arms (lines around 100, 287, 319)
-  for the canonical pattern.
+  This function calls `tracing::error!(...)` but never calls `sentry::capture_error(...)`.
+  Any function in a service/api crate that logs errors via tracing MUST also report them to
+  Sentry — otherwise the error is invisible to the operator dashboard. See
+  `services/auth_service/src/router/auth_router.rs` `.map_err` arms (lines around 100, 287,
+  319) for the canonical pairing.
+
+  NOTE: this rule enforces FUNCTION-LEVEL presence, not per-call pairing. A function with
+  three `tracing::error!` calls and one `sentry::capture_error` will pass. Per-call pairing
+  is enforced by the path_instructions block in `.coderabbit.yaml` for router files.
 rule:
   kind: function_item
   has:
