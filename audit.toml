@@ -1,0 +1,11 @@
+# RUSTSEC-2025-0111: tokio-tar PAX extended header parsing flaw (file smuggling)
+#
+# tokio-tar is an unmaintained transitive dependency pulled in via the
+# integration-tests dev-dependency chain (testcontainers -> bollard -> tokio-tar).
+# It is NOT present in any production service binary — only in test builds.
+#
+# tokio-tar has no patched release. The upstream fix requires bollard or
+# testcontainers to migrate to astral-tokio-tar. Suppress until that happens.
+# Track at: https://github.com/fussybeaver/bollard/issues (bollard upstream)
+[advisories]
+ignore = ["RUSTSEC-2025-0111"]
