@@ -10,6 +10,10 @@ on:
 env:
   CARGO_TERM_COLOR: always
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  LDPROXY_VERSION: "0.3.5"
+
+permissions:
+  contents: read
 
 jobs:
   typos:
@@ -61,10 +65,10 @@ jobs:
         id: cache-ldproxy
         with:
           path: ~/.cargo/bin/ldproxy
-          key: ldproxy-${{ runner.os }}
+          key: ldproxy-${{ runner.os }}-${{ env.LDPROXY_VERSION }}
       - name: Install ldproxy
         if: steps.cache-ldproxy.outputs.cache-hit != 'true'
-        run: cargo install ldproxy
+        run: cargo install ldproxy --version ${{ env.LDPROXY_VERSION }} --locked
       - name: Build
         run: cargo build --release --workspace
       - name: Clippy
