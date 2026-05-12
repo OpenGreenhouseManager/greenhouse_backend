@@ -7,24 +7,24 @@ license = "GPL-3.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = { workspace = true, features = ["tracing"]}
-reqwest = { workspace = true, features = ["json"]}
-tokio = { workspace = true }
+axum = { workspace = true, features = ["tracing"] }
+derive_more = { workspace = true }
 greenhouse_core = { workspace = true, features = ["auth_service_dto"] }
 greenhouse_macro = { workspace = true }
-derive_more = { workspace = true }
+jsonwebtoken = { workspace = true }
+reqwest = { workspace = true, features = ["json"] }
+sentry = { workspace = true, features = ["debug-images", "tower"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
-serde_yaml ={ workspace = true }
-tower-cookies = {workspace = true}
+serde_yaml = { workspace = true }
+tokio = { workspace = true }
+tower-cookies = { workspace = true }
+tower-http = { workspace = true, features = ["trace", "cors"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-tower-http = { workspace = true, features = ["trace", "cors"] }
-sentry = { workspace = true, features = ["debug-images", "tower"] }
-jsonwebtoken = { workspace = true }
 uuid = { workspace = true, features = [
-    "v4",                
-    "fast-rng",          
-    "macro-diagnostics", 
-    "serde"
+    "v4",
+    "fast-rng",
+    "macro-diagnostics",
+    "serde",
 ] }

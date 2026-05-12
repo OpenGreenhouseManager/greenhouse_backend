@@ -4,36 +4,46 @@ version = "0.2.0"
 edition = "2024"
 description = "greenhouse_core"
 license = "GPL-3.0"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-axum = { workspace = true, optional = true }
-derive_more = { workspace = true }
-reqwest = { workspace = true, features = ["json"]}
-serde = { workspace = true }
-serde_json ={ workspace = true }
-chrono = { workspace = true, features = ["serde"] }
-uuid = { workspace = true, features = [
-    "v4",                
-    "fast-rng",          
-    "macro-diagnostics", 
-    "serde"
-] }
-tracing = { workspace = true, optional = true }
-futures = { workspace = true }
-greenhouse_macro = { version = "0.1", path = "../greenhouse_macro" }
 
 [features]
-default = ["api_web_dto", "api_script_dto", "auth_service_dto", "smart_device_dto", "smart_device_interface", "data_storage_service_dto", "device_service_dto", "error_handling", "scripting_service_dto"]
+default = [
+    "api_web_dto",
+    "api_script_dto",
+    "auth_service_dto",
+    "smart_device_dto",
+    "smart_device_interface",
+    "data_storage_service_dto",
+    "device_service_dto",
+    "error_handling",
+    "scripting_service_dto",
+]
 api_web_dto = []
 api_script_dto = []
 auth_service_dto = []
 smart_device_dto = []
 smart_device_interface = ["smart_device_dto", "dep:axum", "dep:tracing"]
 data_storage_service_dto = []
-device_service_dto =[]
+device_service_dto = []
 error_handling = ["dep:axum", "dep:tracing"]
 scripting_service_dto = []
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = { workspace = true, optional = true }
+chrono = { workspace = true, features = ["serde"] }
+derive_more = { workspace = true }
+futures = { workspace = true }
+greenhouse_macro = { version = "0.1", path = "../greenhouse_macro" }
+reqwest = { workspace = true, features = ["json"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true, optional = true }
+uuid = { workspace = true, features = [
+    "v4",
+    "fast-rng",
+    "macro-diagnostics",
+    "serde",
+] }
 
 [dev-dependencies]
 httpc-test = "0.1.9"

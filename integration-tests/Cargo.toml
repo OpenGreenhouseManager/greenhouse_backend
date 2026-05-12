@@ -4,28 +4,28 @@ version = "0.1.0"
 edition = "2024"
 
 [dev-dependencies]
-web_api = { path = "../api/web" }
-scripting_api = { path = "../api/script" }
-greenhouse_core = { workspace = true, features = ["auth_service_dto"] }
 auth_service = { path = "../services/auth_service" }
-device_service = { path = "../services/device_service" }
+axum = { workspace = true, features = ["tracing"] }
+chrono = { workspace = true }
 data_storage_service = { path = "../services/data_storage_service" }
-scripting_service = { path = "../services/scripting_service" }
+device_service = { path = "../services/device_service" }
+diesel = { workspace = true, features = ["uuid", "postgres"] }
+diesel-async = { workspace = true }
+greenhouse_core = { workspace = true, features = ["auth_service_dto"] }
+jsonwebtoken = { workspace = true }
+once_cell = "1.21.3"
 reqwest = { version = "0.12.15", features = ["json"] }
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-testcontainers = "0.24"
-axum = { workspace = true, features = ["tracing"]}
+scripting_api = { path = "../api/script" }
+scripting_service = { path = "../services/scripting_service" }
 serde = { workspace = true }
 serde_json = { version = "1.0", features = ["preserve_order"] }
-once_cell = "1.21.3"
-diesel =  { workspace = true, features = [ "uuid", "postgres" ] }
-diesel-async =  { workspace = true }
-chrono = { workspace = true }
-jsonwebtoken = { workspace = true }
+testcontainers = "0.24"
 testcontainers-modules = { version = "0.12.0", features = ["postgres", "blocking"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 uuid = { workspace = true, features = [
-    "v4",                
-    "fast-rng",          
-    "macro-diagnostics", 
-    "serde"
+    "v4",
+    "fast-rng",
+    "macro-diagnostics",
+    "serde",
 ] }
+web_api = { path = "../api/web" }
