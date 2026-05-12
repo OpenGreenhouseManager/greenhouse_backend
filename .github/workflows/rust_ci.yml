@@ -47,7 +47,7 @@ jobs:
         with:
           tool: cargo-sort
       - name: Check dependency sort
-        run: cargo sort --workspace --grouped
+        run: cargo sort --workspace --grouped --check
 
   rust-checks:
     name: Build / Clippy / Test
