@@ -57,7 +57,7 @@ impl DiaryTag {
             })?;
 
         diary_tag::table
-            .filter(diary_tag::name.eq(name))
+            .filter(diary_tag::name.eq(new_tag.name.as_str()))
             .first(&mut conn)
             .await
             .map_err(|e| {
@@ -130,6 +130,7 @@ impl DiaryTag {
             .filter(diary_tag::name.ilike(format!("%{}%", partial)))
             .select(diary_entry::all_columns)
             .distinct()
+            .order(diary_entry::id.asc())
             .load::<DiaryEntry>(&mut conn)
             .await
             .map_err(|e| {
