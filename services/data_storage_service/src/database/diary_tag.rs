@@ -27,11 +27,15 @@ pub(crate) struct DiaryEntryTag {
 }
 
 impl DiaryTag {
-    pub(crate) fn new(name: &str) -> Self {
-        Self {
-            id: Uuid::new_v4(),
-            name: String::from(name),
+    pub(crate) fn new(name: &str) -> Result<Self> {
+        let name = name.trim();
+        if name.is_empty() {
+            return Err(Error::Creation);
         }
+        Ok(Self {
+            id: Uuid::new_v4(),
+            name: name.to_owned(),
+        })
     }
 
     pub(crate) async fn find_or_create(name: &str, pool: &Pool) -> Result<Self> {
@@ -40,7 +44,7 @@ impl DiaryTag {
             Error::DatabaseConnection
         })?;
 
-        let new_tag = Self::new(name);
+        let new_tag = Self::new(name)?;
         diesel::insert_into(diary_tag::table)
             .values(&new_tag)
             .on_conflict(diary_tag::name)
@@ -71,6 +75,7 @@ impl DiaryTag {
         diary_tag::table
             .inner_join(diary_entry_tag::table)
             .filter(diary_entry_tag::diary_entry_id.eq(entry_id))
+            .order(diary_tag::name.asc())
             .select(diary_tag::all_columns)
             .load::<DiaryTag>(&mut conn)
             .await
@@ -95,6 +100,7 @@ impl DiaryTag {
         let rows: Vec<(Uuid, String)> = diary_entry_tag::table
             .inner_join(diary_tag::table)
             .filter(diary_entry_tag::diary_entry_id.eq_any(entry_ids))
+            .order((diary_entry_tag::diary_entry_id.asc(), diary_tag::name.asc()))
             .select((diary_entry_tag::diary_entry_id, diary_tag::name))
             .load(&mut conn)
             .await
@@ -140,15 +146,27 @@ mod tests {
     #[test]
     fn test_new_diary_tag() {
         let name = "test-tag";
-        let tag = DiaryTag::new(name);
+        let tag = DiaryTag::new(name).unwrap();
         assert_eq!(tag.name, name);
         assert!(!tag.id.is_nil());
     }
 
     #[test]
+    fn test_new_diary_tag_rejects_empty() {
+        assert!(DiaryTag::new("").is_err());
+        assert!(DiaryTag::new("   ").is_err());
+    }
+
+    #[test]
+    fn test_new_diary_tag_trims_whitespace() {
+        let tag = DiaryTag::new("  hello  ").unwrap();
+        assert_eq!(tag.name, "hello");
+    }
+
+    #[test]
     fn test_diary_tag_id_uniqueness() {
-        let tag1 = DiaryTag::new("tag-a");
-        let tag2 = DiaryTag::new("tag-b");
+        let tag1 = DiaryTag::new("tag-a").unwrap();
+        let tag2 = DiaryTag::new("tag-b").unwrap();
         assert_ne!(tag1.id, tag2.id);
     }
 }
