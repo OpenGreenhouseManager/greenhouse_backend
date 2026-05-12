@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+early_access: false
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+  path_instructions:
+    - path: "**/migrations/**"
+      instructions: |
+        Check that migrations are reversible where possible (down migration exists).
+        Flag missing indexes on foreign keys or frequently queried columns.
+        Warn if a migration drops columns or tables without a confirmed backup strategy.
+    - path: "**/services/**"
+      instructions: |
+        Ensure errors are propagated with context (use anyhow or thiserror properly).
+        Flag any use of .unwrap() or .expect() in non-test code — prefer proper error handling.
+        Check that async functions don't block the executor (no std::thread::sleep or heavy CPU work without spawn_blocking).
+    - path: "**/*_test.rs"
+      instructions: |
+        Verify test assertions are meaningful and not trivially true.
+        Check that tests clean up any database or file state they create.
+chat:
+  auto_reply: true
