@@ -10,7 +10,7 @@ use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Queryable, Selectable, Insertable)]
+#[derive(Debug, Queryable, Selectable, Insertable)]
 #[diesel(table_name = crate::database::schema::diary_tag)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub(crate) struct DiaryTag {
