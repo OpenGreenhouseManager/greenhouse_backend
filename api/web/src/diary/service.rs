@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use greenhouse_core::{
     data_storage_service_dto::diary_dtos::{
         endpoints, get_diary::GetDiaryResponseDto, get_diary_entry::DiaryEntryResponseDto,
@@ -171,6 +173,8 @@ pub(crate) async fn get_diary(
     }))
 }
 
+const DOWNSTREAM_TIMEOUT: Duration = Duration::from_secs(10);
+
 pub(crate) async fn add_tag(
     base_ulr: &str,
     entry_id: Uuid,
@@ -178,6 +182,7 @@ pub(crate) async fn add_tag(
 ) -> Result<()> {
     let resp = reqwest::Client::new()
         .post(base_ulr.to_string() + endpoints::DIARY + "/" + &entry_id.to_string() + "/tags")
+        .timeout(DOWNSTREAM_TIMEOUT)
         .json(&body)
         .send()
         .await
@@ -204,6 +209,7 @@ pub(crate) async fn add_tag(
 }
 
 pub(crate) async fn remove_tag(base_ulr: &str, entry_id: Uuid, tag_name: String) -> Result<()> {
+    let encoded = urlencoding::encode(&tag_name);
     let resp = reqwest::Client::new()
         .delete(
             base_ulr.to_string()
@@ -211,8 +217,9 @@ pub(crate) async fn remove_tag(base_ulr: &str, entry_id: Uuid, tag_name: String)
                 + "/"
                 + &entry_id.to_string()
                 + "/tags/"
-                + &tag_name,
+                + encoded.as_ref(),
         )
+        .timeout(DOWNSTREAM_TIMEOUT)
         .send()
         .await
         .map_err(|e| {
@@ -238,8 +245,10 @@ pub(crate) async fn remove_tag(base_ulr: &str, entry_id: Uuid, tag_name: String)
 }
 
 pub(crate) async fn search_by_tag(base_ulr: &str, tag_name: String) -> Result<GetDiaryResponseDto> {
+    let encoded = urlencoding::encode(&tag_name);
     let resp = reqwest::Client::new()
-        .get(base_ulr.to_string() + endpoints::DIARY + "/tags/" + &tag_name)
+        .get(base_ulr.to_string() + endpoints::DIARY + "/tags/" + encoded.as_ref())
+        .timeout(DOWNSTREAM_TIMEOUT)
         .send()
         .await
         .map_err(|e| {

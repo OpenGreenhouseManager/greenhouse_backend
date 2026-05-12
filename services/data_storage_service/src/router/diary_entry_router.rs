@@ -125,12 +125,8 @@ pub(crate) async fn get_diary(
         Error::TimeError
     })?;
     let entries = DiaryEntry::find_by_date_range(start, end, &pool).await?;
-    let mut response_entries = Vec::with_capacity(entries.len());
-    for entry in entries {
-        response_entries.push(entry.populate_tags(&pool).await?);
-    }
     Ok(GetDiaryResponseDto {
-        entries: response_entries,
+        entries: DiaryEntry::populate_tags_for_entries(entries, &pool).await?,
     })
 }
 
@@ -161,11 +157,7 @@ pub(crate) async fn search_entries_by_tag(
     Path(tag_name): Path<String>,
 ) -> HttpResult<GetDiaryResponseDto> {
     let entries = DiaryTag::find_entries_by_partial_name(&tag_name, &pool).await?;
-    let mut response_entries = Vec::with_capacity(entries.len());
-    for entry in entries {
-        response_entries.push(entry.populate_tags(&pool).await?);
-    }
     Ok(GetDiaryResponseDto {
-        entries: response_entries,
+        entries: DiaryEntry::populate_tags_for_entries(entries, &pool).await?,
     })
 }

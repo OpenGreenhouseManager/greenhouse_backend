@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::{
     Error, Result,
     diary_models::DiaryEntry,
@@ -16,7 +18,7 @@ pub(crate) struct DiaryTag {
     pub(crate) name: String,
 }
 
-#[derive(Debug, Clone, Insertable)]
+#[derive(Debug, Queryable, Selectable, Insertable)]
 #[diesel(table_name = crate::database::schema::diary_entry_tag)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub(crate) struct DiaryEntryTag {
@@ -76,6 +78,36 @@ impl DiaryTag {
                 sentry::capture_error(&e);
                 Error::Find
             })
+    }
+
+    pub(crate) async fn get_tags_for_entries(
+        entry_ids: &[Uuid],
+        pool: &Pool,
+    ) -> Result<HashMap<Uuid, Vec<String>>> {
+        if entry_ids.is_empty() {
+            return Ok(HashMap::new());
+        }
+        let mut conn = pool.get().await.map_err(|e| {
+            sentry::capture_error(&e);
+            Error::DatabaseConnection
+        })?;
+
+        let rows: Vec<(Uuid, String)> = diary_entry_tag::table
+            .inner_join(diary_tag::table)
+            .filter(diary_entry_tag::diary_entry_id.eq_any(entry_ids))
+            .select((diary_entry_tag::diary_entry_id, diary_tag::name))
+            .load(&mut conn)
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                Error::Find
+            })?;
+
+        let mut map: HashMap<Uuid, Vec<String>> = HashMap::new();
+        for (entry_id, tag_name) in rows {
+            map.entry(entry_id).or_default().push(tag_name);
+        }
+        Ok(map)
     }
 
     pub(crate) async fn find_entries_by_partial_name(

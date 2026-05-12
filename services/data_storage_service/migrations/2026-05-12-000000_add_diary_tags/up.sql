@@ -1,5 +1,5 @@
 CREATE TABLE diary_tag (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL UNIQUE
 );
 
@@ -8,6 +8,9 @@ CREATE TABLE diary_entry_tag (
     diary_tag_id   UUID NOT NULL REFERENCES diary_tag(id)   ON DELETE CASCADE,
     PRIMARY KEY (diary_entry_id, diary_tag_id)
 );
+
+CREATE INDEX idx_diary_entry_tag_diary_tag_id
+    ON diary_entry_tag (diary_tag_id);
 
 -- Automatically delete a tag when it is no longer referenced by any entry.
 -- Fires after every delete on diary_entry_tag (including cascades from diary_entry).

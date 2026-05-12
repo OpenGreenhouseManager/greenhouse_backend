@@ -173,6 +173,26 @@ impl DiaryEntry {
         dto.tags = tags.into_iter().map(|t| t.name).collect();
         Ok(dto)
     }
+
+    pub(crate) async fn populate_tags_for_entries(
+        entries: Vec<Self>,
+        pool: &Pool,
+    ) -> Result<Vec<DiaryEntryResponseDto>> {
+        if entries.is_empty() {
+            return Ok(vec![]);
+        }
+        let ids: Vec<Uuid> = entries.iter().map(|e| e.id).collect();
+        let mut tags_map = DiaryTag::get_tags_for_entries(&ids, pool).await?;
+        Ok(entries
+            .into_iter()
+            .map(|entry| {
+                let id = entry.id;
+                let mut dto: DiaryEntryResponseDto = entry.into();
+                dto.tags = tags_map.remove(&id).unwrap_or_default();
+                dto
+            })
+            .collect())
+    }
 }
 
 impl From<DiaryEntry> for DiaryEntryResponseDto {
