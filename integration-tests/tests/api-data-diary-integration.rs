@@ -171,12 +171,27 @@ async fn test_add_and_get_tags_on_diary_entry() {
         response.status().is_success(),
         "Failed to create diary entry"
     );
-    let entry: DiaryEntryResponseDto = response.json().await.unwrap();
-    assert!(entry.tags.is_empty(), "New entry should have no tags");
+
+    // Retrieve the entry id via date-range lookup
+    let response = client
+        .get(format!(
+            "http://localhost:3000/api/diary/{}/{}",
+            post_entry.date, post_entry.date
+        ))
+        .header("Cookie", format!("auth-token={token}"))
+        .send()
+        .await
+        .unwrap();
+    let entries = response.json::<GetDiaryResponseDto>().await.unwrap();
+    let entry_id = &entries.entries[0].id;
+    assert!(
+        entries.entries[0].tags.is_empty(),
+        "New entry should have no tags"
+    );
 
     // Add a tag
     let response = client
-        .post(format!("http://localhost:3000/api/diary/{}/tags", entry.id))
+        .post(format!("http://localhost:3000/api/diary/{entry_id}/tags"))
         .json(&PostDiaryTagDtoRequest {
             tag_name: "rust".to_string(),
         })
@@ -188,7 +203,7 @@ async fn test_add_and_get_tags_on_diary_entry() {
 
     // Get entry and verify tag is present
     let response = client
-        .get(format!("http://localhost:3000/api/diary/{}", entry.id))
+        .get(format!("http://localhost:3000/api/diary/{entry_id}"))
         .header("Cookie", format!("auth-token={token}"))
         .send()
         .await
@@ -212,18 +227,30 @@ async fn test_remove_tag_from_diary_entry() {
         content: "Will have tag removed.".to_string(),
         date: chrono::Utc::now().to_string(),
     };
-    let response = client
+    client
         .post("http://localhost:3000/api/diary")
         .json(&post_entry)
         .header("Cookie", format!("auth-token={token}"))
         .send()
         .await
         .unwrap();
-    let entry: DiaryEntryResponseDto = response.json().await.unwrap();
+
+    // Retrieve the entry id via date-range lookup
+    let response = client
+        .get(format!(
+            "http://localhost:3000/api/diary/{}/{}",
+            post_entry.date, post_entry.date
+        ))
+        .header("Cookie", format!("auth-token={token}"))
+        .send()
+        .await
+        .unwrap();
+    let entries = response.json::<GetDiaryResponseDto>().await.unwrap();
+    let entry_id = &entries.entries[0].id;
 
     // Add tag
     client
-        .post(format!("http://localhost:3000/api/diary/{}/tags", entry.id))
+        .post(format!("http://localhost:3000/api/diary/{entry_id}/tags"))
         .json(&PostDiaryTagDtoRequest {
             tag_name: "temporary".to_string(),
         })
@@ -235,8 +262,7 @@ async fn test_remove_tag_from_diary_entry() {
     // Remove the tag
     let response = client
         .delete(format!(
-            "http://localhost:3000/api/diary/{}/tags/temporary",
-            entry.id
+            "http://localhost:3000/api/diary/{entry_id}/tags/temporary"
         ))
         .header("Cookie", format!("auth-token={token}"))
         .send()
@@ -246,7 +272,7 @@ async fn test_remove_tag_from_diary_entry() {
 
     // Verify tag is gone
     let response = client
-        .get(format!("http://localhost:3000/api/diary/{}", entry.id))
+        .get(format!("http://localhost:3000/api/diary/{entry_id}"))
         .header("Cookie", format!("auth-token={token}"))
         .send()
         .await
@@ -265,32 +291,63 @@ async fn test_search_diary_entries_by_partial_tag() {
 
     let client = reqwest::Client::new();
 
-    // Create two entries
-    let create = |title: &str| PostDiaryEntryDtoRequest {
-        title: title.to_string(),
-        content: "content".to_string(),
-        date: chrono::Utc::now().to_string(),
-    };
-    let r1 = client
+    // Create two entries with distinct dates so the range lookups are unambiguous
+    let date_a = chrono::Utc::now().to_string();
+    client
         .post("http://localhost:3000/api/diary")
-        .json(&create("Entry A"))
+        .json(&PostDiaryEntryDtoRequest {
+            title: "Entry A".to_string(),
+            content: "content".to_string(),
+            date: date_a.clone(),
+        })
         .header("Cookie", format!("auth-token={token}"))
         .send()
         .await
         .unwrap();
-    let entry_a: DiaryEntryResponseDto = r1.json().await.unwrap();
+    let id_a = client
+        .get(format!("http://localhost:3000/api/diary/{date_a}/{date_a}"))
+        .header("Cookie", format!("auth-token={token}"))
+        .send()
+        .await
+        .unwrap()
+        .json::<GetDiaryResponseDto>()
+        .await
+        .unwrap()
+        .entries
+        .into_iter()
+        .next()
+        .unwrap()
+        .id;
 
-    let r2 = client
+    let date_b = chrono::Utc::now().to_string();
+    client
         .post("http://localhost:3000/api/diary")
-        .json(&create("Entry B"))
+        .json(&PostDiaryEntryDtoRequest {
+            title: "Entry B".to_string(),
+            content: "content".to_string(),
+            date: date_b.clone(),
+        })
         .header("Cookie", format!("auth-token={token}"))
         .send()
         .await
         .unwrap();
-    let entry_b: DiaryEntryResponseDto = r2.json().await.unwrap();
+    let id_b = client
+        .get(format!("http://localhost:3000/api/diary/{date_b}/{date_b}"))
+        .header("Cookie", format!("auth-token={token}"))
+        .send()
+        .await
+        .unwrap()
+        .json::<GetDiaryResponseDto>()
+        .await
+        .unwrap()
+        .entries
+        .into_iter()
+        .next()
+        .unwrap()
+        .id;
 
     // Tag entry A with "greenhouse-rust", entry B with "unrelated"
-    for (id, tag) in [(&entry_a.id, "greenhouse-rust"), (&entry_b.id, "unrelated")] {
+    for (id, tag) in [(&id_a, "greenhouse-rust"), (&id_b, "unrelated")] {
         client
             .post(format!("http://localhost:3000/api/diary/{id}/tags"))
             .json(&PostDiaryTagDtoRequest {
@@ -312,7 +369,7 @@ async fn test_search_diary_entries_by_partial_tag() {
     assert!(response.status().is_success(), "Tag search failed");
     let result: GetDiaryResponseDto = response.json().await.unwrap();
     assert_eq!(result.entries.len(), 1, "Should find exactly one entry");
-    assert_eq!(result.entries[0].id, entry_a.id, "Should return Entry A");
+    assert_eq!(result.entries[0].id, id_a, "Should return Entry A");
 
     context.stop().await;
 }
