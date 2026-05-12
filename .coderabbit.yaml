@@ -2,13 +2,7 @@
 language: "en-US"
 early_access: false
 
-tone_instructions: |
-  Be assertive, terse, and technical. Cite file paths and line ranges. Quote the offending snippet,
-  then show the fix as a diff or code block matching this repo's style. Do not hedge. Do not praise.
-  Do not apologize. Never suggest `anyhow`, `thiserror`, `Box<dyn Error>`, `#[tracing::instrument]`,
-  doc comments (`///`), or `unwrap_or_default()` to swallow errors. Treat existing `error.rs` files
-  and `greenhouse_core/src/http_error.rs` as the source of truth for error handling — flag any
-  deviation and link to a sibling file demonstrating the correct pattern.
+tone_instructions: "Be assertive, terse, technical. Cite file:line. Quote the offending snippet, then show the fix matching this repo style. Forbid anyhow, thiserror, Box<dyn Error>, #[tracing::instrument], /// doc comments. Use existing error.rs files as reference."
 
 reviews:
   profile: "assertive"
