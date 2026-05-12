@@ -65,12 +65,7 @@ pub(crate) async fn add_tag_to_entry(
     Path(id): Path<Uuid>,
     Json(body): Json<PostDiaryTagDtoRequest>,
 ) -> HttpResult<StatusCode> {
-    service::add_tag(
-        &config.service_addresses.data_storage_service,
-        id,
-        body.tag_name,
-    )
-    .await?;
+    service::add_tag(&config.service_addresses.data_storage_service, id, body).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 

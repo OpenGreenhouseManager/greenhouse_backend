@@ -138,36 +138,28 @@ impl DiaryEntry {
     }
 
     pub(crate) async fn remove_tag(&self, tag_name: &str, pool: &Pool) -> Result<()> {
+        use super::schema::diary_tag;
         let mut conn = pool.get().await.map_err(|e| {
             sentry::capture_error(&e);
             Error::DatabaseConnection
         })?;
-        use super::schema::diary_tag;
-        let tag_id: Option<Uuid> = diary_tag::table
-            .filter(diary_tag::name.eq(tag_name))
-            .select(diary_tag::id)
-            .first(&mut conn)
-            .await
-            .optional()
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::Find
-            })?;
-        if let Some(tag_id) = tag_id {
-            diesel::delete(
-                diary_entry_tag::table.filter(
-                    diary_entry_tag::diary_entry_id
-                        .eq(self.id)
-                        .and(diary_entry_tag::diary_tag_id.eq(tag_id)),
+        diesel::delete(
+            diary_entry_tag::table.filter(
+                diary_entry_tag::diary_entry_id.eq(self.id).and(
+                    diary_entry_tag::diary_tag_id.eq_any(
+                        diary_tag::table
+                            .filter(diary_tag::name.eq(tag_name))
+                            .select(diary_tag::id),
+                    ),
                 ),
-            )
-            .execute(&mut conn)
-            .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::Find
-            })?;
-        }
+            ),
+        )
+        .execute(&mut conn)
+        .await
+        .map_err(|e| {
+            sentry::capture_error(&e);
+            Error::Find
+        })?;
         Ok(())
     }
 
@@ -175,10 +167,7 @@ impl DiaryEntry {
         DiaryTag::get_tags_for_entry(self.id, pool).await
     }
 
-    pub(crate) async fn into_response_with_tags(
-        self,
-        pool: &Pool,
-    ) -> Result<DiaryEntryResponseDto> {
+    pub(crate) async fn populate_tags(self, pool: &Pool) -> Result<DiaryEntryResponseDto> {
         let tags = self.get_tags(pool).await?;
         let mut dto: DiaryEntryResponseDto = self.into();
         dto.tags = tags.into_iter().map(|t| t.name).collect();

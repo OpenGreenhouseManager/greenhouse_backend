@@ -171,8 +171,11 @@ pub(crate) async fn get_diary(
     }))
 }
 
-pub(crate) async fn add_tag(base_ulr: &str, entry_id: Uuid, tag_name: String) -> Result<()> {
-    let body = PostDiaryTagDtoRequest { tag_name };
+pub(crate) async fn add_tag(
+    base_ulr: &str,
+    entry_id: Uuid,
+    body: PostDiaryTagDtoRequest,
+) -> Result<()> {
     let resp = reqwest::Client::new()
         .post(base_ulr.to_string() + endpoints::DIARY + "/" + &entry_id.to_string() + "/tags")
         .json(&body)

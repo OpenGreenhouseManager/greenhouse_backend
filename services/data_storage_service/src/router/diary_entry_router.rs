@@ -59,7 +59,7 @@ pub(crate) async fn update_diary_entry(
 
     entry.content = update.content.clone();
     entry.flush(&pool).await?;
-    Ok(entry.into_response_with_tags(&pool).await?)
+    Ok(entry.populate_tags(&pool).await?)
 }
 
 #[axum::debug_handler]
@@ -83,7 +83,7 @@ pub(crate) async fn create_diary_entry(
         &entry.content,
     );
     entry.flush(&pool).await?;
-    Ok(entry.into_response_with_tags(&pool).await?)
+    Ok(entry.populate_tags(&pool).await?)
 }
 
 #[axum::debug_handler]
@@ -93,7 +93,7 @@ pub(crate) async fn get_diary_entry(
 ) -> HttpResult<DiaryEntryResponseDto> {
     Ok(DiaryEntry::find_by_id(id, &pool)
         .await?
-        .into_response_with_tags(&pool)
+        .populate_tags(&pool)
         .await?)
 }
 
@@ -127,7 +127,7 @@ pub(crate) async fn get_diary(
     let entries = DiaryEntry::find_by_date_range(start, end, &pool).await?;
     let mut response_entries = Vec::with_capacity(entries.len());
     for entry in entries {
-        response_entries.push(entry.into_response_with_tags(&pool).await?);
+        response_entries.push(entry.populate_tags(&pool).await?);
     }
     Ok(GetDiaryResponseDto {
         entries: response_entries,
@@ -163,7 +163,7 @@ pub(crate) async fn search_entries_by_tag(
     let entries = DiaryTag::find_entries_by_partial_name(&tag_name, &pool).await?;
     let mut response_entries = Vec::with_capacity(entries.len());
     for entry in entries {
-        response_entries.push(entry.into_response_with_tags(&pool).await?);
+        response_entries.push(entry.populate_tags(&pool).await?);
     }
     Ok(GetDiaryResponseDto {
         entries: response_entries,
