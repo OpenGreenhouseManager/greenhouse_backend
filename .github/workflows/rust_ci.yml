@@ -10,7 +10,7 @@ on:
 env:
   CARGO_TERM_COLOR: always
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  LDPROXY_VERSION: "0.3.5"
+  LDPROXY_VERSION: "0.3.4"
 
 permissions:
   contents: read
