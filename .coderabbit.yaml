@@ -83,18 +83,20 @@ reviews:
         4. State destructured at the parameter site: `State(AppState { config, pool }): State<AppState>`.
            Reject `State(state): State<AppState>` followed by `state.pool` field access — destructure
            at the binding instead.
-        5. `pool.get().await` MUST be followed by
-           `.map_err(|e| { sentry::capture_error(&e); Error::DatabaseConnection })?;`
-           For user-bearing flows, prepend `sentry::configure_scope(|scope| { scope.set_user(...) })`
-           — see `services/auth_service/src/router/auth_router.rs` `register_user` for the canonical
-           form.
+        5. `pool.get().await` MUST be followed by `.map_err(|e| { ... Error::DatabaseConnection })?;`
+           where the closure logs the error via `tracing::error!`. For user-bearing flows, prepend
+           `sentry::configure_scope(|scope| { scope.set_user(...) })` — see
+           `services/auth_service/src/router/auth_router.rs` `register_user` for the canonical form.
+           DO NOT require `sentry::capture_error(&e)` here — Sentry capture is centralised in
+           `HttpErrorResponse::into_response()` (see `greenhouse_core/src/http_error.rs`).
         6. Every `.map_err` arm that produces an `Error::*` variant from a real underlying error
-           MUST call `sentry::capture_error(&e)` before returning the mapped variant. Bare
-           `.map_err(|_| Error::Foo)` is acceptable ONLY when the source has already been captured
-           upstream — call it out explicitly when seen so a human can confirm.
-        7. Every `tracing::error!("...: {:?}", e)` in a handler module MUST be paired with
-           `sentry::capture_error(&e)` within the same function. Either both present or neither;
-           never a `tracing::error!` alone.
+           SHOULD bind the error as `|e|` and log via `tracing::error!` or `tracing::warn!` with
+           relevant context. Bare `.map_err(|_| Error::Foo)` is acceptable for unrecoverable errors
+           where no extra context can be logged. DO NOT require `sentry::capture_error(&e)` — Sentry
+           capture is centralised in `HttpErrorResponse::into_response()`.
+        7. `tracing::error!` / `tracing::warn!` calls stand alone — they do NOT need to be paired
+           with `sentry::capture_error(&e)`. The `sentry::configure_scope` calls for user/DB context
+           enrichment are still valid and encouraged for user-bearing flows.
         8. NO `.unwrap()` and NO `.expect()` in handler bodies. These are acceptable ONLY in
            `main.rs`/`lib.rs` startup or migration runners — not in routes.
         9. Cookie auth follows the exact form:
@@ -116,8 +118,11 @@ reviews:
         2. Pool type alias is `bb8::Pool<AsyncDieselConnectionManager<AsyncPgConnection>>`. Functions
            take `pool: &Pool`, never an owned `Pool`.
         3. Connection acquisition is always:
-           `let mut conn = pool.get().await.map_err(|e| { sentry::capture_error(&e); Error::DatabaseConnection })?;`
-           Reject any other shape, including `.expect("db")`.
+           `let mut conn = pool.get().await.map_err(|e| { tracing::error!(error = ?e, "db connection failed"); Error::DatabaseConnection })?;`
+           or a bare `map_err(|_| Error::DatabaseConnection)` when no context is available. Reject
+           `.expect("db")`. DO NOT require `sentry::capture_error(&e)` — Sentry capture is
+           centralised in `HttpErrorResponse::into_response()` via a staged stacktrace captured at
+           `HttpErrorResponse::new()` (see `greenhouse_core/src/http_error.rs`).
         4. Use `diesel_async::RunQueryDsl` (`.execute(&mut conn).await`, `.get_result(&mut conn).await`,
            `.first(&mut conn).await`). Flag synchronous `diesel::RunQueryDsl`.
         5. Constructors return `Result<Self>` using the local `Result` alias from `error.rs`. Do not
@@ -248,17 +253,27 @@ reviews:
         SENSITIVE FILE. Changes here affect every service. Apply maximum scrutiny:
 
         1. `HttpErrorMapping` trait signature is a contract: `to_status_code`, `to_error_message`,
-           `to_error_context`. Any change requires updating every `impl HttpErrorMapping for Error`
-           across `services/*/src/**/error.rs` and `api/*/src/**/error.rs`. Verify the PR touches
-           all of them.
+           `to_error_context`, `sentry_level`. Breaking changes (removing or modifying required
+           methods) require auditing every `impl HttpErrorMapping for Error` across
+           `services/*/src/**/error.rs` and `api/*/src/**/error.rs`. Additive methods with default
+           implementations do not require touching every impl — only verify callers of the new method.
         2. The `impl_http_error_from!` macro is consumed across all services. Changing its expansion
            is a breaking change — PR description MUST list every callsite.
-        3. The `IntoResponse for HttpErrorResponse<E>` impl logs via `tracing::error!` behind
-           `#[cfg(feature = "error_handling")]`. If you remove or change that gating, callers may
-           lose error logs.
-        4. Do NOT leak internal error debug output to clients. `to_error_message` is what clients
+        3. The `IntoResponse for HttpErrorResponse<E>` impl is the SINGLE point where Sentry events
+           are captured (behind `#[cfg(feature = "sentry")]`) and where `tracing::error!`/`warn!`
+           are emitted (behind `#[cfg(feature = "error_handling")]`). The Sentry stacktrace is
+           captured eagerly at `HttpErrorResponse::new()` call-site via
+           `sentry::integrations::backtrace::current_stacktrace()` and stored until `into_response`
+           fires. This staged approach preserves the originating code location. Do NOT add
+           `sentry::capture_error` calls elsewhere in the codebase — they will cause duplicate
+           captures.
+        4. `HttpErrorMapping::sentry_level()` controls whether a variant is sent to Sentry:
+           - Default: 5xx → `Some(SentryLevel::Error)`, 4xx → `None` (silent).
+           - Override per-variant to suppress expected errors (e.g. failed logins → `None`) or
+             promote a 4xx to `Some(SentryLevel::Error)` if it signals a real server fault.
+        5. Do NOT leak internal error debug output to clients. `to_error_message` is what clients
            see; it MUST be hand-curated. The `Display` impl returning `{self:?}` is for logs.
-        5. Adding fields to `ErrorResponseBody` is a wire-format change — call it out and require
+        6. Adding fields to `ErrorResponseBody` is a wire-format change — call it out and require
            integration-tests updates.
 
     - path: "greenhouse_core/src/smart_device_interface/**/*.rs"
@@ -307,9 +322,12 @@ reviews:
         2. `pub(crate) async fn` only — reject bare `pub async fn`.
         3. Return `HttpResult<T>` or `HttpResult<impl IntoResponse>`.
         4. `State<AppState>` destructured at the parameter site.
-        5. `.map_err` arms pair `sentry::capture_error(&e)` with the mapped `Error` variant.
-        6. Every `tracing::error!` in this file is paired with `sentry::capture_error(&e)` in the
-           same function.
+        5. `.map_err` arms SHOULD bind the error as `|e|` and log via `tracing::error!` or
+           `tracing::warn!`. DO NOT require `sentry::capture_error(&e)` — Sentry capture is
+           centralised in `HttpErrorResponse::into_response()`.
+        6. `tracing::error!` / `tracing::warn!` calls stand alone — no `sentry::capture_error`
+           pairing needed. `sentry::configure_scope` for user/request context enrichment is still
+           valid and encouraged.
         7. No `.unwrap()` / `.expect()` in handler bodies.
         8. Cookies are set with `SameSite::None`, `secure(true)`, `path("/")` — match
            `api/web/src/auth/router.rs`. Flag changes to these flags as security-relevant.
@@ -327,7 +345,9 @@ reviews:
            `http://localhost:...`.
         3. Errors propagate as the local `Error` enum (`Error::Request(reqwest::Error)`,
            `Error::Json(reqwest::Error)`, `Error::Api(ApiError)`) — do not stringify or `.unwrap()`.
-        4. Pair `.map_err` mapping with `sentry::capture_error(&e)` for non-Api variants.
+        4. Bind `.map_err` closures with `|e|` and log via `tracing::error!` for non-Api variants.
+           DO NOT require `sentry::capture_error(&e)` — Sentry capture is centralised in
+           `HttpErrorResponse::into_response()`.
         5. Module split is mandatory: `service.rs` (this file) holds outbound logic; `router.rs`
            holds Axum routes; `helper/error.rs` holds the error type. Do not merge them.
 
@@ -337,7 +357,8 @@ reviews:
 
         1. Cookie auth uses `cookies.get(AUTH_TOKEN).map(|c| c.value().to_string()).ok_or(Error::CookieNotFound)?`
            — reject any other shape.
-        2. Pair `tracing::error!` with `sentry::capture_error(&e)` in the same function.
+        2. `tracing::error!` calls stand alone — no `sentry::capture_error` pairing needed.
+           Sentry capture is centralised in `HttpErrorResponse::into_response()`.
         3. No `.unwrap()` / `.expect()` in middleware bodies.
 
     - path: "examples/**/*.rs"

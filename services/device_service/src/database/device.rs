@@ -37,7 +37,7 @@ impl Device {
 
     pub(crate) async fn find_by_id(id: Uuid, pool: &Pool) -> Result<Self> {
         let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
+            tracing::error!(error = ?e, "device db connection failed");
             Error::DatabaseConnection
         })?;
         device::table
@@ -45,25 +45,25 @@ impl Device {
             .first(&mut conn)
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
+                tracing::warn!(error = ?e, %id, "device find_by_id failed");
                 Error::Find
             })
     }
 
     pub(crate) async fn all(pool: &Pool) -> Result<Vec<Self>> {
         let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
+            tracing::error!(error = ?e, "device db connection failed");
             Error::DatabaseConnection
         })?;
         device::table.get_results(&mut conn).await.map_err(|e| {
-            sentry::capture_error(&e);
+            tracing::warn!(error = ?e, "device all() query failed");
             Error::Find
         })
     }
 
     pub(crate) async fn flush(&mut self, pool: &Pool) -> Result<()> {
         let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
+            tracing::error!(error = ?e, "device db connection failed");
             Error::DatabaseConnection
         })?;
         let db_entry = self.clone();
@@ -75,7 +75,7 @@ impl Device {
             .execute(&mut conn)
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
+                tracing::error!(error = ?e, id = %self.id, "device upsert failed");
                 Error::Creation
             })?;
 
@@ -84,7 +84,7 @@ impl Device {
 
     pub(crate) async fn get_scraping_devices(pool: &Pool) -> Result<Vec<Self>> {
         let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
+            tracing::error!(error = ?e, "device db connection failed");
             Error::DatabaseConnection
         })?;
         device::table
@@ -92,7 +92,7 @@ impl Device {
             .get_results(&mut conn)
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
+                tracing::warn!(error = ?e, "device get_scraping_devices query failed");
                 Error::Find
             })
     }

@@ -51,10 +51,9 @@ pub(crate) mod user_token {
                 }));
                 let mut map = std::collections::BTreeMap::new();
                 map.insert(String::from("username"), user_name.into());
-
                 scope.set_context("user_long", sentry::protocol::Context::Other(map));
             });
-            sentry::capture_error(&e);
+            tracing::error!("Error encoding JWT for {:?}: {:?}", user_name, e);
             Error::JwtEncode
         })
     }
@@ -69,10 +68,9 @@ pub(crate) mod user_token {
             sentry::configure_scope(|scope| {
                 let mut map = std::collections::BTreeMap::new();
                 map.insert(String::from("token"), token.into());
-
                 scope.set_context("token", sentry::protocol::Context::Other(map));
             });
-            sentry::capture_error(&e);
+            tracing::warn!("Error decoding JWT: {:?}", e);
             Error::JwtDecode
         })?
         .claims)

@@ -32,18 +32,12 @@ impl DiaryEntry {
     }
 
     pub(crate) async fn find_by_id(id: Uuid, pool: &Pool) -> Result<Self> {
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
+        let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
         diary_entry::table
             .filter(diary_entry::id.eq(id))
             .first(&mut conn)
             .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::Find
-            })
+            .map_err(|_| Error::Find)
     }
 
     pub(crate) async fn find_by_date_range(
@@ -51,10 +45,7 @@ impl DiaryEntry {
         end: DateTime<Utc>,
         pool: &Pool,
     ) -> Result<Vec<Self>> {
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
+        let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
         diary_entry::table
             .filter(
                 diary_entry::entry_date
@@ -63,17 +54,11 @@ impl DiaryEntry {
             )
             .load(&mut conn)
             .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::Find
-            })
+            .map_err(|_| Error::Find)
     }
 
     pub(crate) async fn flush(&mut self, pool: &Pool) -> Result<()> {
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
+        let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
         self.updated_at = chrono::Utc::now();
         let db_entry = self.clone();
         diesel::insert_into(diary_entry::table)
@@ -83,41 +68,14 @@ impl DiaryEntry {
             .set(&db_entry)
             .execute(&mut conn)
             .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::Creation
-            })?;
+            .map_err(|_| Error::Creation)?;
 
         Ok(())
     }
 
-    //pub(crate) async fn delete(&self, pool: &Pool) -> Result<()> {
-    //    let mut conn: bb8::PooledConnection<
-    //        '_,
-    //        diesel_async::pooled_connection::AsyncDieselConnectionManager<
-    //            diesel_async::AsyncPgConnection,
-    //        >,
-    //    > = pool.get().await.map_err(|e| {
-    //        sentry::capture_error(&e);
-    //        Error::DatabaseConnection
-    //    })?;
-    //    diesel::delete(diary_entry::table.filter(diary_entry::id.eq(self.id)))
-    //        .execute(&mut conn)
-    //        .await
-    //        .map_err(|e| {
-    //            sentry::capture_error(&e);
-    //            Error::CreationError
-    //        })?;
-    //
-    //    Ok(())
-    //}
-
     pub(crate) async fn add_tag(&self, tag_name: &str, pool: &Pool) -> Result<()> {
         let tag = DiaryTag::find_or_create(tag_name, pool).await?;
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
+        let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
         diesel::insert_into(diary_entry_tag::table)
             .values((
                 diary_entry_tag::diary_entry_id.eq(self.id),
@@ -130,19 +88,13 @@ impl DiaryEntry {
             .do_nothing()
             .execute(&mut conn)
             .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::Creation
-            })?;
+            .map_err(|_| Error::Creation)?;
         Ok(())
     }
 
     pub(crate) async fn remove_tag(&self, tag_name: &str, pool: &Pool) -> Result<()> {
         use super::schema::diary_tag;
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
+        let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
         diesel::delete(
             diary_entry_tag::table.filter(
                 diary_entry_tag::diary_entry_id.eq(self.id).and(
@@ -156,10 +108,7 @@ impl DiaryEntry {
         )
         .execute(&mut conn)
         .await
-        .map_err(|e| {
-            sentry::capture_error(&e);
-            Error::Find
-        })?;
+        .map_err(|_| Error::Find)?;
         Ok(())
     }
 

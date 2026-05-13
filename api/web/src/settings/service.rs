@@ -22,8 +22,6 @@ pub(crate) async fn generate_one_time_token(base_ulr: &str, username: &str) -> R
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
-
             tracing::error!(
                 "Error in post to service: {:?} with username: {} for url {}",
                 e,
@@ -38,8 +36,6 @@ pub(crate) async fn generate_one_time_token(base_ulr: &str, username: &str) -> R
             .json::<GenerateOneTimeTokenResponseDto>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
-
                 tracing::error!("Error in response json: {:?}", e,);
 
                 Error::Json(e)
@@ -62,7 +58,6 @@ pub(crate) async fn generate_one_time_token(base_ulr: &str, username: &str) -> R
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?

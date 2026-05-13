@@ -43,7 +43,6 @@ pub(crate) async fn register(
                 base_ulr
             );
 
-            sentry::capture_error(&e);
             Error::Request(e)
         })?;
     if resp.status().is_success() {
@@ -54,7 +53,6 @@ pub(crate) async fn register(
 
                 scope.set_context("username", sentry::protocol::Context::Other(map));
             });
-            sentry::capture_error(&e);
 
             tracing::error!("Error in response json: {:?}", e,);
 
@@ -67,7 +65,6 @@ pub(crate) async fn register(
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?
@@ -94,7 +91,6 @@ pub(crate) async fn login(
 
                 scope.set_context("username", sentry::protocol::Context::Other(map));
             });
-            sentry::capture_error(&e);
 
             tracing::error!(
                 "Error in post to service: {:?} with username: {} for url {}",
@@ -110,7 +106,6 @@ pub(crate) async fn login(
             sentry::configure_scope(|scope| {
                 scope.set_extra("username", login_request.username.into());
             });
-            sentry::capture_error(&e);
 
             tracing::error!("Error in response json: {:?}", e,);
 
@@ -123,7 +118,6 @@ pub(crate) async fn login(
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?
@@ -141,8 +135,6 @@ pub(crate) async fn check_token(base_ulr: &str, token: &str) -> Result<TokenResp
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
-
             tracing::error!(
                 "Error in post to service: {:?} with token: {} for url {}",
                 e,
@@ -154,7 +146,6 @@ pub(crate) async fn check_token(base_ulr: &str, token: &str) -> Result<TokenResp
         })?;
     if resp.status().is_success() {
         return resp.json().await.map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in response json: {:?}", e);
             Error::Json(e)
         });
@@ -165,7 +156,6 @@ pub(crate) async fn check_token(base_ulr: &str, token: &str) -> Result<TokenResp
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?

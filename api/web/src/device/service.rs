@@ -28,8 +28,6 @@ pub(crate) async fn update_device(
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
-
             tracing::error!(
                 "Error in update device: {:?} with entry: {:?} for url {}",
                 e,
@@ -41,8 +39,6 @@ pub(crate) async fn update_device(
         })?;
     if resp.status().is_success() {
         return resp.json().await.map_err(|e| {
-            sentry::capture_error(&e);
-
             tracing::error!(
                 "Error parsing json for update device: {:?} with entry: {:?} for url {}",
                 e,
@@ -59,7 +55,6 @@ pub(crate) async fn update_device(
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?
@@ -77,8 +72,6 @@ pub(crate) async fn create_device(
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
-
             tracing::error!(
                 "Error in post to device service: {:?} with entry: {:?} for url {}",
                 e,
@@ -90,8 +83,6 @@ pub(crate) async fn create_device(
         })?;
     if resp.status().is_success() {
         return resp.json().await.map_err(|e| {
-            sentry::capture_error(&e);
-
             tracing::error!("Error in json to device service: {:?} with", e);
 
             Error::Json(e)
@@ -103,7 +94,6 @@ pub(crate) async fn create_device(
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?
@@ -117,8 +107,6 @@ pub(crate) async fn get_device(base_url: &str, id: Uuid) -> Result<DeviceRespons
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
-
             tracing::error!(
                 "Error in get to service: {:?} with id: {:?} for url {}",
                 e,
@@ -130,8 +118,6 @@ pub(crate) async fn get_device(base_url: &str, id: Uuid) -> Result<DeviceRespons
         })?;
     if resp.status().is_success() {
         return resp.json().await.map_err(|e| {
-            sentry::capture_error(&e);
-
             tracing::error!("Error in get to service: {:?} with id: {:?}", e, id);
 
             Error::Json(e)
@@ -143,7 +129,6 @@ pub(crate) async fn get_device(base_url: &str, id: Uuid) -> Result<DeviceRespons
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?
@@ -157,8 +142,6 @@ pub(crate) async fn get_device_config(base_ulr: &str, id: Uuid) -> Result<String
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
-
             tracing::error!(
                 "Error in get to device service: {:?} with id: {:?} for url {}",
                 e,
@@ -170,7 +153,6 @@ pub(crate) async fn get_device_config(base_ulr: &str, id: Uuid) -> Result<String
         })?;
     if resp.status().is_success() {
         return resp.text().await.map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in get to device service: {:?}", e,);
             Error::Json(e)
         });
@@ -181,7 +163,6 @@ pub(crate) async fn get_device_config(base_ulr: &str, id: Uuid) -> Result<String
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?
@@ -195,8 +176,6 @@ pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
-
             tracing::error!(
                 "Error in get to service: {:?} with id: {:?} for url {}",
                 e,
@@ -208,7 +187,6 @@ pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String
         })?;
     if resp.status().is_success() {
         return resp.text().await.map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in get to service: {:?}", e,);
             Error::Json(e)
         });
@@ -219,7 +197,6 @@ pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?
@@ -238,7 +215,6 @@ pub(crate) async fn update_device_config(
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in put to service: {:?}", e);
             Error::Request(e)
         })?;
@@ -249,7 +225,6 @@ pub(crate) async fn update_device_config(
     Err(Error::Api(ApiError {
         status: resp.status(),
         message: resp.text().await.map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in put to service: {:?}", e);
             Error::Json(e)
         })?,
@@ -262,8 +237,6 @@ pub(crate) async fn get_devices(base_url: &str) -> Result<DevicesResponseDto> {
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
-
             tracing::error!(
                 "Error in get all to device service: {:?} for url {}",
                 e,
@@ -275,7 +248,6 @@ pub(crate) async fn get_devices(base_url: &str) -> Result<DevicesResponseDto> {
 
     if resp.status().is_success() {
         return resp.json().await.map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in get all json to service: {:?}", e,);
             Error::Json(e)
         });
@@ -286,7 +258,6 @@ pub(crate) async fn get_devices(base_url: &str) -> Result<DevicesResponseDto> {
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?
@@ -300,7 +271,6 @@ pub(crate) async fn activate_device(base_url: &str, id: Uuid) -> Result<()> {
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in put to service: {:?}", e);
             Error::Request(e)
         })?;
@@ -311,7 +281,6 @@ pub(crate) async fn activate_device(base_url: &str, id: Uuid) -> Result<()> {
     Err(Error::Api(ApiError {
         status: resp.status(),
         message: resp.text().await.map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in put to service: {:?}", e);
             Error::Json(e)
         })?,
@@ -329,14 +298,12 @@ pub(crate) async fn get_device_timeseries(
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in get to service: {:?}", e);
             Error::Request(e)
         })?;
 
     if resp.status().is_success() {
         return resp.json().await.map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in get to service: {:?}", e);
             Error::Json(e)
         });
@@ -347,7 +314,6 @@ pub(crate) async fn get_device_timeseries(
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?
@@ -361,14 +327,12 @@ pub(crate) async fn get_device_operations(base_url: &str, id: Uuid) -> Result<Op
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in get to service: {:?}", e);
             Error::Request(e)
         })?;
 
     if resp.status().is_success() {
         return resp.json().await.map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in get to service: {:?}", e);
             Error::Json(e)
         });
@@ -379,7 +343,6 @@ pub(crate) async fn get_device_operations(base_url: &str, id: Uuid) -> Result<Op
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?

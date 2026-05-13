@@ -11,7 +11,7 @@ derive_more = { workspace = true }
 diesel = { workspace = true, features = ["uuid", "postgres"] }
 diesel-async = { workspace = true }
 diesel_migrations = { workspace = true }
-greenhouse_core = { workspace = true, features = ["auth_service_dto"] }
+greenhouse_core = { workspace = true, features = ["auth_service_dto", "sentry"] }
 reqwest = { workspace = true, features = ["json"] }
 sentry = { workspace = true, features = ["debug-images", "tower"] }
 serde = { workspace = true }
