@@ -9,4 +9,6 @@ pub struct DiaryEntryResponseDto {
     pub content: String,
     pub created_at: String,
     pub updated_at: String,
+    #[serde(default)]
+    pub tags: Vec<String>,
 }

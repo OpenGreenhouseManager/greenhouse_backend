@@ -1,19 +1,21 @@
 use axum::{
     Json, Router,
     extract::{Path, State},
-    routing::{get, post, put},
+    http::StatusCode,
+    routing::{delete, get, post, put},
 };
 use chrono::{DateTime, Utc};
 use greenhouse_core::data_storage_service_dto::diary_dtos::{
     get_diary::GetDiaryResponseDto, get_diary_entry::DiaryEntryResponseDto,
-    post_diary_entry::PostDiaryEntryDtoRequest, put_diary_entry::PutDiaryEntryDtoRequest,
+    post_diary_entry::PostDiaryEntryDtoRequest, post_diary_tag::PostDiaryTagDtoRequest,
+    put_diary_entry::PutDiaryEntryDtoRequest,
 };
 use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::{
     AppState,
-    database::diary_models::DiaryEntry,
+    database::{diary_models::DiaryEntry, diary_tag::DiaryTag},
     router::error::{Error, HttpResult},
 };
 
@@ -29,6 +31,9 @@ pub(crate) fn routes(state: AppState) -> Router {
         .route("/{id}", put(update_diary_entry))
         .route("/{id}", get(get_diary_entry))
         .route("/{start}/{end}", get(get_diary))
+        .route("/{id}/tags", post(add_tag_to_entry))
+        .route("/{id}/tags/{tag_name}", delete(remove_tag_from_entry))
+        .route("/tags/{tag_name}", get(search_entries_by_tag))
         .with_state(state)
 }
 
@@ -54,7 +59,7 @@ pub(crate) async fn update_diary_entry(
 
     entry.content = update.content.clone();
     entry.flush(&pool).await?;
-    Ok(entry.into())
+    Ok(entry.populate_tags(&pool).await?)
 }
 
 #[axum::debug_handler]
@@ -78,7 +83,7 @@ pub(crate) async fn create_diary_entry(
         &entry.content,
     );
     entry.flush(&pool).await?;
-    Ok(entry.into())
+    Ok(entry.populate_tags(&pool).await?)
 }
 
 #[axum::debug_handler]
@@ -86,7 +91,10 @@ pub(crate) async fn get_diary_entry(
     State(AppState { config: _, pool }): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> HttpResult<DiaryEntryResponseDto> {
-    Ok(DiaryEntry::find_by_id(id, &pool).await?.into())
+    Ok(DiaryEntry::find_by_id(id, &pool)
+        .await?
+        .populate_tags(&pool)
+        .await?)
 }
 
 #[axum::debug_handler]
@@ -118,6 +126,38 @@ pub(crate) async fn get_diary(
     })?;
     let entries = DiaryEntry::find_by_date_range(start, end, &pool).await?;
     Ok(GetDiaryResponseDto {
-        entries: entries.into_iter().map(|entry| entry.into()).collect(),
+        entries: DiaryEntry::populate_tags_for_entries(entries, &pool).await?,
+    })
+}
+
+#[axum::debug_handler]
+pub(crate) async fn add_tag_to_entry(
+    State(AppState { config: _, pool }): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(body): Json<PostDiaryTagDtoRequest>,
+) -> HttpResult<StatusCode> {
+    let entry = DiaryEntry::find_by_id(id, &pool).await?;
+    entry.add_tag(&body.tag_name, &pool).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[axum::debug_handler]
+pub(crate) async fn remove_tag_from_entry(
+    State(AppState { config: _, pool }): State<AppState>,
+    Path((id, tag_name)): Path<(Uuid, String)>,
+) -> HttpResult<StatusCode> {
+    let entry = DiaryEntry::find_by_id(id, &pool).await?;
+    entry.remove_tag(&tag_name, &pool).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[axum::debug_handler]
+pub(crate) async fn search_entries_by_tag(
+    State(AppState { config: _, pool }): State<AppState>,
+    Path(tag_name): Path<String>,
+) -> HttpResult<GetDiaryResponseDto> {
+    let entries = DiaryTag::find_entries_by_partial_name(&tag_name, &pool).await?;
+    Ok(GetDiaryResponseDto {
+        entries: DiaryEntry::populate_tags_for_entries(entries, &pool).await?,
     })
 }
