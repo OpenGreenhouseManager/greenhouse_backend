@@ -30,37 +30,28 @@ impl Alert {
             id: Uuid::new_v4(),
             severity: alert.severity.into(),
             identifier: alert.identifier.parse().map_err(|e| {
-                sentry::capture_error(&e);
+                tracing::error!("Error parsing alert identifier: {:?}", e);
                 Error::Creation
             })?,
             value: alert.value.unwrap_or_default(),
             note: alert.note,
             created_at: Utc::now(),
             datasource_id: alert.datasource_id.parse().map_err(|e| {
-                sentry::capture_error(&e);
+                tracing::error!("Error parsing alert datasource_id: {:?}", e);
                 Error::Creation
             })?,
         };
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
+        let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
         diesel::insert_into(alert::table)
             .values(&alert)
             .execute(&mut conn)
             .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::Creation
-            })?;
+            .map_err(|_| Error::Creation)?;
         Ok(alert)
     }
 
     pub(crate) async fn query(alert_query: AlertQuery, pool: &Pool) -> Result<Vec<Self>> {
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
+        let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
         let mut query = alert::table.into_boxed();
         if let Some(start) = alert_query.created_at {
             query = query.filter(alert::created_at.ge(start));
@@ -75,20 +66,14 @@ impl Alert {
         if let Some(identifier) = alert_query.identifier {
             query = query.filter(alert::identifier.eq(identifier));
         }
-        query.load(&mut conn).await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::Find
-        })
+        query.load(&mut conn).await.map_err(|_| Error::Find)
     }
 
     pub(crate) async fn aggrigate(
         interval_query: IntervalQuery,
         pool: &Pool,
     ) -> Result<Vec<AggrigatedAlert>> {
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
+        let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
 
         let mut query = alert::table
             .group_by((alert::datasource_id, alert::severity, alert::identifier))
@@ -119,10 +104,7 @@ impl Alert {
                 Option<DateTime<Utc>>,
             )>(&mut conn)
             .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::Find
-            })?;
+            .map_err(|_| Error::Find)?;
 
         Ok(query
             .into_iter()

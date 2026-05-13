@@ -39,10 +39,7 @@ impl DiaryTag {
     }
 
     pub(crate) async fn find_or_create(name: &str, pool: &Pool) -> Result<Self> {
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
+        let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
 
         let new_tag = Self::new(name)?;
         diesel::insert_into(diary_tag::table)
@@ -51,26 +48,17 @@ impl DiaryTag {
             .do_nothing()
             .execute(&mut conn)
             .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::Creation
-            })?;
+            .map_err(|_| Error::Creation)?;
 
         diary_tag::table
             .filter(diary_tag::name.eq(new_tag.name.as_str()))
             .first(&mut conn)
             .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::Find
-            })
+            .map_err(|_| Error::Find)
     }
 
     pub(crate) async fn get_tags_for_entry(entry_id: Uuid, pool: &Pool) -> Result<Vec<Self>> {
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
+        let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
 
         diary_tag::table
             .inner_join(diary_entry_tag::table)
@@ -79,10 +67,7 @@ impl DiaryTag {
             .select(diary_tag::all_columns)
             .load::<DiaryTag>(&mut conn)
             .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::Find
-            })
+            .map_err(|_| Error::Find)
     }
 
     pub(crate) async fn get_tags_for_entries(
@@ -92,10 +77,7 @@ impl DiaryTag {
         if entry_ids.is_empty() {
             return Ok(HashMap::new());
         }
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
+        let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
 
         let rows: Vec<(Uuid, String)> = diary_entry_tag::table
             .inner_join(diary_tag::table)
@@ -104,10 +86,7 @@ impl DiaryTag {
             .select((diary_entry_tag::diary_entry_id, diary_tag::name))
             .load(&mut conn)
             .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::Find
-            })?;
+            .map_err(|_| Error::Find)?;
 
         let mut map: HashMap<Uuid, Vec<String>> = HashMap::new();
         for (entry_id, tag_name) in rows {
@@ -120,10 +99,7 @@ impl DiaryTag {
         partial: &str,
         pool: &Pool,
     ) -> Result<Vec<DiaryEntry>> {
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
+        let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
 
         diary_entry::table
             .inner_join(diary_entry_tag::table.inner_join(diary_tag::table))
@@ -133,10 +109,7 @@ impl DiaryTag {
             .order(diary_entry::id.asc())
             .load::<DiaryEntry>(&mut conn)
             .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::Find
-            })
+            .map_err(|_| Error::Find)
     }
 }
 

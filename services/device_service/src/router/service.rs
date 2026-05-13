@@ -10,21 +10,15 @@ pub(crate) async fn request_device_config(device_address: &str) -> Result<String
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
-
             tracing::error!(
                 "Error in get to smart device: {:?} for url {}",
                 e,
                 device_address
             );
-
             Error::SmartDeviceNotReachable
         })?;
     resp.text().await.map_err(|e| {
-        sentry::capture_error(&e);
-
         tracing::error!("Error in response from smart device: {:?}", e);
-
         Error::SmartDeviceResponse
     })
 }
@@ -39,21 +33,15 @@ pub(crate) async fn request_device_config_update(
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
-
             tracing::error!(
                 "Error in post to smart device for config update: {:?} for url {}",
                 e,
                 device_address
             );
-
             Error::SmartDeviceNotReachable
         })?;
     resp.text().await.map_err(|e| {
-        sentry::capture_error(&e);
-
         tracing::error!("Error in response from smart device: {:?}", e);
-
         Error::SmartDeviceResponse
     })
 }
@@ -64,21 +52,15 @@ pub(crate) async fn request_device_status(device_address: &str) -> Result<String
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
-
             tracing::error!(
                 "Error in get to smart device: {:?} for url {}",
                 e,
                 device_address
             );
-
             Error::SmartDeviceNotReachable
         })?;
     resp.text().await.map_err(|e| {
-        sentry::capture_error(&e);
-
         tracing::error!("Error in response from smart device: {:?}", e);
-
         Error::SmartDeviceResponse
     })
 }
@@ -93,17 +75,11 @@ pub(crate) async fn request_device_activate(
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
-
             tracing::error!("Error in activate to smart device: {:?}", e);
-
             Error::SmartDeviceNotReachable
         })?;
     resp.text().await.map_err(|e| {
-        sentry::capture_error(&e);
-
         tracing::error!("Error in response from smart device: {:?}", e);
-
         Error::SmartDeviceResponse
     })
 }
@@ -114,17 +90,11 @@ pub(crate) async fn request_device_token(scripting_api_address: &str) -> Result<
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
-
             tracing::error!("Error in post to scripting api: {:?}", e);
-
             Error::ScriptingApiNotReachable
         })?;
     resp.json::<TokenDto>().await.map_err(|e| {
-        sentry::capture_error(&e);
-
         tracing::error!("Error in response from scripting api: {:?}", e);
-
         Error::ScriptingApiResponse
     })
 }

@@ -49,11 +49,9 @@ pub(crate) async fn update_diary_entry(
         sentry::configure_scope(|scope| {
             let mut map = std::collections::BTreeMap::new();
             map.insert(String::from("time"), update.date.clone().into());
-
             scope.set_context("time_string", sentry::protocol::Context::Other(map));
         });
-
-        sentry::capture_error(&e);
+        tracing::warn!("Invalid date string {:?}: {:?}", update.date, e);
         Error::TimeError
     })?;
 
@@ -72,11 +70,9 @@ pub(crate) async fn create_diary_entry(
             sentry::configure_scope(|scope| {
                 let mut map = std::collections::BTreeMap::new();
                 map.insert(String::from("time"), entry.date.clone().into());
-
                 scope.set_context("time_string", sentry::protocol::Context::Other(map));
             });
-
-            sentry::capture_error(&e);
+            tracing::warn!("Invalid date string {:?}: {:?}", entry.date, e);
             Error::TimeError
         })?,
         &entry.title,
@@ -106,22 +102,18 @@ pub(crate) async fn get_diary(
         sentry::configure_scope(|scope| {
             let mut map = std::collections::BTreeMap::new();
             map.insert(String::from("time"), start.clone().into());
-
             scope.set_context("time_string", sentry::protocol::Context::Other(map));
         });
-
-        sentry::capture_error(&e);
+        tracing::warn!("Invalid start date string {:?}: {:?}", start, e);
         Error::TimeError
     })?;
     let end = end.parse::<DateTime<Utc>>().map_err(|e| {
         sentry::configure_scope(|scope| {
             let mut map = std::collections::BTreeMap::new();
             map.insert(String::from("time"), end.clone().into());
-
             scope.set_context("time_string", sentry::protocol::Context::Other(map));
         });
-
-        sentry::capture_error(&e);
+        tracing::warn!("Invalid end date string {:?}: {:?}", end, e);
         Error::TimeError
     })?;
     let entries = DiaryEntry::find_by_date_range(start, end, &pool).await?;

@@ -36,36 +36,21 @@ impl Device {
     }
 
     pub(crate) async fn find_by_id(id: Uuid, pool: &Pool) -> Result<Self> {
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
+        let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
         device::table
             .filter(device::id.eq(id))
             .first(&mut conn)
             .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::Find
-            })
+            .map_err(|_| Error::Find)
     }
 
     pub(crate) async fn all(pool: &Pool) -> Result<Vec<Self>> {
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
-        device::table.get_results(&mut conn).await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::Find
-        })
+        let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
+        device::table.get_results(&mut conn).await.map_err(|_| Error::Find)
     }
 
     pub(crate) async fn flush(&mut self, pool: &Pool) -> Result<()> {
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
+        let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
         let db_entry = self.clone();
         diesel::insert_into(device::table)
             .values(&db_entry)
@@ -74,27 +59,18 @@ impl Device {
             .set(&db_entry)
             .execute(&mut conn)
             .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::Creation
-            })?;
+            .map_err(|_| Error::Creation)?;
 
         Ok(())
     }
 
     pub(crate) async fn get_scraping_devices(pool: &Pool) -> Result<Vec<Self>> {
-        let mut conn = pool.get().await.map_err(|e| {
-            sentry::capture_error(&e);
-            Error::DatabaseConnection
-        })?;
+        let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
         device::table
             .filter(device::scraping.eq(true))
             .get_results(&mut conn)
             .await
-            .map_err(|e| {
-                sentry::capture_error(&e);
-                Error::Find
-            })
+            .map_err(|_| Error::Find)
     }
 }
 

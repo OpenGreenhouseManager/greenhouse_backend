@@ -11,7 +11,7 @@ derive_more = { workspace = true }
 diesel = { workspace = true, features = ["uuid", "postgres"] }
 diesel-async = { workspace = true }
 diesel_migrations = { workspace = true }
-greenhouse_core = { workspace = true, features = ["auth_service_dto"] }
+greenhouse_core = { workspace = true, features = ["auth_service_dto", "sentry"] }
 metrics = { version = "0.24", default-features = false }
 metrics-exporter-prometheus = { version = "0.17", default-features = false }
 reqwest = { workspace = true, features = ["json"] }

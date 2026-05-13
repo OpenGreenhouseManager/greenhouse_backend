@@ -9,7 +9,7 @@ license = "GPL-3.0"
 [dependencies]
 axum = { workspace = true, features = ["tracing"] }
 derive_more = { workspace = true }
-greenhouse_core = { workspace = true, features = ["auth_service_dto"] }
+greenhouse_core = { workspace = true, features = ["auth_service_dto", "sentry"] }
 greenhouse_macro = { workspace = true }
 jsonwebtoken = { workspace = true }
 reqwest = { workspace = true, features = ["json"] }

@@ -53,10 +53,9 @@ impl User {
                 let mut map = std::collections::BTreeMap::new();
                 map.insert(String::from("username"), username.into());
                 map.insert(String::from("role"), role.into());
-
                 scope.set_context("user_long", sentry::protocol::Context::Other(map));
             });
-            sentry::capture_error(&e);
+            tracing::error!("Error hashing password for {:?}: {:?}", username, e);
             Error::InvalidHash
         })?;
 
@@ -87,11 +86,9 @@ impl User {
                 let mut map = std::collections::BTreeMap::new();
                 map.insert(String::from("username"), self.username.clone().into());
                 map.insert(String::from("role"), self.role.clone().into());
-
                 scope.set_context("user_long", sentry::protocol::Context::Other(map));
             });
-
-            sentry::capture_error(&e);
+            tracing::error!("Error verifying password for {:?}: {:?}", self.username, e);
             Error::InvalidHash
         })
     }

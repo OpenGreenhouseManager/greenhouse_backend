@@ -17,7 +17,6 @@ pub(crate) async fn check_token(base_ulr: &str, token: &str) -> Result<()> {
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
 
             tracing::error!(
                 "Error in post to service: {:?} with token: {} for url {}",
@@ -37,7 +36,6 @@ pub(crate) async fn check_token(base_ulr: &str, token: &str) -> Result<()> {
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in post to service: {:?}", e);
                 Error::Json(e)
             })?

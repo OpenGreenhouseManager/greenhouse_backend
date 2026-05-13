@@ -101,10 +101,9 @@ pub(crate) async fn register_user(
         sentry::configure_scope(|scope| {
             let mut map = std::collections::BTreeMap::new();
             map.insert(String::from("db_url"), config.database_url.clone().into());
-
             scope.set_context("db", sentry::protocol::Context::Other(map));
         });
-        sentry::capture_error(&e);
+        tracing::error!("Error getting database connection: {:?}", e);
         Error::DatabaseConnection
     })?;
 
@@ -123,10 +122,9 @@ pub(crate) async fn register_user(
                 let mut map = std::collections::BTreeMap::new();
                 map.insert(String::from("username"), name.into());
                 map.insert(String::from("role"), role.into());
-
                 scope.set_context("user_long", sentry::protocol::Context::Other(map));
             });
-            sentry::capture_error(&e);
+            tracing::error!("Error inserting user {:?}: {:?}", name, e);
             Error::UsernameTaken
         })?;
     Ok(token)
@@ -141,10 +139,9 @@ pub(crate) async fn login(
         sentry::configure_scope(|scope| {
             let mut map = std::collections::BTreeMap::new();
             map.insert(String::from("db_url"), config.database_url.into());
-
             scope.set_context("db", sentry::protocol::Context::Other(map));
         });
-        sentry::capture_error(&e);
+        tracing::error!("Error getting database connection: {:?}", e);
         Error::DatabaseConnection
     })?;
 
@@ -160,10 +157,8 @@ pub(crate) async fn login(
                 }));
                 let mut map = std::collections::BTreeMap::new();
                 map.insert(String::from("username"), login.username.clone().into());
-
                 scope.set_context("user_long", sentry::protocol::Context::Other(map));
             });
-            sentry::capture_error(&e);
             match e {
                 diesel::result::Error::NotFound => Error::UserNotFound,
                 _ => Error::DatabaseConnection,
@@ -189,10 +184,9 @@ pub(crate) async fn login(
                 }));
                 let mut map = std::collections::BTreeMap::new();
                 map.insert(String::from("username"), login.username.into());
-
                 scope.set_context("user_long", sentry::protocol::Context::Other(map));
             });
-            sentry::capture_error(&e);
+            tracing::error!("Error updating login session: {:?}", e);
             Error::UserNotFound
         })?;
 
@@ -212,10 +206,9 @@ pub(crate) async fn check_token(
         sentry::configure_scope(|scope| {
             let mut map = std::collections::BTreeMap::new();
             map.insert(String::from("db_url"), config.database_url.into());
-
             scope.set_context("db", sentry::protocol::Context::Other(map));
         });
-        sentry::capture_error(&e);
+        tracing::error!("Error getting database connection: {:?}", e);
         Error::DatabaseConnection
     })?;
 
@@ -233,10 +226,9 @@ pub(crate) async fn check_token(
                 }));
                 let mut map = std::collections::BTreeMap::new();
                 map.insert(String::from("username"), claims.user_name.clone().into());
-
                 scope.set_context("user_long", sentry::protocol::Context::Other(map));
             });
-            sentry::capture_error(&e);
+            tracing::warn!("User not found for token check: {:?}", e);
             Error::UserNotFound
         })?;
 

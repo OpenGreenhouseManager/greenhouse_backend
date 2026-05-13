@@ -16,7 +16,6 @@ pub(crate) async fn create_alert(base_ulr: &str, alert: CreateAlertDto) -> Resul
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
 
             tracing::error!("Error in post to service: {:?} for url {}", e, base_ulr);
 
@@ -24,7 +23,6 @@ pub(crate) async fn create_alert(base_ulr: &str, alert: CreateAlertDto) -> Resul
         })?;
     if resp.status().is_success() {
         return resp.json().await.map_err(|e| {
-            sentry::capture_error(&e);
 
             tracing::error!("Error in post to service: {:?} for url {}", e, base_ulr);
 
@@ -37,7 +35,6 @@ pub(crate) async fn create_alert(base_ulr: &str, alert: CreateAlertDto) -> Resul
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in post to service: {:?}", e);
                 Error::Json(e)
             })?

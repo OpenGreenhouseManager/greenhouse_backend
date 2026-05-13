@@ -26,10 +26,12 @@ data_storage_service_dto = []
 device_service_dto = []
 error_handling = ["dep:axum", "dep:tracing"]
 scripting_service_dto = []
+sentry = ["dep:sentry", "error_handling"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 axum = { workspace = true, optional = true }
+sentry = { workspace = true, optional = true }
 chrono = { workspace = true, features = ["serde"] }
 derive_more = { workspace = true }
 futures = { workspace = true }

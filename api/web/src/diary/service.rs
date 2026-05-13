@@ -25,7 +25,6 @@ pub(crate) async fn create_diary_entry(
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
 
             tracing::error!(
                 "Error in post to service: {:?} with entry: {:?} for url {}",
@@ -45,7 +44,6 @@ pub(crate) async fn create_diary_entry(
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?
@@ -64,7 +62,6 @@ pub(crate) async fn update_diary_entry(
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
 
             tracing::error!(
                 "Error in put to service: {:?} with entry: {:?} for url {}",
@@ -84,7 +81,6 @@ pub(crate) async fn update_diary_entry(
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?
@@ -98,7 +94,6 @@ pub(crate) async fn get_diary_entry(base_ulr: &str, id: Uuid) -> Result<DiaryEnt
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
 
             tracing::error!(
                 "Error in get to service: {:?} with id: {:?} for url {}",
@@ -111,7 +106,6 @@ pub(crate) async fn get_diary_entry(base_ulr: &str, id: Uuid) -> Result<DiaryEnt
         })?;
     if resp.status().is_success() {
         return resp.json().await.map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in get to service: {:?}", e,);
             Error::Json(e)
         });
@@ -122,7 +116,6 @@ pub(crate) async fn get_diary_entry(base_ulr: &str, id: Uuid) -> Result<DiaryEnt
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?
@@ -140,7 +133,6 @@ pub(crate) async fn get_diary(
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
 
             tracing::error!(
                 "Error in get to service: {:?} with start: {:?} and end: {:?} for url {}",
@@ -154,7 +146,6 @@ pub(crate) async fn get_diary(
         })?;
     if resp.status().is_success() {
         return resp.json().await.map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in get to service: {:?}", e,);
             Error::Json(e)
         });
@@ -165,7 +156,6 @@ pub(crate) async fn get_diary(
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?
@@ -187,7 +177,6 @@ pub(crate) async fn add_tag(
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in post to service: {:?} for url {}", e, base_ulr);
             Error::Request(e)
         })?;
@@ -200,7 +189,6 @@ pub(crate) async fn add_tag(
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?
@@ -223,7 +211,6 @@ pub(crate) async fn remove_tag(base_ulr: &str, entry_id: Uuid, tag_name: String)
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in delete to service: {:?} for url {}", e, base_ulr);
             Error::Request(e)
         })?;
@@ -236,7 +223,6 @@ pub(crate) async fn remove_tag(base_ulr: &str, entry_id: Uuid, tag_name: String)
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?
@@ -252,13 +238,11 @@ pub(crate) async fn search_by_tag(base_ulr: &str, tag_name: String) -> Result<Ge
         .send()
         .await
         .map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in get to service: {:?} for url {}", e, base_ulr);
             Error::Request(e)
         })?;
     if resp.status().is_success() {
         return resp.json().await.map_err(|e| {
-            sentry::capture_error(&e);
             tracing::error!("Error in get to service: {:?}", e);
             Error::Json(e)
         });
@@ -269,7 +253,6 @@ pub(crate) async fn search_by_tag(base_ulr: &str, tag_name: String) -> Result<Ge
             .json::<ErrorResponseBody>()
             .await
             .map_err(|e| {
-                sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
                 Error::Json(e)
             })?

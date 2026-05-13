@@ -34,18 +34,12 @@ pub(crate) async fn generate_scripting_key(
         scriptig_key: token.clone(),
     };
 
-    let mut conn = pool.get().await.map_err(|e| {
-        sentry::capture_error(&e);
-        Error::DatabaseConnection
-    })?;
+    let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
     diesel::insert_into(scripting_device::table)
         .values(&device)
         .execute(&mut conn)
         .await
-        .map_err(|e| {
-            sentry::capture_error(&e);
-            Error::Creation
-        })?;
+        .map_err(|_| Error::Creation)?;
 
     Ok(TokenDto { token })
 }
@@ -54,19 +48,13 @@ pub(crate) async fn check_scripting_key(
     State(AppState { config: _, pool }): State<AppState>,
     Json(check_token_dto_request): Json<TokenDto>,
 ) -> HttpResult<StatusCode> {
-    let mut conn = pool.get().await.map_err(|e| {
-        sentry::capture_error(&e);
-        Error::DatabaseConnection
-    })?;
+    let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
 
     let _ = scripting_device::table
         .filter(scripting_device::scriptig_key.eq(check_token_dto_request.token))
         .first::<ScriptingDevice>(&mut conn)
         .await
-        .map_err(|e| {
-            sentry::capture_error(&e);
-            Error::NotFound
-        });
+        .map_err(|_| Error::NotFound);
 
     Ok(StatusCode::OK)
 }
@@ -75,19 +63,13 @@ pub(crate) async fn delete_scripting_key(
     State(AppState { config: _, pool }): State<AppState>,
     Json(check_token_dto_request): Json<TokenDto>,
 ) -> HttpResult<StatusCode> {
-    let mut conn = pool.get().await.map_err(|e| {
-        sentry::capture_error(&e);
-        Error::DatabaseConnection
-    })?;
+    let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
 
     let _ = diesel::delete(scripting_device::table)
         .filter(scripting_device::scriptig_key.eq(check_token_dto_request.token))
         .execute(&mut conn)
         .await
-        .map_err(|e| {
-            sentry::capture_error(&e);
-            Error::NotFound
-        });
+        .map_err(|_| Error::NotFound);
 
     Ok(StatusCode::OK)
 }
