@@ -253,9 +253,10 @@ reviews:
         SENSITIVE FILE. Changes here affect every service. Apply maximum scrutiny:
 
         1. `HttpErrorMapping` trait signature is a contract: `to_status_code`, `to_error_message`,
-           `to_error_context`, `sentry_level`. Any change requires updating every
-           `impl HttpErrorMapping for Error` across `services/*/src/**/error.rs` and
-           `api/*/src/**/error.rs`. Verify the PR touches all of them.
+           `to_error_context`, `sentry_level`. Breaking changes (removing or modifying required
+           methods) require auditing every `impl HttpErrorMapping for Error` across
+           `services/*/src/**/error.rs` and `api/*/src/**/error.rs`. Additive methods with default
+           implementations do not require touching every impl — only verify callers of the new method.
         2. The `impl_http_error_from!` macro is consumed across all services. Changing its expansion
            is a breaking change — PR description MUST list every callsite.
         3. The `IntoResponse for HttpErrorResponse<E>` impl is the SINGLE point where Sentry events
