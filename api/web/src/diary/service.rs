@@ -25,7 +25,6 @@ pub(crate) async fn create_diary_entry(
         .send()
         .await
         .map_err(|e| {
-
             tracing::error!(
                 "Error in post to service: {:?} with entry: {:?} for url {}",
                 e,
@@ -62,7 +61,6 @@ pub(crate) async fn update_diary_entry(
         .send()
         .await
         .map_err(|e| {
-
             tracing::error!(
                 "Error in put to service: {:?} with entry: {:?} for url {}",
                 e,
@@ -94,7 +92,6 @@ pub(crate) async fn get_diary_entry(base_ulr: &str, id: Uuid) -> Result<DiaryEnt
         .send()
         .await
         .map_err(|e| {
-
             tracing::error!(
                 "Error in get to service: {:?} with id: {:?} for url {}",
                 e,
@@ -133,7 +130,6 @@ pub(crate) async fn get_diary(
         .send()
         .await
         .map_err(|e| {
-
             tracing::error!(
                 "Error in get to service: {:?} with start: {:?} and end: {:?} for url {}",
                 e,

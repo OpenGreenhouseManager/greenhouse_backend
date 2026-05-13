@@ -46,7 +46,10 @@ impl Device {
 
     pub(crate) async fn all(pool: &Pool) -> Result<Vec<Self>> {
         let mut conn = pool.get().await.map_err(|_| Error::DatabaseConnection)?;
-        device::table.get_results(&mut conn).await.map_err(|_| Error::Find)
+        device::table
+            .get_results(&mut conn)
+            .await
+            .map_err(|_| Error::Find)
     }
 
     pub(crate) async fn flush(&mut self, pool: &Pool) -> Result<()> {

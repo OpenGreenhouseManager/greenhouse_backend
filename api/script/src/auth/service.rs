@@ -17,7 +17,6 @@ pub(crate) async fn check_token(base_ulr: &str, token: &str) -> Result<()> {
         .send()
         .await
         .map_err(|e| {
-
             tracing::error!(
                 "Error in post to service: {:?} with token: {} for url {}",
                 e,

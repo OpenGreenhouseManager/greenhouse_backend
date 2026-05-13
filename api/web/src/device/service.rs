@@ -28,7 +28,6 @@ pub(crate) async fn update_device(
         .send()
         .await
         .map_err(|e| {
-
             tracing::error!(
                 "Error in update device: {:?} with entry: {:?} for url {}",
                 e,
@@ -40,7 +39,6 @@ pub(crate) async fn update_device(
         })?;
     if resp.status().is_success() {
         return resp.json().await.map_err(|e| {
-
             tracing::error!(
                 "Error parsing json for update device: {:?} with entry: {:?} for url {}",
                 e,
@@ -74,7 +72,6 @@ pub(crate) async fn create_device(
         .send()
         .await
         .map_err(|e| {
-
             tracing::error!(
                 "Error in post to device service: {:?} with entry: {:?} for url {}",
                 e,
@@ -86,7 +83,6 @@ pub(crate) async fn create_device(
         })?;
     if resp.status().is_success() {
         return resp.json().await.map_err(|e| {
-
             tracing::error!("Error in json to device service: {:?} with", e);
 
             Error::Json(e)
@@ -111,7 +107,6 @@ pub(crate) async fn get_device(base_url: &str, id: Uuid) -> Result<DeviceRespons
         .send()
         .await
         .map_err(|e| {
-
             tracing::error!(
                 "Error in get to service: {:?} with id: {:?} for url {}",
                 e,
@@ -123,7 +118,6 @@ pub(crate) async fn get_device(base_url: &str, id: Uuid) -> Result<DeviceRespons
         })?;
     if resp.status().is_success() {
         return resp.json().await.map_err(|e| {
-
             tracing::error!("Error in get to service: {:?} with id: {:?}", e, id);
 
             Error::Json(e)
@@ -148,7 +142,6 @@ pub(crate) async fn get_device_config(base_ulr: &str, id: Uuid) -> Result<String
         .send()
         .await
         .map_err(|e| {
-
             tracing::error!(
                 "Error in get to device service: {:?} with id: {:?} for url {}",
                 e,
@@ -183,7 +176,6 @@ pub(crate) async fn get_device_status(base_ulr: &str, id: Uuid) -> Result<String
         .send()
         .await
         .map_err(|e| {
-
             tracing::error!(
                 "Error in get to service: {:?} with id: {:?} for url {}",
                 e,
@@ -245,7 +237,6 @@ pub(crate) async fn get_devices(base_url: &str) -> Result<DevicesResponseDto> {
         .send()
         .await
         .map_err(|e| {
-
             tracing::error!(
                 "Error in get all to device service: {:?} for url {}",
                 e,

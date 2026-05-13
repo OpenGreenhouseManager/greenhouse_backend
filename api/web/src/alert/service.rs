@@ -20,7 +20,6 @@ pub(crate) async fn get_filtered_alert(base_ulr: &str, query: AlertQuery) -> Res
         .send()
         .await
         .map_err(|e| {
-
             tracing::error!(
                 "Error in get to service: {:?} with id: {:?} for url {}",
                 e,
@@ -32,7 +31,6 @@ pub(crate) async fn get_filtered_alert(base_ulr: &str, query: AlertQuery) -> Res
         })?;
     if resp.status().is_success() {
         return resp.json().await.map_err(|e| {
-
             tracing::error!("Error in get to service: {:?} with id: {:?}", e, query);
 
             Error::Json(e)
@@ -62,7 +60,6 @@ pub(crate) async fn get_alert_subset(
         .send()
         .await
         .map_err(|e| {
-
             tracing::error!(
                 "Error in get to service: {:?} with id: {:?} for url {}",
                 e,
@@ -74,7 +71,6 @@ pub(crate) async fn get_alert_subset(
         })?;
     if resp.status().is_success() {
         return resp.json().await.map_err(|e| {
-
             tracing::error!("Error in get to service: {:?} with id: {:?}", e, query);
 
             Error::Json(e)

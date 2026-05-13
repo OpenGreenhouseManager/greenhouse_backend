@@ -16,14 +16,12 @@ pub(crate) async fn create_alert(base_ulr: &str, alert: CreateAlertDto) -> Resul
         .send()
         .await
         .map_err(|e| {
-
             tracing::error!("Error in post to service: {:?} for url {}", e, base_ulr);
 
             Error::Request(e)
         })?;
     if resp.status().is_success() {
         return resp.json().await.map_err(|e| {
-
             tracing::error!("Error in post to service: {:?} for url {}", e, base_ulr);
 
             Error::Json(e)

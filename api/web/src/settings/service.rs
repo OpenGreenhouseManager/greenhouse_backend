@@ -22,7 +22,6 @@ pub(crate) async fn generate_one_time_token(base_ulr: &str, username: &str) -> R
         .send()
         .await
         .map_err(|e| {
-
             tracing::error!(
                 "Error in post to service: {:?} with username: {} for url {}",
                 e,
@@ -37,7 +36,6 @@ pub(crate) async fn generate_one_time_token(base_ulr: &str, username: &str) -> R
             .json::<GenerateOneTimeTokenResponseDto>()
             .await
             .map_err(|e| {
-
                 tracing::error!("Error in response json: {:?}", e,);
 
                 Error::Json(e)

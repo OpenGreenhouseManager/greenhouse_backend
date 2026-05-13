@@ -26,7 +26,7 @@ pub trait HttpErrorMapping: fmt::Display {
     /// Whether and at what level to report this error to Sentry.
     /// Default: 5xx → Error, 4xx → None (silent).
     /// Override per-variant to suppress noisy-but-expected errors (e.g. failed logins)
-    /// or to promote mis-classified errors (e.g. a 400 that is actually a server fault).
+    /// or to promote misclassified errors (e.g. a 400 that is actually a server fault).
     fn sentry_level(&self) -> Option<SentryLevel> {
         if self.to_status_code().is_server_error() {
             Some(SentryLevel::Error)
@@ -119,6 +119,13 @@ where
             );
         }
 
-        (status_code, ErrorResponseBody { error: error_message, context }).into_response()
+        (
+            status_code,
+            ErrorResponseBody {
+                error: error_message,
+                context,
+            },
+        )
+            .into_response()
     }
 }
