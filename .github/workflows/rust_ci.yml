@@ -10,48 +10,71 @@ on:
 env:
   CARGO_TERM_COLOR: always
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  LDPROXY_VERSION: "0.3.4"
+
+permissions:
+  contents: read
 
 jobs:
-  rust-checks-embedded:
-    name: Rust Checks
+  typos:
+    name: Typo Check
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        action:
-          - command: sort
-            args: --workspace --grouped 
-          - command: build
-            args: --release --workspace 
-          - command: fmt
-            args: --all -- --check --color always
-          - command: clippy
-            args: --all-targets --all-features --workspace  -- -D warnings
-          - command: test
-            args: --release --workspace --all-features -- --test-threads=1
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-      - name: rust up update 
-        run: rustup update
-      - name: rust up update nightly
-        run: rustup update nightly
-      - name: nightly
-        run: rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
-      - name: rustfmt
-        run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rustfmt
-      - name: clippy
-        run: rustup component add --toolchain nightly-x86_64-unknown-linux-gnu clippy
-      - name: install ldproxy
-        run: cargo install ldproxy
-      - name: install cargo-sort
-        run: cargo install cargo-sort
-      - name: install typos
-        run: cargo install typos-cli
-      - name: typos
-        run: typos
-      - name: Run command
-        run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: typos-cli
+      - run: typos
+
+  fmt:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install nightly rustfmt
+        run: |
+          rustup update nightly
+          rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rustfmt
+      - name: Check formatting
+        run: cargo fmt --all -- --check --color always
+
+  sort:
+    name: Dependency Sort
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-sort
+      - name: Check dependency sort
+        run: cargo sort --workspace --grouped --check
+
+  rust-checks:
+    name: Build / Clippy / Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install nightly components
+        run: |
+          rustup update nightly
+          rustup component add --toolchain nightly-x86_64-unknown-linux-gnu rust-src clippy
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@v2
+      - name: Cache ldproxy binary
+        uses: actions/cache@v4
+        id: cache-ldproxy
+        with:
+          path: ~/.cargo/bin/ldproxy
+          key: ldproxy-${{ runner.os }}-${{ env.LDPROXY_VERSION }}
+      - name: Install ldproxy
+        if: steps.cache-ldproxy.outputs.cache-hit != 'true'
+        run: cargo install ldproxy --version ${{ env.LDPROXY_VERSION }} --locked
+      - name: Build
+        run: cargo build --release --workspace
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features --workspace -- -D warnings
+      - name: Test
+        run: cargo test --release --workspace --all-features -- --test-threads=1
 
   security-audit:
     name: Security Audit
@@ -59,10 +82,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-      - name: Install cargo-audit
-        run: cargo install cargo-audit --locked
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
       - name: Run security audit
         # RUSTSEC-2025-0111: tokio-tar PAX header flaw. Transitive dev-only dep
         # via testcontainers->bollard. Not in production binaries. No upstream
