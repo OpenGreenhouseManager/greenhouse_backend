@@ -1,0 +1,38 @@
+[package]
+name = "greenhouse_esp32"
+version = "0.1.0"
+edition = "2021"
+description = "ESP32 smart device interface for OpenGreenhouseManager"
+license = "GPL-3.0"
+publish = false
+
+[lib]
+name = "greenhouse_esp32"
+
+[[example]]
+name = "input_output_int_saver"
+path = "src/examples/input_output_int_saver.rs"
+
+[dependencies]
+embedded-io = "0.6"
+esp-idf-hal = "0.44"
+esp-idf-svc = { version = "0.49", features = ["std", "alloc", "experimental"] }
+greenhouse_core = { path = "../greenhouse_core", default-features = false, features = [
+    "smart_device_dto",
+    "data_storage_service_dto",
+] }
+log = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[build-dependencies]
+embuild = "0.32"
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = "symbols"
+
+[profile.dev]
+opt-level = 1
+debug = true
