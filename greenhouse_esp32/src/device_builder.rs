@@ -125,7 +125,12 @@ where
 
     /// Starts the HTTP server and loops forever. Call this at the end of `main`.
     pub fn run(self) -> Result<()> {
-        let port = self.state.config.lock().unwrap().port;
+        let port = self
+            .state
+            .config
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .port;
         let server_cfg = esp_idf_svc::http::server::Configuration {
             http_port: port,
             ..Default::default()

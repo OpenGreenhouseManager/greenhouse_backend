@@ -18,10 +18,10 @@ pub fn trigger_alert<T>(config: &Arc<Config<T>>, alert: AlertCreation) -> Result
 where
     T: Clone + Default,
 {
-    let scripting_api = config
-        .scripting_api
-        .as_ref()
-        .ok_or(Error::ScriptingApiNotConfigured)?;
+    let scripting_api = config.scripting_api.as_ref().ok_or_else(|| {
+        log::warn!("scripting_api missing; cannot send alert");
+        Error::ScriptingApiNotConfigured
+    })?;
 
     let dto = CreateAlertDto {
         severity: alert.severity,
@@ -38,7 +38,6 @@ where
     let headers = [
         ("Content-Type", "application/json"),
         ("Cookie", cookie.as_str()),
-        ("Access-Control-Allow-Credentials", "true"),
     ];
 
     use esp_idf_svc::http::client::{Configuration, EspHttpConnection};
@@ -56,10 +55,15 @@ where
     request.write_all(&body).map_err(|_| Error::IoError)?;
     request.flush().map_err(|_| Error::IoError)?;
 
-    let response = request.submit().map_err(|_| Error::IoError)?;
+    let response = request.submit().map_err(|e| {
+        log::warn!("alert POST submit failed: {:?}", e);
+        Error::IoError
+    })?;
 
-    if response.status() >= 400 {
-        return Err(Error::IoError);
+    let status = response.status();
+    if status >= 400 {
+        log::warn!("alert POST returned HTTP {}", status);
+        return Err(Error::HttpStatus(status));
     }
     Ok(())
 }

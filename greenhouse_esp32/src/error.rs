@@ -6,6 +6,7 @@ pub enum Error {
     MissingConfig,
     ScriptingApiNotConfigured,
     Esp(esp_idf_svc::sys::EspError),
+    HttpStatus(u16),
     IoError,
     SerializationError,
 }

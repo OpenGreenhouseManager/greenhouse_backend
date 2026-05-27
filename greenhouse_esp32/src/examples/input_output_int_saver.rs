@@ -74,11 +74,11 @@ fn write_handler(data: Type, config: Arc<Config<ExampleDeviceConfig>>) -> Status
         Type::Number(n) => n,
         _ => return StatusCode::BAD_REQUEST,
     };
-    SAVED_NUMBER.store(number as i32, std::sync::atomic::Ordering::Relaxed);
-    if config.additional_config.min > number as i32 || config.additional_config.max < number as i32
-    {
-        return StatusCode::INTERNAL_SERVER_ERROR;
+    let number_i32 = number as i32;
+    if config.additional_config.min > number_i32 || config.additional_config.max < number_i32 {
+        return StatusCode::BAD_REQUEST;
     }
+    SAVED_NUMBER.store(number_i32, std::sync::atomic::Ordering::Relaxed);
     StatusCode::OK
 }
 
