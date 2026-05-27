@@ -1,11 +1,44 @@
+# This workspace uses diesel exclusively with the PostgreSQL backend.
+# All SQLite and MySQL backend advisories are non-applicable because those
+# code paths are never compiled or reachable. The diesel ↔ diesel-async
+# version pairing is constrained: diesel-async 0.5.x requires diesel ~2.2.x
+# (tilde requirement), and diesel-async 0.9.x (which relaxes this) requires
+# diesel ~2.3.9. A joint upgrade is tracked below.
+#
 # RUSTSEC-2025-0111: tokio-tar PAX extended header parsing flaw (file smuggling)
 #
-# tokio-tar is an unmaintained transitive dependency pulled in via the
-# integration-tests dev-dependency chain (testcontainers -> bollard -> tokio-tar).
-# It is NOT present in any production service binary — only in test builds.
+# Transitive dev-only dep via testcontainers → bollard → tokio-tar.
+# Not present in any production binary. No upstream patch yet.
+# Track: https://github.com/fussybeaver/bollard/issues
 #
-# tokio-tar has no patched release. The upstream fix requires bollard or
-# testcontainers to migrate to astral-tokio-tar. Suppress until that happens.
-# Track at: https://github.com/fussybeaver/bollard/issues (bollard upstream)
+# RUSTSEC-2026-0111: diesel SQLite sqlite3_value_text invalid UTF-8
+# RUSTSEC-2026-0134: diesel MySQL datetime struct cast undefined behaviour
+# RUSTSEC-2026-0135: diesel SQLite debug_query unsound transmute
+# RUSTSEC-2026-0137: diesel SQLite SqliteAggregate alignment
+#
+# All four affect SQLite or MySQL backends only. This workspace compiles
+# diesel with the `postgres` feature exclusively; none of this code is
+# reachable. All are patched in diesel 2.3.8, but upgrading diesel alone is
+# blocked until diesel-async also releases a 2.3.x-compatible version.
+#
+# RUSTSEC-2026-0136: diesel PostgreSQL COPY option injection
+#
+# Affects CopyToQuery / CopyFromQuery methods. This codebase contains no
+# COPY operations (confirmed by grep). Patched in diesel 2.3.8; same
+# upgrade-path block as above.
+#
+# RUSTSEC-2026-0138: diesel-async MySQL datetime undefined behaviour
+#
+# Affects the mysql feature of diesel-async only. This workspace uses
+# diesel-async with `features = ["postgres", "bb8"]`; MySQL code is never
+# compiled. Patched in diesel-async 0.9.0, which requires diesel ~2.3.9.
 [advisories]
-ignore = ["RUSTSEC-2025-0111"]
+ignore = [
+    "RUSTSEC-2025-0111",
+    "RUSTSEC-2026-0111",
+    "RUSTSEC-2026-0134",
+    "RUSTSEC-2026-0135",
+    "RUSTSEC-2026-0136",
+    "RUSTSEC-2026-0137",
+    "RUSTSEC-2026-0138",
+]
