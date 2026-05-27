@@ -16,6 +16,19 @@ use super::{
     },
 };
 
+/// Builds an Axum [`Router`] for an input (actuator) device.
+///
+/// Registers the following routes on the returned router:
+///
+/// | Method | Path | Handler |
+/// |--------|------|---------|
+/// | `POST` | `/write` | `write_device_handler` — forwards a value to the actuator |
+/// | `GET` | `/status` | `status_device_handler` — returns online/panic status |
+/// | `GET` | `/config` | `get_config_handler` — returns current configuration |
+/// | `POST` | `/config` | `config_update_handler` — updates additional config |
+/// | `POST` | `/activate` | `activate_device` — registers scripting API credentials |
+///
+/// Pass the router to `axum::serve` to start the device HTTP server.
 pub fn init_input_router<T>(device_service: DeviceBuilder<T>) -> Router
 where
     T: Clone + Default + Serialize + DeserializeOwned + Send + Sync + 'static,

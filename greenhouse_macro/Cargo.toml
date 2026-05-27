@@ -2,8 +2,16 @@
 name = "greenhouse_macro"
 version = "0.1.0"
 edition = "2021"
-description = "greenhouse_macro"
+description = "Procedural macros for the OpenGreenhouseManager backend (JWT auth attribute + JSON response derive)"
 license = "GPL-3.0"
+repository = "https://github.com/OpenGreenhouseManager/greenhouse_backend"
+homepage = "https://github.com/OpenGreenhouseManager/greenhouse_backend"
+documentation = "https://docs.rs/greenhouse_macro"
+keywords = ["greenhouse", "macro", "axum", "jwt", "proc-macro"]
+categories = ["web-programming"]
+
+[package.metadata.docs.rs]
+all-features = true
 
 [lib]
 proc-macro = true

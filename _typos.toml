@@ -1,0 +1,6 @@
+[default.extend-identifiers]
+# Legacy public API symbols — renaming these would be a breaking change.
+Aggrigated = "Aggrigated"
+aggrigated = "aggrigated"
+# Wire-format field name from the device service API.
+canscript = "canscript"

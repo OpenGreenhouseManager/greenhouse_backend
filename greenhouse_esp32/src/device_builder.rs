@@ -13,24 +13,42 @@ use greenhouse_core::smart_device_dto::Type;
 
 const NVS_NAMESPACE: &str = "ghse_cfg";
 
+/// Operating mode of the ESP32 device.
 #[derive(Debug, Clone)]
 pub enum Mode {
+    /// Sensor only — exposes `/read`.
     Input(TypeOption),
+    /// Actuator only — exposes `/write`.
     Output(TypeOption),
+    /// Both sensor and actuator — exposes `/read` and `/write`.
     InputOutput(TypeOption, TypeOption),
+    /// Mode not yet determined.
     Unknown,
 }
 
+/// Internal shared state passed to each ESP-IDF HTTP handler closure.
 pub struct DeviceState<T: Clone + Default> {
+    /// Optional read handler — `Some` for output and hybrid devices.
     pub read_handler: Option<Arc<dyn Fn(Arc<Config<T>>) -> Type + Send + Sync>>,
+    /// Optional write handler — `Some` for input and hybrid devices.
     pub write_handler: Option<Arc<dyn Fn(Type, Arc<Config<T>>) -> StatusCode + Send + Sync>>,
+    /// Status handler — always present.
     pub status_handler: Arc<dyn Fn(Arc<Config<T>>) -> DeviceStatusResponseDto + Send + Sync>,
+    /// Config interceptor called on every `/config` POST.
     pub config_interceptor: Arc<dyn Fn(ConfigRequestDto<T>, Arc<Config<T>>) -> Config<T> + Send + Sync>,
+    /// Current device configuration protected by a `Mutex`.
     pub config: Mutex<Config<T>>,
+    /// NVS partition handle for persisting configuration changes.
     pub nvs: Arc<Mutex<EspNvs<NvsDefault>>>,
+    /// Operating mode.
     pub mode: Mode,
 }
 
+/// Builder for ESP32 smart-device HTTP servers.
+///
+/// Mirrors [`greenhouse_core::smart_device_interface::device_builder::DeviceBuilder`]
+/// but uses synchronous handler functions and NVS-backed configuration. Call
+/// [`DeviceBuilder::run`] at the end of `main` to start the HTTP server.
 pub struct DeviceBuilder<T: Clone + Default> {
     pub(crate) state: Arc<DeviceState<T>>,
 }
@@ -39,6 +57,15 @@ impl<T> DeviceBuilder<T>
 where
     T: Clone + Default + Serialize + DeserializeOwned + Send + Sync + 'static,
 {
+    /// Constructs a hybrid device (both sensor and actuator).
+    ///
+    /// Attempts to load existing configuration from NVS. If none is found,
+    /// `default_config` is written to NVS and used as the starting configuration.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the NVS partition cannot be opened, or if a stored
+    /// config cannot be deserialised.
     pub fn new_hybrid_device<RH, WH, SH, CIH>(
         nvs_partition: EspDefaultNvsPartition,
         default_config: Config<T>,
@@ -69,6 +96,13 @@ where
         })
     }
 
+    /// Constructs an output device (sensor / read-only).
+    ///
+    /// Exposes `/read`, `/status`, `/config`, and `/activate`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the NVS partition cannot be opened.
     pub fn new_output_device<RH, SH, CIH>(
         nvs_partition: EspDefaultNvsPartition,
         default_config: Config<T>,
@@ -96,6 +130,13 @@ where
         })
     }
 
+    /// Constructs an input device (actuator / write-only).
+    ///
+    /// Exposes `/write`, `/status`, `/config`, and `/activate`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the NVS partition cannot be opened.
     pub fn new_input_device<WH, SH, CIH>(
         nvs_partition: EspDefaultNvsPartition,
         default_config: Config<T>,
@@ -123,7 +164,16 @@ where
         })
     }
 
-    /// Starts the HTTP server and loops forever. Call this at the end of `main`.
+    /// Starts the ESP-IDF HTTP server and loops forever.
+    ///
+    /// Call this at the end of `main`. The server listens on the port from
+    /// `Config::port` and routes requests to the appropriate handlers based
+    /// on [`Mode`].
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the HTTP server cannot be started, or if the
+    /// device mode is [`Mode::Unknown`].
     pub fn run(self) -> Result<()> {
         let port = self
             .state

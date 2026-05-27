@@ -7,6 +7,20 @@ use crate::device_builder::DeviceState;
 use crate::error::{Error, Result};
 use crate::handler;
 
+/// Starts the ESP-IDF HTTP server for a hybrid (sensor + actuator) device.
+///
+/// Registers all five standard endpoints:
+///
+/// | Method | Path | Handler |
+/// |--------|------|---------|
+/// | `GET` | `/read` | returns the current sensor reading |
+/// | `POST` | `/write` | forwards value to the actuator |
+/// | `GET` | `/status` | returns online/panic status |
+/// | `GET` | `/config` | returns current configuration |
+/// | `POST` | `/config` | updates additional config and persists to NVS |
+/// | `POST` | `/activate` | registers scripting API credentials |
+///
+/// Returns the running [`EspHttpServer`] handle. Drop it to stop the server.
 pub fn start_server<T>(
     state: Arc<DeviceState<T>>,
     config: Configuration,

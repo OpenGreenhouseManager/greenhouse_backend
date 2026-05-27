@@ -98,4 +98,12 @@ device-stop:
     killall input_output_int_saver || true
     killall input_alert_trigger || true
 
-ci: lint test fmt
+ci: lint test fmt doc-build
+
+# Generate and open rustdoc for the published crates
+doc:
+    cargo doc --package greenhouse_core --package greenhouse_macro --all-features --no-deps --open
+
+# Build docs without opening the browser (used in CI)
+doc-build:
+    cargo doc --package greenhouse_core --package greenhouse_macro --all-features --no-deps

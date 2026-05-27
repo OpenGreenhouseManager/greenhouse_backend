@@ -2,8 +2,13 @@
 name = "greenhouse_core"
 version = "0.2.0"
 edition = "2024"
-description = "greenhouse_core"
+description = "Shared DTOs and smart-device interface for the OpenGreenhouseManager backend"
 license = "GPL-3.0"
+repository = "https://github.com/OpenGreenhouseManager/greenhouse_backend"
+homepage = "https://github.com/OpenGreenhouseManager/greenhouse_backend"
+documentation = "https://docs.rs/greenhouse_core"
+keywords = ["greenhouse", "iot", "smart-device", "axum", "dto"]
+categories = ["embedded", "web-programming", "data-structures"]
 
 [features]
 default = [
@@ -26,7 +31,10 @@ data_storage_service_dto = []
 device_service_dto = []
 error_handling = ["dep:axum", "dep:tracing"]
 scripting_service_dto = []
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 axum = { workspace = true, optional = true }
@@ -47,3 +55,20 @@ uuid = { workspace = true, features = [
 
 [dev-dependencies]
 httpc-test = "0.1.9"
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+
+[[example]]
+name = "dto_construction"
+required-features = ["auth_service_dto", "device_service_dto", "data_storage_service_dto"]
+
+[[example]]
+name = "smart_device_types"
+required-features = ["smart_device_dto"]
+
+[[example]]
+name = "device_builder_minimal"
+required-features = ["smart_device_interface"]
+
+[[example]]
+name = "http_error_mapping"
+required-features = ["error_handling"]
