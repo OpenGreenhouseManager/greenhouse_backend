@@ -1,0 +1,5 @@
+[toolchain]
+# Standard nightly works for RISC-V ESP32 variants (C3, C6, C2).
+# For Xtensa variants (ESP32, S2, S3) switch to channel = "esp" after running `espup install`.
+channel = "nightly"
+components = ["rust-src", "rustfmt", "clippy"]

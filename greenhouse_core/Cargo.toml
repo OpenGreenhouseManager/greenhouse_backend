@@ -21,7 +21,7 @@ api_web_dto = []
 api_script_dto = []
 auth_service_dto = []
 smart_device_dto = []
-smart_device_interface = ["smart_device_dto", "dep:axum", "dep:tracing"]
+smart_device_interface = ["smart_device_dto", "dep:axum", "dep:tracing", "dep:reqwest"]
 data_storage_service_dto = []
 device_service_dto = []
 error_handling = ["dep:axum", "dep:tracing"]
@@ -34,7 +34,7 @@ chrono = { workspace = true, features = ["serde"] }
 derive_more = { workspace = true }
 futures = { workspace = true }
 greenhouse_macro = { version = "0.1", path = "../greenhouse_macro" }
-reqwest = { workspace = true, features = ["json"] }
+reqwest = { workspace = true, features = ["json"], optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tracing = { workspace = true, optional = true }
