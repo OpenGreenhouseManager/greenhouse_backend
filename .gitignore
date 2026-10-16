@@ -2,5 +2,7 @@
 .embuild
 .env
 **/config.json
-Cargo.lock
+# The root Cargo.lock is committed: the Nix package builds from it.
+/greenhouse_esp32/Cargo.lock
 logs
+.direnv
