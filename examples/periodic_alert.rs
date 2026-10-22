@@ -18,7 +18,7 @@ use greenhouse_core::{
         hybrid_device::init_hybrid_router,
     },
 };
-use rand::Rng;
+use rand::RngExt;
 use serde_derive::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
