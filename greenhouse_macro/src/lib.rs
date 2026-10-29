@@ -1,25 +1,23 @@
 extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, AttributeArgs, ItemFn, Lit, NestedMeta};
+use syn::{parse_macro_input, ItemFn, LitStr};
 
 #[proc_macro_attribute]
 pub fn authenticate(args: TokenStream, input: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(args as AttributeArgs);
-    let input_fn = parse_macro_input!(input as ItemFn);
-
     // Extract role string from attribute like #[authenticate("ADMIN")]
-    let expected_role = match args.first() {
-        Some(NestedMeta::Lit(Lit::Str(s))) => s.value(),
-        _ => {
-            return syn::Error::new_spanned(
-                args.first().unwrap(),
+    let expected_role = match syn::parse::<LitStr>(args) {
+        Ok(s) => s.value(),
+        Err(e) => {
+            return syn::Error::new(
+                e.span(),
                 "expected role as a string, e.g. #[authenticate(\"ADMIN\")]",
             )
             .to_compile_error()
             .into();
         }
     };
+    let input_fn = parse_macro_input!(input as ItemFn);
 
     let vis = &input_fn.vis;
     let sig = &input_fn.sig;

@@ -31,7 +31,6 @@ scripting_service_dto = []
 [dependencies]
 axum = { workspace = true, optional = true }
 chrono = { workspace = true, features = ["serde"] }
-derive_more = { workspace = true }
 futures = { workspace = true }
 greenhouse_macro = { version = "0.1", path = "../greenhouse_macro" }
 reqwest = { workspace = true, features = ["json"], optional = true }
@@ -46,4 +45,4 @@ uuid = { workspace = true, features = [
 ] }
 
 [dev-dependencies]
-httpc-test = "0.1.9"
+httpc-test = "0.1.10"

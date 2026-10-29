@@ -4,14 +4,10 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 fn main() {
     let config = load_config();
 
-    let _guard = sentry::init((
-        config.sentry_url.clone(),
-        sentry::ClientOptions {
-            release: sentry::release_name!(),
-            environment: Some(config.environment.clone().into()),
-            ..Default::default()
-        },
-    ));
+    let mut sentry_options = sentry::ClientOptions::new();
+    sentry_options.release = sentry::release_name!();
+    sentry_options.environment = Some(config.environment.clone().into());
+    let _guard = sentry::init((config.sentry_url.clone(), sentry_options));
 
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
