@@ -1,3 +1,4 @@
+pub mod batch_timeseries;
 pub mod endpoints;
 pub mod get_device;
 pub mod get_timeseries;

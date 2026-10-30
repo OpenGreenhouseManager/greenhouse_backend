@@ -18,6 +18,8 @@ pub(crate) enum Error {
     PrometheusJson(reqwest::Error),
     PrometheusInvalidResultType,
     PrometheusNotImplemented,
+    PrometheusInvalidValue,
+    BatchTooLarge,
     #[from]
     Database(database::Error),
 }
@@ -51,6 +53,8 @@ impl HttpErrorMapping for Error {
             Error::PrometheusJson(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Error::PrometheusInvalidResultType => StatusCode::BAD_REQUEST,
             Error::PrometheusNotImplemented => StatusCode::NOT_IMPLEMENTED,
+            Error::PrometheusInvalidValue => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::BatchTooLarge => StatusCode::BAD_REQUEST,
         }
     }
 
@@ -69,6 +73,11 @@ impl HttpErrorMapping for Error {
             Error::PrometheusJson(e) => format!("Prometheus json error: {e}"),
             Error::PrometheusInvalidResultType => String::from("Prometheus invalid result type"),
             Error::PrometheusNotImplemented => String::from("Prometheus type not implemented"),
+            Error::PrometheusInvalidValue => String::from("Prometheus returned an invalid value"),
+            Error::BatchTooLarge => format!(
+                "Batch exceeds the maximum of {} queries",
+                crate::router::prom_service::MAX_BATCH_QUERIES
+            ),
         }
     }
 }

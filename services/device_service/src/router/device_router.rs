@@ -3,7 +3,10 @@ use crate::{
     database::device::Device,
     router::{
         error::HttpResult,
-        prom_service::{get_device_query_timeseries, request_device_query_operations},
+        prom_service::{
+            get_batch_query_timeseries, get_device_query_timeseries,
+            request_device_query_operations,
+        },
         service::{
             request_device_activate, request_device_config, request_device_config_update,
             request_device_status, request_device_token,
@@ -19,6 +22,7 @@ use axum::{
 };
 use greenhouse_core::{
     device_service_dto::{
+        batch_timeseries::{BatchTimeseriesRequestDto, BatchTimeseriesResponseDto},
         endpoints::{ACTIVATE, CONFIG, STATUS},
         get_device::{DeviceResponseDto, DevicesResponseDto},
         get_timeseries::GetTimeseriesDto,
@@ -41,6 +45,7 @@ pub(crate) fn routes(state: AppState) -> Router {
         .route(&format!("/{{id}}/{CONFIG}"), put(update_device_config))
         .route(&format!("/{{id}}/{CONFIG}"), get(get_device_config))
         .route(&format!("/{{id}}/{STATUS}"), get(get_device_status))
+        .route("/timeseries/batch", post(get_batch_timeseries))
         .route("/{id}/timeseries", get(get_device_timeseries))
         .route("/{id}/options", get(get_device_query_operations))
         .with_state(state)
@@ -177,7 +182,15 @@ pub(crate) async fn get_device_timeseries(
     Path(id): Path<Uuid>,
     Query(query): Query<PromQuery>,
 ) -> HttpResult<GetTimeseriesDto> {
-    Ok(get_device_query_timeseries(&config.prometheus_url, &id.to_string(), query).await?)
+    Ok(get_device_query_timeseries(&config.prometheus_url, id, query).await?)
+}
+
+#[axum::debug_handler]
+pub(crate) async fn get_batch_timeseries(
+    State(AppState { config, pool: _ }): State<AppState>,
+    Json(request): Json<BatchTimeseriesRequestDto>,
+) -> HttpResult<BatchTimeseriesResponseDto> {
+    Ok(get_batch_query_timeseries(&config.prometheus_url, request).await?)
 }
 
 async fn get_device_query_operations(

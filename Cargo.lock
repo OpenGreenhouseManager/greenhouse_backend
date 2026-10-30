@@ -1023,6 +1023,7 @@ dependencies = [
  "diesel",
  "diesel-async",
  "diesel_migrations",
+ "futures",
  "greenhouse_core",
  "metrics",
  "metrics-exporter-prometheus",
