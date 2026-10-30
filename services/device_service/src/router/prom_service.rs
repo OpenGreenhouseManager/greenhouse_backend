@@ -1,12 +1,20 @@
 use super::error::{Error, Result};
-use greenhouse_core::device_service_dto::{
-    get_timeseries::{GetTimeseriesDto, Measurement, TimeseriesDto, Type},
-    operations::OperationsDto,
-    query::PromQuery,
+use futures::{StreamExt, stream};
+use greenhouse_core::{
+    device_service_dto::{
+        batch_timeseries::{
+            BatchTimeseriesRequestDto, BatchTimeseriesResponseDto, BatchTimeseriesResultDto,
+        },
+        get_timeseries::{GetTimeseriesDto, Measurement, TimeseriesDto, Type},
+        operations::OperationsDto,
+        query::PromQuery,
+    },
+    http_error::HttpErrorMapping,
 };
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PrometheusTimeseriesResponse {
@@ -49,45 +57,85 @@ pub struct MetricSeries {
     pub metric_type: String,
 }
 
+/// Upper bound for queries in a single batch request.
+pub(crate) const MAX_BATCH_QUERIES: usize = 50;
+/// How many Prometheus requests a batch runs concurrently.
+const BATCH_CONCURRENCY: usize = 8;
+
 pub(crate) async fn get_device_query_timeseries(
     prometheus_url: &str,
-    id: &str,
+    device_id: Uuid,
     query: PromQuery,
 ) -> Result<GetTimeseriesDto> {
-    let client = Client::new();
+    Ok(
+        fetch_timeseries(&Client::new(), prometheus_url, device_id, &query)
+            .await?
+            .into(),
+    )
+}
 
+pub(crate) async fn get_batch_query_timeseries(
+    prometheus_url: &str,
+    request: BatchTimeseriesRequestDto,
+) -> Result<BatchTimeseriesResponseDto> {
+    if request.queries.len() > MAX_BATCH_QUERIES {
+        return Err(Error::BatchTooLarge);
+    }
+
+    let client = &Client::new();
+
+    let results = stream::iter(request.queries)
+        .map(|query| async move {
+            let result =
+                fetch_timeseries(client, prometheus_url, query.device_id, &query.query).await;
+
+            let (timeseries, error) = match result {
+                Ok(timeseries) => (Some(timeseries), None),
+                Err(e) => {
+                    tracing::warn!("Batch timeseries query {query:?} failed: {e}");
+                    (None, Some(e.to_error_message()))
+                }
+            };
+
+            BatchTimeseriesResultDto {
+                query,
+                timeseries,
+                error,
+            }
+        })
+        // `buffered` keeps the request order while bounding concurrency
+        .buffered(BATCH_CONCURRENCY)
+        .collect::<Vec<_>>()
+        .await;
+
+    Ok(results.into())
+}
+
+async fn fetch_timeseries(
+    client: &Client,
+    prometheus_url: &str,
+    device_id: Uuid,
+    query: &PromQuery,
+) -> Result<Vec<TimeseriesDto>> {
     // Example metric name: scrape_service_duration_<uuid>_periodic_alert_4
-    let id = id.to_string().replace("-", "_");
-    let name = if let Some(sub_property) = query.sub_property {
+    let id = device_id.to_string().replace("-", "_");
+    let name = if let Some(sub_property) = &query.sub_property {
         format!("scrape_service_duration_{id}_{sub_property}")
     } else {
         format!("scrape_service_duration_{id}")
     };
 
-    // Convert chrono DateTime<Utc> to unix seconds
-    let start = query.start.timestamp();
-    let end = query.end.timestamp();
-
-    // Step (you could make this configurable too)
-    let step = query.step.unwrap_or("15s".to_string());
-
-    // Build the URL
     let url = format!("{}/query_range", prometheus_url.trim_end_matches('/'));
 
-    tracing::info!("Prometheus URL: {}", url);
-    tracing::info!("Prometheus query: {}", name);
-    tracing::info!("Prometheus start: {}", start);
-    tracing::info!("Prometheus end: {}", end);
-    tracing::info!("Prometheus step: {}", step);
+    tracing::debug!("Prometheus query_range {url}: query={name} {query:?}");
 
-    // Build the request with query params
     let resp = client
         .get(url)
         .query(&[
-            ("query", &name),
-            ("start", &start.to_string()),
-            ("end", &end.to_string()),
-            ("step", &step),
+            ("query", name.as_str()),
+            ("start", &query.start.timestamp().to_string()),
+            ("end", &query.end.timestamp().to_string()),
+            ("step", &query.step.to_string()),
         ])
         .send()
         .await
@@ -96,57 +144,68 @@ pub(crate) async fn get_device_query_timeseries(
         .await
         .map_err(Error::PrometheusJson)?;
 
-    match resp.data.result[0]
+    // No samples in the requested window
+    let Some(series) = resp.data.result.first() else {
+        return Ok(Vec::new());
+    };
+
+    let parse_f64 = |value: &str| {
+        value
+            .parse::<f64>()
+            .map_err(|_| Error::PrometheusInvalidValue)
+    };
+
+    match series
         .metric
         .get("type")
-        .unwrap_or(&String::from("unknown"))
-        .as_str()
+        .map(String::as_str)
+        .unwrap_or("unknown")
     {
-        "number" => {
-            let timeseries = resp.data.result[0]
-                .values
-                .iter()
-                .map(|result| TimeseriesDto {
-                    timestamp: result.0,
-                    value: Type::Number(result.1.parse::<f64>().unwrap()),
+        "number" => series
+            .values
+            .iter()
+            .map(|(timestamp, value)| {
+                Ok(TimeseriesDto {
+                    timestamp: *timestamp,
+                    value: Type::Number(parse_f64(value)?),
                 })
-                .collect::<Vec<TimeseriesDto>>()
-                .into();
-            Ok(timeseries)
-        }
-        "boolean" => {
-            let timeseries = resp.data.result[0]
-                .values
-                .iter()
-                .map(|result| TimeseriesDto {
-                    timestamp: result.0,
-                    value: Type::Boolean(result.1.parse::<bool>().unwrap()),
+            })
+            .collect(),
+        // Booleans are stored as 1.0 / 0.0 gauges by the scrape service
+        "boolean" => series
+            .values
+            .iter()
+            .map(|(timestamp, value)| {
+                Ok(TimeseriesDto {
+                    timestamp: *timestamp,
+                    value: Type::Boolean(parse_f64(value)? != 0.0),
                 })
-                .collect::<Vec<TimeseriesDto>>()
-                .into();
-            Ok(timeseries)
-        }
+            })
+            .collect(),
         "object" => {
             tracing::error!("Object type not implemented: {}", resp.data.result_type);
             Err(Error::PrometheusNotImplemented)
         }
         "measurement" => {
-            let unknown = "unknown".to_string();
-            let unit = resp.data.result[0].metric.get("unit").unwrap_or(&unknown);
+            let unit = series
+                .metric
+                .get("unit")
+                .cloned()
+                .unwrap_or("unknown".to_string());
 
-            let timeseries = resp.data.result[0]
+            series
                 .values
                 .iter()
-                .map(|result| TimeseriesDto {
-                    timestamp: result.0,
-                    value: Type::Measurement(Measurement {
-                        value: result.1.parse::<f64>().unwrap(),
-                        unit: unit.to_string(),
-                    }),
+                .map(|(timestamp, value)| {
+                    Ok(TimeseriesDto {
+                        timestamp: *timestamp,
+                        value: Type::Measurement(Measurement {
+                            value: parse_f64(value)?,
+                            unit: unit.clone(),
+                        }),
+                    })
                 })
-                .collect::<Vec<TimeseriesDto>>()
-                .into();
-            Ok(timeseries)
+                .collect()
         }
         _ => {
             tracing::error!("Prometheus invalid result type: {}", resp.data.result_type);

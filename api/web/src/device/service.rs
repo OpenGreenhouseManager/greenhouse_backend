@@ -1,5 +1,6 @@
 use greenhouse_core::{
     device_service_dto::{
+        batch_timeseries::{BatchTimeseriesRequestDto, BatchTimeseriesResponseDto},
         endpoints,
         get_device::{DeviceResponseDto, DevicesResponseDto},
         get_timeseries::GetTimeseriesDto,
@@ -349,6 +350,42 @@ pub(crate) async fn get_device_timeseries(
             .map_err(|e| {
                 sentry::capture_error(&e);
                 tracing::error!("Error in get to service: {:?}", e);
+                Error::Json(e)
+            })?
+            .error,
+    }))
+}
+
+pub(crate) async fn get_batch_timeseries(
+    base_url: &str,
+    request: BatchTimeseriesRequestDto,
+) -> Result<BatchTimeseriesResponseDto> {
+    let resp = reqwest::Client::new()
+        .post(base_url.to_string() + "/timeseries/batch")
+        .json(&request)
+        .send()
+        .await
+        .map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!("Error in post to service: {:?}", e);
+            Error::Request(e)
+        })?;
+
+    if resp.status().is_success() {
+        return resp.json().await.map_err(|e| {
+            sentry::capture_error(&e);
+            tracing::error!("Error in post to service: {:?}", e);
+            Error::Json(e)
+        });
+    }
+    Err(Error::Api(ApiError {
+        status: resp.status(),
+        message: resp
+            .json::<ErrorResponseBody>()
+            .await
+            .map_err(|e| {
+                sentry::capture_error(&e);
+                tracing::error!("Error in post to service: {:?}", e);
                 Error::Json(e)
             })?
             .error,

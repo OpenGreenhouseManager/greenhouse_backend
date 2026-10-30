@@ -7,6 +7,7 @@ use axum::{
     routing::{get, post, put},
 };
 use greenhouse_core::device_service_dto::{
+    batch_timeseries::{BatchTimeseriesRequestDto, BatchTimeseriesResponseDto},
     endpoints::{ACTIVATE, CONFIG, STATUS},
     get_device::{DeviceResponseDto, DevicesResponseDto},
     get_timeseries::GetTimeseriesDto,
@@ -28,6 +29,7 @@ pub(crate) fn routes(state: AppState) -> Router {
         .route(&format!("/{{id}}/{CONFIG}"), put(update_device_config))
         .route(&format!("/{{id}}/{CONFIG}"), get(get_device_config))
         .route(&format!("/{{id}}/{STATUS}"), get(get_device_status))
+        .route("/timeseries/batch", post(get_batch_timeseries))
         .route("/{id}/timeseries", get(get_device_timeseries))
         .route("/{id}/options", get(get_device_operations))
         .with_state(state)
@@ -123,6 +125,14 @@ pub(crate) async fn get_device_timeseries(
     Query(query): Query<PromQuery>,
 ) -> HttpResult<GetTimeseriesDto> {
     Ok(service::get_device_timeseries(&config.service_addresses.device_service, id, query).await?)
+}
+
+#[axum::debug_handler]
+pub(crate) async fn get_batch_timeseries(
+    State(AppState { config }): State<AppState>,
+    Json(request): Json<BatchTimeseriesRequestDto>,
+) -> HttpResult<BatchTimeseriesResponseDto> {
+    Ok(service::get_batch_timeseries(&config.service_addresses.device_service, request).await?)
 }
 
 pub(crate) async fn get_device_operations(
